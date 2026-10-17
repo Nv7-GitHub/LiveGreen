@@ -38,23 +38,16 @@ nonisolated enum SwapMath {
     /// Whether a metric's change is worth a row: not when both sides are effectively zero ("0 g → 0 g") or the
     /// change rounds to 0% (no net change). Worse is always shown, including a rise from zero.
     static func showsChange(_ metric: MetricKey, current: Measured, alternative: Measured) -> Bool {
-        guard displayable(current, metric) != nil || displayable(alternative, metric) != nil,
-              current.value != alternative.value else { return false }
+        let says = { (measured: Measured) in !measured.isEffectivelyZero || metric.zeroIsInformative }
+        guard says(current) || says(alternative), current.value != alternative.value else { return false }
         guard let percent = percentBetter(metric, current: current, alternative: alternative) else { return true }
         return Int(percent.rounded()) != 0
-    }
-
-    /// The results screen's zero rule (GreenCore's `Component.displayable`): nil when a value and its range are
-    /// effectively zero. A 0/10 repairability or 0% recyclable share is a real value, so those are kept.
-    static func displayable(_ measured: Measured, _ metric: MetricKey) -> Measured? {
-        if metric == .recyclablePercent || metric == .repairability { return measured }
-        return max(abs(measured.low), abs(measured.value), abs(measured.high)) < 1e-3 ? nil : measured
     }
 
     /// Whether a saving is a net change: not effectively zero, and not rounding to 0% of `baseline` (what the
     /// item had on the same basis; zero means unknown).
     static func isNetChange(_ saving: EstimateRange, baseline: Double) -> Bool {
-        guard max(abs(saving.low), abs(saving.value), abs(saving.high)) >= 1e-3 else { return false }
+        guard max(abs(saving.low), abs(saving.value), abs(saving.high)) >= Measured.negligibleMagnitude else { return false }
         guard baseline != 0 else { return saving.value != 0 }
         return Int((saving.value / abs(baseline) * 100).rounded()) != 0
     }
