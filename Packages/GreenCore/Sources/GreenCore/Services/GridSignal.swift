@@ -1,8 +1,8 @@
 import Foundation
 
-/// Grid carbon-intensity signal (spec §8.3: Electricity Maps, falling back to the bundled 24-h shape).
+/// Grid carbon-intensity signal (spec §8.3: Electricity Maps or the free EIA API, falling back to the bundled 24-h shape).
 public protocol GridSignal: Sendable {
-    /// Current intensity for an Electricity Maps zone (e.g. "US-NE-ISNE").
+    /// Current (or most recently published) intensity for an Electricity Maps-style zone (e.g. "US-NE-ISNE").
     func latest(zone: String) async throws -> GridIntensityPoint
     /// Hourly history, oldest first, covering roughly the last `hours` hours.
     func history(zone: String, hours: Int) async throws -> [GridIntensityPoint]

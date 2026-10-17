@@ -51,8 +51,8 @@ nonisolated struct ServiceContainer: Sendable {
             isDemo: true)
     }
 
-    /// Live services. Keyless clients (Open Food Facts, ENERGY STAR) always run; the grid falls back to the
-    /// bundled regional shapes without an Electricity Maps key. Claude and Grok calls without a key throw
+    /// Live services. Keyless clients (Open Food Facts, ENERGY STAR) always run; the grid prefers Electricity
+    /// Maps, then the free EIA API (US), then the bundled regional shapes. Claude and Grok calls without a key throw
     /// `missingAPIKey`, which the ladder skips and the scan and image screens report (Settings names the key).
     static func live(flags: FeatureFlags, secrets: Secrets) -> ServiceContainer {
         let reference = ReferenceStore.bundled
@@ -61,6 +61,7 @@ nonisolated struct ServiceContainer: Sendable {
         let products = OpenFoodFactsClient()
         let appliances = EnergyStarClient(appToken: secrets.value(for: .energyStar))
         let grid: any GridSignal = secrets.value(for: .electricityMaps).map { ElectricityMapsClient(apiKey: $0) }
+            ?? secrets.value(for: .eia).map { EIAGridClient(apiKey: $0) }
             ?? BundledGridSignal(store: reference)
         return ServiceContainer(
             vision: claude,

@@ -19,7 +19,8 @@ open LiveGreen.xcodeproj
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Claude identify, alternatives, spec research | yes (except demo mode) |
 | `XAI_API_KEY` | Grok greener-image edit | yes (except demo mode) |
-| `ELECTRICITYMAPS_API_KEY` | Live grid carbon intensity | yes (falls back to bundled shape) |
+| `ELECTRICITYMAPS_API_KEY` | Live grid carbon intensity (paid beyond 24 h of history) | optional (falls back to EIA, then the bundled shape) |
+| `EIA_API_KEY` | Free US grid intensity from EIA-930 hourly fuel mix ([get a key](https://www.eia.gov/opendata/register.php)) | optional (falls back to the bundled shape) |
 | `ENERGYSTAR_APP_TOKEN` | ENERGY STAR Socrata queries | optional |
 
 The keys go into Info.plist at build time. Any key can also be entered in **Settings → API keys**, which stores it in the Keychain and overrides the xcconfig value. A fresh clone builds without `Secrets.xcconfig` because the include is optional.
@@ -60,7 +61,7 @@ LiveGreen/                    app target (UI and platform integrations)
 Packages/GreenCore/           Swift package with no UIKit/SwiftUI dependency
   Sources/GreenCore/Model     Tier, Source, Measured, MetricKey, Category, Component, ScanResult, UserProfile…
   Sources/GreenCore/Services  Protocols for every external dependency, plus their DTOs
-  Sources/GreenCore/Clients   Claude, Grok, Open Food Facts, ENERGY STAR, Electricity Maps, Shelly (URLSession)
+  Sources/GreenCore/Clients   Claude, Grok, Open Food Facts, ENERGY STAR, Electricity Maps, EIA, Shelly (URLSession)
   Sources/GreenCore/Resolve   EvidenceLadder, EstimateResolver (T4), QuestionGate
   Sources/GreenCore/Engine    ImpactEngine (Monte Carlo), factor models, CohortModel, Percentiles,
                               GreenHoursPlanner, ShellyScheduleBuilder

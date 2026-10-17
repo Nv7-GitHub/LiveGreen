@@ -44,25 +44,59 @@ nonisolated struct GridOutlook: Hashable, Sendable {
     static func load(grid: any GridSignal, reference: any ReferenceProviding,
                      profile: UserProfile) async throws -> GridOutlook {
         let zone = zone(for: profile)
-        async let latest = try? grid.latest(zone: zone)
-        async let history = loadHistory(grid: grid, zone: zone)
+        let live = isLive(grid)
+        // Unstructured so a slow live request keeps running (and archives) after we stop waiting for it.
+        let latestTask = Task { try? await grid.latest(zone: zone) }
+        let historyTask = Task { () -> Result<[GridIntensityPoint], any Error> in
+            do {
+                let points = try await grid.history(zone: zone, hours: 7 * 24)
+                if live { _ = GridHistoryArchive.merge(points, zone: zone) }
+                return .success(points)
+            } catch {
+                return .failure(error)
+            }
+        }
+        let patience = live ? historyPatience : nil
         let regions = [profile.region.gridZone, profile.region.usState.map { "US-\($0)" }, profile.region.countryCode]
         let record = regions.compactMap { $0 }.lazy.compactMap { reference.gridIntensity(region: $0) }.first
-        let current = await latest
-        let (fresh, issue) = await history
-        // Only live Electricity Maps readings are archived; bundled and demo signals regenerate theirs.
-        let readings = grid is ElectricityMapsClient ? GridHistoryArchive.merge(fresh, zone: zone) : fresh
+
+        var fresh: [GridIntensityPoint] = []
+        var issue: String?
+        switch await value(of: historyTask, within: patience) {
+        case .success(let points)?: fresh = points
+        case .failure(let error)?: issue = error.localizedDescription
+        case nil: issue = "Live grid data is still loading; planning from saved readings for now."
+        }
+        let current = await value(of: latestTask, within: patience) ?? nil
+        // Only live readings are archived; bundled and demo signals regenerate theirs.
+        let readings = live ? GridHistoryArchive.merge(fresh, zone: zone) : fresh
         guard let forecast = GridForecast.make(history: readings, fallback: record) else {
             throw GreenCoreError.notFound
         }
         return GridOutlook(zone: zone, current: current, forecast: forecast, historyIssue: issue)
     }
 
-    private static func loadHistory(grid: any GridSignal, zone: String) async -> ([GridIntensityPoint], String?) {
-        do {
-            return (try await grid.history(zone: zone, hours: 7 * 24), nil)
-        } catch {
-            return ([], error.localizedDescription)
+    /// Seconds to wait for live grid data before planning from archived readings (the EIA API can take
+    /// over a minute to answer).
+    static let historyPatience: Double = 12
+
+    static func isLive(_ grid: any GridSignal) -> Bool {
+        grid is ElectricityMapsClient || grid is EIAGridClient
+    }
+
+    /// The task's value, or nil if it is not ready within `seconds` (nil waits indefinitely). The task is
+    /// not cancelled.
+    private static func value<T: Sendable>(of task: Task<T, Never>, within seconds: Double?) async -> T? {
+        guard let seconds else { return await task.value }
+        return await withTaskGroup(of: T?.self) { group in
+            group.addTask { await task.value }
+            group.addTask {
+                try? await Task.sleep(for: .seconds(seconds))
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
         }
     }
 }
