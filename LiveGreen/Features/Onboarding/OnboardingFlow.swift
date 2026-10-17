@@ -26,17 +26,23 @@ struct OnboardingFlow: View {
         VStack(spacing: 16) {
             header
             LiveEstimateCard(profile: profile, step: step)
-            ScrollView {
-                card
-                    .id(step)
-                    .transition(.asymmetric(
-                        insertion: .move(edge: movingForward ? .trailing : .leading).combined(with: .opacity),
-                        removal: .move(edge: movingForward ? .leading : .trailing).combined(with: .opacity)))
+            // One scroll view per question, overlapping in a ZStack while they slide: inside a single scroll view
+            // the outgoing and incoming cards stacked vertically mid-transition, and a question opened at the
+            // previous one's scroll offset.
+            ZStack {
+                ScrollView {
+                    card
+                }
+                // Clipped so the question scrolls under, not over, the live estimate above it.
+                .contentMargins(.vertical, 8, for: .scrollContent)
+                .scrollBounceBehavior(.basedOnSize)
+                .scrollDismissesKeyboard(.interactively)
+                .id(step)
+                .transition(.asymmetric(
+                    insertion: .move(edge: movingForward ? .trailing : .leading).combined(with: .opacity),
+                    removal: .move(edge: movingForward ? .leading : .trailing).combined(with: .opacity)))
             }
-            // Clipped so the question scrolls under, not over, the live estimate above it.
-            .contentMargins(.vertical, 8, for: .scrollContent)
-            .scrollBounceBehavior(.basedOnSize)
-            .scrollDismissesKeyboard(.interactively)
+            .frame(maxHeight: .infinity)
             navigation
         }
         .padding()
@@ -77,6 +83,8 @@ struct OnboardingFlow: View {
         }
     }
 
+    /// Outside the scroll view, so Back and Next stay put above the keyboard and long questions. Next fills the
+    /// rest of the row for a large target.
     private var navigation: some View {
         GlassEffectContainer(spacing: 12) {
             HStack(spacing: 12) {
@@ -84,13 +92,16 @@ struct OnboardingFlow: View {
                     Button("Back", systemImage: "chevron.left") { move(by: -1) }
                         .buttonStyle(.glass)
                         .controlSize(.large)
+                        .accessibilityIdentifier("onboarding.back")
                 }
-                Button(isLast ? "Finish" : "Next", systemImage: isLast ? "checkmark" : "chevron.right") {
+                Button {
                     isLast ? finish() : move(by: 1)
+                } label: {
+                    Label(isLast ? "Finish" : "Next", systemImage: isLast ? "checkmark" : "chevron.right")
+                        .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.glassProminent)
                 .controlSize(.large)
-                .frame(maxWidth: .infinity, alignment: .trailing)
                 .accessibilityIdentifier("onboarding.next")
             }
         }
@@ -104,8 +115,18 @@ struct OnboardingFlow: View {
 
     private func move(by offset: Int) {
         guard let next = OnboardingStep(rawValue: step.rawValue + offset) else { return }
+        guard movingForward != (offset > 0) else {
+            withAnimation(.smooth) { step = next }
+            return
+        }
+        // The outgoing card takes its removal edge from its last render, so on a change of direction let the
+        // new direction render for a frame before the step changes; otherwise the first Back after Next slid
+        // both cards the same way.
         movingForward = offset > 0
-        withAnimation(.smooth) { step = next }
+        Task {
+            try? await Task.sleep(for: .milliseconds(16))
+            withAnimation(.smooth) { step = next }
+        }
     }
 
     private func finish() {
