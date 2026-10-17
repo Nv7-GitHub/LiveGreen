@@ -56,7 +56,7 @@ nonisolated struct GridOutlook: Hashable, Sendable {
                 return .failure(error)
             }
         }
-        let patience = live ? historyPatience : nil
+        let patience = live ? patience(zone: zone) : nil
         let regions = [profile.region.gridZone, profile.region.usState.map { "US-\($0)" }, profile.region.countryCode]
         let record = regions.compactMap { $0 }.lazy.compactMap { reference.gridIntensity(region: $0) }.first
 
@@ -76,9 +76,26 @@ nonisolated struct GridOutlook: Hashable, Sendable {
         return GridOutlook(zone: zone, current: current, forecast: forecast, historyIssue: issue)
     }
 
-    /// Seconds to wait for live grid data before planning from archived readings (the EIA API can take
-    /// over a minute to answer).
-    static let historyPatience: Double = 12
+    /// Seconds to wait for live grid data before planning from archived readings. EIA's grid monitor takes
+    /// ~30 s for a fresh query (repeats within a minute are instant), so with no recent archive we wait for
+    /// it; with one, we plan right away and the request still finishes and archives in the background.
+    static func patience(zone: String, now: Date = Date()) -> Double {
+        guard let newest = GridHistoryArchive.newestDate(zone: zone), now.timeIntervalSince(newest) < 12 * 3600 else {
+            return 75
+        }
+        return 3
+    }
+
+    /// Starts the live history request early (app launch) so the Plugs screens find it cached or archived.
+    static func warm(grid: any GridSignal, profile: UserProfile) {
+        guard isLive(grid) else { return }
+        let zone = zone(for: profile)
+        Task.detached(priority: .utility) {
+            if let points = try? await grid.history(zone: zone, hours: 7 * 24) {
+                _ = GridHistoryArchive.merge(points, zone: zone)
+            }
+        }
+    }
 
     static func isLive(_ grid: any GridSignal) -> Bool {
         grid is ElectricityMapsClient || grid is EIAGridClient

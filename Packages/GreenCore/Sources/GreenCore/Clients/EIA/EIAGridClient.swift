@@ -1,13 +1,12 @@
 import Foundation
 
-/// Free US grid carbon intensity from the EIA Open Data API (EIA-930 hourly generation by fuel type).
-/// `/v2/electricity/rto/fuel-type-data` gives MWh per fuel per balancing authority each hour; intensity is the
-/// generation-weighted mean of lifecycle emission factors (`EIAFuelFactors`). Data lags real time by a few
-/// hours, and history goes back years, so the 7-day forecast window works on a free key. The API can take a
-/// minute or more to answer, so responses are shared across callers and reused for `reuseInterval`.
+/// Free US grid carbon intensity from EIA-930 hourly generation by fuel type, read from the endpoint behind
+/// EIA's Hourly Electric Grid Monitor (`/electricity/930-api/region_data_by_fuel_type`). It needs no key and
+/// reliably answers in ~30 s for a fresh query (about a second for a repeat), where the Open Data API
+/// (`api.eia.gov/v2`) often takes over a minute or returns 504 for the same data. It is not a documented public API, so its shape is pinned by recorded fixtures.
+/// Intensity is the generation-weighted mean of lifecycle emission factors (`EIAFuelFactors`). Data lags
+/// real time by a few hours; history goes back years, so the 7-day forecast window is always available.
 public struct EIAGridClient: GridSignal {
-    /// `EIA_API_KEY`. Calls throw `GreenCoreError.missingAPIKey` while it is nil or empty.
-    public var apiKey: String?
     public var baseURL: URL
     public var timeout: Double
     public var retry: RetryPolicy
@@ -17,11 +16,10 @@ public struct EIAGridClient: GridSignal {
     let now: @Sendable () -> Date
     let memo: EIAResponseMemo
 
-    public init(apiKey: String?, baseURL: URL = URL(string: "https://api.eia.gov")!, timeout: Double = 120,
-                retry: RetryPolicy = RetryPolicy(maxAttempts: 2), reuseInterval: TimeInterval = 15 * 60,
+    public init(baseURL: URL = URL(string: "https://www.eia.gov/electricity/930-api")!, timeout: Double = 90,
+                retry: RetryPolicy = .default, reuseInterval: TimeInterval = 15 * 60,
                 transport: any HTTPTransport = URLSessionTransport(), now: @escaping @Sendable () -> Date = { Date() },
                 memo: EIAResponseMemo = .shared) {
-        self.apiKey = apiKey
         self.baseURL = baseURL
         self.timeout = timeout
         self.retry = retry
@@ -45,33 +43,32 @@ public struct EIAGridClient: GridSignal {
         let now = now()
         let start = now.addingTimeInterval(-Double(max(hours, 1)) * 3600)
         let rows = try await memo.rows(respondent: respondent, start: start, now: now, reuseInterval: reuseInterval) {
-            try await fuelMix(respondent: respondent, start: start)
+            try await fuelMix(respondent: respondent, start: start, end: now)
         }
-        return Self.intensities(rows.filter { (Self.parsePeriod($0.period) ?? .distantPast) >= start }, zone: zone)
+        return Self.intensities(rows.filter { $0.date >= start }, zone: zone)
     }
 
-    func fuelMix(respondent: String, start: Date) async throws -> [Row] {
-        guard let apiKey = apiKey?.trimmedNonEmpty else { throw GreenCoreError.missingAPIKey("EIA_API_KEY") }
-        var components = URLComponents(url: baseURL.appending(path: "v2/electricity/rto/fuel-type-data/data/"),
+    func fuelMix(respondent: String, start: Date, end: Date) async throws -> [Row] {
+        var components = URLComponents(url: baseURL.appending(path: "region_data_by_fuel_type/series_data"),
                                        resolvingAgainstBaseURL: false)!
         components.queryItems = [
-            URLQueryItem(name: "api_key", value: apiKey),
+            URLQueryItem(name: "type[0]", value: "NG"), // net generation
+            URLQueryItem(name: "respondent[0]", value: respondent),
+            URLQueryItem(name: "start", value: Self.timestamp(start)),
+            URLQueryItem(name: "end", value: Self.timestamp(end)),
             URLQueryItem(name: "frequency", value: "hourly"),
-            URLQueryItem(name: "data[0]", value: "value"),
-            URLQueryItem(name: "facets[respondent][]", value: respondent),
-            URLQueryItem(name: "start", value: Self.period(start)),
-            URLQueryItem(name: "sort[0][column]", value: "period"),
-            URLQueryItem(name: "sort[0][direction]", value: "asc"),
-            URLQueryItem(name: "length", value: "5000"),
+            URLQueryItem(name: "timezone", value: "UTC"),
+            URLQueryItem(name: "limit", value: "10000"),
+            URLQueryItem(name: "offset", value: "0"),
         ]
         var request = URLRequest(url: components.url!)
         request.timeoutInterval = timeout
         let (data, response) = try await retry.send(request, via: transport)
         guard response.isSuccess else { throw GreenCoreError.http(status: response.statusCode, body: data.bodyPreview) }
         do {
-            return try JSONDecoder().decode(Payload.self, from: data).response.data
+            return try JSONDecoder().decode([SeriesGroup].self, from: data).flatMap(\.rows)
         } catch {
-            throw GreenCoreError.decoding("EIA fuel-type-data: \(error)")
+            throw GreenCoreError.decoding("EIA grid monitor fuel mix: \(error)")
         }
     }
 
@@ -80,11 +77,11 @@ public struct EIAGridClient: GridSignal {
     /// reported, or total generation under half the window's median (EIA reporting gaps that zero out
     /// gas or nuclear for an hour would otherwise read as wildly clean or dirty).
     static func intensities(_ rows: [Row], zone: String) -> [GridIntensityPoint] {
-        let hours = Dictionary(grouping: rows, by: \.period).compactMap { period, rows -> (Date, mwh: Double, grams: Double)? in
-            guard let date = parsePeriod(period), rows.count >= EIAFuelFactors.minimumFuelsPerHour else { return nil }
+        let hours = Dictionary(grouping: rows, by: \.date).compactMap { date, rows -> (Date, mwh: Double, grams: Double)? in
+            guard rows.count >= EIAFuelFactors.minimumFuelsPerHour else { return nil }
             var mwh = 0.0, grams = 0.0
             for row in rows {
-                guard let value = row.megawattHours, value > 0, let factor = EIAFuelFactors.grams(for: row.fueltype) else { continue }
+                guard let value = row.megawattHours, value > 0, let factor = EIAFuelFactors.grams(for: row.fuel) else { continue }
                 mwh += value
                 grams += value * factor
             }
@@ -107,16 +104,17 @@ public struct EIAGridClient: GridSignal {
         return parts.last
     }
 
-    /// EIA periods are UTC hours formatted "YYYY-MM-DDTHH".
-    static func period(_ date: Date) -> String {
+    /// Request bounds: UTC hours as "MMddyyyy HH:mm:ss".
+    static func timestamp(_ date: Date) -> String {
         let c = utc.dateComponents([.year, .month, .day, .hour], from: date)
-        return String(format: "%04d-%02d-%02dT%02d", c.year!, c.month!, c.day!, c.hour!)
+        return String(format: "%02d%02d%04d %02d:00:00", c.month!, c.day!, c.year!, c.hour!)
     }
 
-    static func parsePeriod(_ raw: String) -> Date? {
-        let parts = raw.split(whereSeparator: { $0 == "-" || $0 == "T" }).compactMap { Int($0) }
-        guard parts.count == 4 else { return nil }
-        return utc.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2], hour: parts[3]))
+    /// Response dates: UTC hours as "MM/dd/yyyy HH:mm:ss".
+    static func parseDate(_ raw: String) -> Date? {
+        let parts = raw.split(whereSeparator: { "/ :".contains($0) }).compactMap { Int($0) }
+        guard parts.count >= 4 else { return nil }
+        return utc.date(from: DateComponents(year: parts[2], month: parts[0], day: parts[1], hour: parts[3]))
     }
 
     private static let utc: Calendar = {
@@ -125,18 +123,38 @@ public struct EIAGridClient: GridSignal {
         return calendar
     }()
 
-    struct Payload: Decodable {
-        struct Response: Decodable { var data: [Row] }
-        var response: Response
+    /// One fuel's generation in one hour.
+    struct Row: Sendable, Hashable {
+        var date: Date
+        var fuel: String
+        var megawattHours: Double?
     }
 
-    /// One fuel's generation in one hour. EIA sends `value` as a string (sometimes null).
-    struct Row: Decodable, Sendable {
-        var period: String
-        var fueltype: String
-        var value: String?
+    /// `[{data: [{FUEL_TYPE_ID, VALUES: {DATES: [...], DATA: [...]}}]}]`; DATA includes EIA's imputed values.
+    struct SeriesGroup: Decodable {
+        struct Series: Decodable {
+            struct Values: Decodable {
+                var dates: [String]
+                var data: [Double?]
 
-        var megawattHours: Double? { value.flatMap(Double.init) }
+                enum CodingKeys: String, CodingKey { case dates = "DATES", data = "DATA" }
+            }
+
+            var fuel: String
+            var values: Values
+
+            enum CodingKeys: String, CodingKey { case fuel = "FUEL_TYPE_ID", values = "VALUES" }
+        }
+
+        var data: [Series]
+
+        var rows: [Row] {
+            data.flatMap { series in
+                zip(series.values.dates, series.values.data).compactMap { raw, value in
+                    EIAGridClient.parseDate(raw).map { Row(date: $0, fuel: series.fuel, megawattHours: value) }
+                }
+            }
+        }
     }
 }
 

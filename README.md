@@ -19,8 +19,7 @@ open LiveGreen.xcodeproj
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Claude identify, alternatives, spec research | yes (except demo mode) |
 | `XAI_API_KEY` | Grok greener-image edit | yes (except demo mode) |
-| `ELECTRICITYMAPS_API_KEY` | Live grid carbon intensity (paid beyond 24 h of history) | optional (falls back to EIA, then the bundled shape) |
-| `EIA_API_KEY` | Free US grid intensity from EIA-930 hourly fuel mix ([get a key](https://www.eia.gov/opendata/register.php)) | optional (falls back to the bundled shape) |
+| `ELECTRICITYMAPS_API_KEY` | Live grid carbon intensity (paid beyond 24 h of history) | optional (without it, US grid data comes from EIA's Hourly Electric Grid Monitor, no key needed) |
 | `ENERGYSTAR_APP_TOKEN` | ENERGY STAR Socrata queries | optional |
 
 The keys go into Info.plist at build time. Any key can also be entered in **Settings → API keys**, which stores it in the Keychain and overrides the xcconfig value. A fresh clone builds without `Secrets.xcconfig` because the include is optional.

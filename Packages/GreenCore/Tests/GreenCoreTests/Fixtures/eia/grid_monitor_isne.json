@@ -1,0 +1,348 @@
+[
+ {
+  "data": [
+   {
+    "RESPONDENT_ID": "ISNE",
+    "RESPONDENT_NAME": "ISO New England",
+    "TYPE_ID": "NG",
+    "TYPE_NAME": "Net generation",
+    "DISPLAY_ORDER": 4,
+    "FUEL_TYPE_ID": "PS",
+    "FUEL_TYPE_NAME": "Pumped storage",
+    "DATE": "10/17/2026 01:00:00",
+    "TIME_ZONE": "UTC",
+    "FREQUENCY": "hourly",
+    "VALUES": {
+     "DATES": [
+      "10/17/2026 01:00:00",
+      "10/17/2026 02:00:00",
+      "10/17/2026 03:00:00"
+     ],
+     "DATA": [
+      237,
+      237,
+      238
+     ],
+     "DATA_REPORTED": [
+      237,
+      237,
+      238
+     ],
+     "DATA_IMPUTED": [
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "RESPONDENT_ID": "ISNE",
+    "RESPONDENT_NAME": "ISO New England",
+    "TYPE_ID": "NG",
+    "TYPE_NAME": "Net generation",
+    "DISPLAY_ORDER": 30,
+    "FUEL_TYPE_ID": "WAT",
+    "FUEL_TYPE_NAME": "Hydro",
+    "DATE": "10/17/2026 01:00:00",
+    "TIME_ZONE": "UTC",
+    "FREQUENCY": "hourly",
+    "VALUES": {
+     "DATES": [
+      "10/17/2026 01:00:00",
+      "10/17/2026 02:00:00",
+      "10/17/2026 03:00:00"
+     ],
+     "DATA": [
+      388,
+      381,
+      387
+     ],
+     "DATA_REPORTED": [
+      388,
+      381,
+      387
+     ],
+     "DATA_IMPUTED": [
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "RESPONDENT_ID": "ISNE",
+    "RESPONDENT_NAME": "ISO New England",
+    "TYPE_ID": "NG",
+    "TYPE_NAME": "Net generation",
+    "DISPLAY_ORDER": 10,
+    "FUEL_TYPE_ID": "WND",
+    "FUEL_TYPE_NAME": "Wind",
+    "DATE": "10/17/2026 01:00:00",
+    "TIME_ZONE": "UTC",
+    "FREQUENCY": "hourly",
+    "VALUES": {
+     "DATES": [
+      "10/17/2026 01:00:00",
+      "10/17/2026 02:00:00",
+      "10/17/2026 03:00:00"
+     ],
+     "DATA": [
+      2179,
+      2080,
+      1937
+     ],
+     "DATA_REPORTED": [
+      2179,
+      2080,
+      1937
+     ],
+     "DATA_IMPUTED": [
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "RESPONDENT_ID": "ISNE",
+    "RESPONDENT_NAME": "ISO New England",
+    "TYPE_ID": "NG",
+    "TYPE_NAME": "Net generation",
+    "DISPLAY_ORDER": 20,
+    "FUEL_TYPE_ID": "SUN",
+    "FUEL_TYPE_NAME": "Solar",
+    "DATE": "10/17/2026 01:00:00",
+    "TIME_ZONE": "UTC",
+    "FREQUENCY": "hourly",
+    "VALUES": {
+     "DATES": [
+      "10/17/2026 01:00:00",
+      "10/17/2026 02:00:00",
+      "10/17/2026 03:00:00"
+     ],
+     "DATA": [
+      5,
+      5,
+      5
+     ],
+     "DATA_REPORTED": [
+      5,
+      5,
+      5
+     ],
+     "DATA_IMPUTED": [
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "RESPONDENT_ID": "ISNE",
+    "RESPONDENT_NAME": "ISO New England",
+    "TYPE_ID": "NG",
+    "TYPE_NAME": "Net generation",
+    "DISPLAY_ORDER": 60,
+    "FUEL_TYPE_ID": "NG",
+    "FUEL_TYPE_NAME": "Natural Gas",
+    "DATE": "10/17/2026 01:00:00",
+    "TIME_ZONE": "UTC",
+    "FREQUENCY": "hourly",
+    "VALUES": {
+     "DATES": [
+      "10/17/2026 01:00:00",
+      "10/17/2026 02:00:00",
+      "10/17/2026 03:00:00"
+     ],
+     "DATA": [
+      8446,
+      7648,
+      7002
+     ],
+     "DATA_REPORTED": [
+      8446,
+      7648,
+      7002
+     ],
+     "DATA_IMPUTED": [
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "RESPONDENT_ID": "ISNE",
+    "RESPONDENT_NAME": "ISO New England",
+    "TYPE_ID": "NG",
+    "TYPE_NAME": "Net generation",
+    "DISPLAY_ORDER": 40,
+    "FUEL_TYPE_ID": "OTH",
+    "FUEL_TYPE_NAME": "Other",
+    "DATE": "10/17/2026 01:00:00",
+    "TIME_ZONE": "UTC",
+    "FREQUENCY": "hourly",
+    "VALUES": {
+     "DATES": [
+      "10/17/2026 01:00:00",
+      "10/17/2026 02:00:00",
+      "10/17/2026 03:00:00"
+     ],
+     "DATA": [
+      358,
+      369,
+      381
+     ],
+     "DATA_REPORTED": [
+      358,
+      369,
+      381
+     ],
+     "DATA_IMPUTED": [
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "RESPONDENT_ID": "ISNE",
+    "RESPONDENT_NAME": "ISO New England",
+    "TYPE_ID": "NG",
+    "TYPE_NAME": "Net generation",
+    "DISPLAY_ORDER": 3,
+    "FUEL_TYPE_ID": "SNB",
+    "FUEL_TYPE_NAME": "Solar with integrated battery storage",
+    "DATE": "10/17/2026 01:00:00",
+    "TIME_ZONE": "UTC",
+    "FREQUENCY": "hourly",
+    "VALUES": {
+     "DATES": [
+      "10/17/2026 01:00:00",
+      "10/17/2026 02:00:00",
+      "10/17/2026 03:00:00"
+     ],
+     "DATA": [
+      0,
+      0,
+      0
+     ],
+     "DATA_REPORTED": [
+      0,
+      0,
+      0
+     ],
+     "DATA_IMPUTED": [
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "RESPONDENT_ID": "ISNE",
+    "RESPONDENT_NAME": "ISO New England",
+    "TYPE_ID": "NG",
+    "TYPE_NAME": "Net generation",
+    "DISPLAY_ORDER": 80,
+    "FUEL_TYPE_ID": "NUC",
+    "FUEL_TYPE_NAME": "Nuclear",
+    "DATE": "10/17/2026 01:00:00",
+    "TIME_ZONE": "UTC",
+    "FREQUENCY": "hourly",
+    "VALUES": {
+     "DATES": [
+      "10/17/2026 01:00:00",
+      "10/17/2026 02:00:00",
+      "10/17/2026 03:00:00"
+     ],
+     "DATA": [
+      2256,
+      2250,
+      2261
+     ],
+     "DATA_REPORTED": [
+      2256,
+      2250,
+      2261
+     ],
+     "DATA_IMPUTED": [
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "RESPONDENT_ID": "ISNE",
+    "RESPONDENT_NAME": "ISO New England",
+    "TYPE_ID": "NG",
+    "TYPE_NAME": "Net generation",
+    "DISPLAY_ORDER": 1,
+    "FUEL_TYPE_ID": "BAT",
+    "FUEL_TYPE_NAME": "Battery storage",
+    "DATE": "10/17/2026 01:00:00",
+    "TIME_ZONE": "UTC",
+    "FREQUENCY": "hourly",
+    "VALUES": {
+     "DATES": [
+      "10/17/2026 01:00:00",
+      "10/17/2026 02:00:00",
+      "10/17/2026 03:00:00"
+     ],
+     "DATA": [
+      7,
+      11,
+      9
+     ],
+     "DATA_REPORTED": [
+      7,
+      11,
+      9
+     ],
+     "DATA_IMPUTED": [
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "RESPONDENT_ID": "ISNE",
+    "RESPONDENT_NAME": "ISO New England",
+    "TYPE_ID": "NG",
+    "TYPE_NAME": "Net generation",
+    "DISPLAY_ORDER": 50,
+    "FUEL_TYPE_ID": "OIL",
+    "FUEL_TYPE_NAME": "Petroleum",
+    "DATE": "10/17/2026 01:00:00",
+    "TIME_ZONE": "UTC",
+    "FREQUENCY": "hourly",
+    "VALUES": {
+     "DATES": [
+      "10/17/2026 01:00:00",
+      "10/17/2026 02:00:00",
+      "10/17/2026 03:00:00"
+     ],
+     "DATA": [
+      18,
+      18,
+      18
+     ],
+     "DATA_REPORTED": [
+      18,
+      18,
+      18
+     ],
+     "DATA_IMPUTED": [
+      null,
+      null,
+      null
+     ]
+    }
+   }
+  ],
+  "recordCount": 30,
+  "totalCount": 30
+ }
+]

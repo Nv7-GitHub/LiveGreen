@@ -46,6 +46,7 @@ struct RootView: View {
         guard model.flags.plugFeaturesEnabled else { return }
         switch phase {
         case .active:
+            GridOutlook.warm(grid: model.services.grid, profile: model.profile)
             Task { await PlugCenter.shared.replanAll(services: model.services, profile: model.profile) }
             BackgroundRefresh.schedule()
         case .background:

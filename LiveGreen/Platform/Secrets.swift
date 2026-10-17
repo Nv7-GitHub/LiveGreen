@@ -6,7 +6,6 @@ nonisolated enum SecretKey: String, CaseIterable, Identifiable, Sendable {
     case xai = "XAI_API_KEY"
     case electricityMaps = "ELECTRICITYMAPS_API_KEY"
     case energyStar = "ENERGYSTAR_APP_TOKEN"
-    case eia = "EIA_API_KEY"
 
     var id: String { rawValue }
 
@@ -16,11 +15,10 @@ nonisolated enum SecretKey: String, CaseIterable, Identifiable, Sendable {
         case .xai: "xAI (Grok image)"
         case .electricityMaps: "Electricity Maps"
         case .energyStar: "ENERGY STAR app token"
-        case .eia: "EIA (free US grid data)"
         }
     }
 
-    /// ENERGY STAR works without a token (rate-limited); the grid keys fall back to bundled hourly shapes.
+    /// ENERGY STAR works without a token (rate-limited); without Electricity Maps the grid uses free EIA data.
     var isRequired: Bool { [.anthropic, .xai].contains(self) }
 }
 

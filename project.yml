@@ -67,7 +67,6 @@ targets:
         XAI_API_KEY: $(XAI_API_KEY)
         ELECTRICITYMAPS_API_KEY: $(ELECTRICITYMAPS_API_KEY)
         ENERGYSTAR_APP_TOKEN: $(ENERGYSTAR_APP_TOKEN)
-        EIA_API_KEY: $(EIA_API_KEY)
 
   LiveGreenUITests:
     type: bundle.ui-testing
