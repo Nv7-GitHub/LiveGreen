@@ -76,7 +76,7 @@ final class AppModel {
     func makeScanCoordinator(mode: ScanMode? = nil, scene: DemoScene? = nil) -> ScanCoordinator {
         let services = scene.map { self.services.replaying($0) } ?? self.services
         return ScanCoordinator(services: services, profile: profile, mode: mode ?? flags.scanMode,
-                               cache: services.isDemo ? nil : ScanCache(store: store))
+                               cache: services.isDemo ? nil : ScanCache(container: container))
     }
 
     func refreshServices() {

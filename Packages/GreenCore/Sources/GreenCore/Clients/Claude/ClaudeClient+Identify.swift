@@ -7,10 +7,9 @@ extension ClaudeClient: VisionIdentifier {
                                 tools: [ReportComponentsTool.definition], toolName: ReportComponentsTool.name,
                                 maxTokens: 16_000, effort: configuration.identifyEffort,
                                 timeout: configuration.identifyTimeout)
-        let content: [JSONValue] = [
-            ImageBlock.make(image),
-            ["type": "text", "text": .string(Self.identifyUserText(hints: hints, profile: profile))],
-        ]
+        // Barcode/label mode can send hints without a frame; the label text alone then identifies the item.
+        var content: [JSONValue] = image.isEmpty ? [] : [ImageBlock.make(image)]
+        content.append(["type": "text", "text": .string(Self.identifyUserText(hints: hints, profile: profile))])
         return try await runTool(spec, userContent: content) { input, _ in try ReportComponentsTool.parse(input) }
     }
 

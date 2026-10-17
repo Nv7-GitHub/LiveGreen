@@ -1,17 +1,17 @@
 import Foundation
+import SwiftData
 import GreenCore
 
-/// Evidence-ladder cache: a hit skips resolution so the same identifier always yields the same numbers.
-struct ScanCache {
-    let store: ScanStore
+/// SwiftData-backed evidence-ladder cache (spec §5.4): a hit skips resolution so the same identifier
+/// always yields the same numbers. Reads and writes hop to the main context.
+nonisolated struct ScanCache: ResolutionCache {
+    let container: ModelContainer
 
-    func lookup(_ identifiers: Identifiers) -> CachedResolution? {
-        guard let key = identifiers.cacheKey else { return nil }
-        return try? store.cachedResolution(forKey: key)
+    func cachedResolution(forKey key: String) async -> CachedResolution? {
+        await MainActor.run { try? ScanStore(context: container.mainContext).cachedResolution(forKey: key) }
     }
 
-    func remember(_ component: Component) {
-        guard let key = component.identifiers.cacheKey, !component.metrics.isEmpty else { return }
-        try? store.cache(CachedResolution(metrics: component.metrics, stageShares: component.stageShares), forKey: key)
+    func store(_ resolution: CachedResolution, forKey key: String) async {
+        await MainActor.run { try? ScanStore(context: container.mainContext).cache(resolution, forKey: key) }
     }
 }

@@ -69,7 +69,7 @@ struct ScanTab: View {
     private var demoButtons: some View {
         HStack {
             ForEach(DemoScene.allCases, id: \.self) { scene in
-                Button(scene.title) { start(image: Data(), hints: .none, scene: scene) }
+                Button(scene.title) { start(image: DemoArtwork.photo(for: scene), hints: .none, scene: scene) }
                     .buttonStyle(.glass)
             }
         }

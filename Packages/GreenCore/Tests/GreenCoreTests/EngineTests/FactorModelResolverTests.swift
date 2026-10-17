@@ -100,7 +100,7 @@ struct FactorModelResolverTests {
     }
 
     @Test func demoScenesResolveThroughFullLadder() async {
-        let ladder = EvidenceLadder(resolvers: [FakeRecordResolver(), ASUSPCFResolver(), resolver, EstimateResolver()])
+        let ladder = EvidenceLadder(resolvers: SampleScans.demoRecordResolvers + [ASUSPCFResolver(), resolver, EstimateResolver()])
         for scene in DemoScene.allCases {
             for identified in scene.identifyResponse.components {
                 let component = await ladder.resolve(identified.makeComponent(), profile: .default)

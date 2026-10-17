@@ -120,7 +120,9 @@ enum DemoFixtures {
             name: "E-bike", category: .electronic,
             boundingBox: NormalizedRect(x: 0.10, y: 0.15, width: 0.60, height: 0.70),
             quantities: Quantities(massKg: 24, deviceType: "ebike"),
+            // Battery charging energy is counted here; the charger below only adds its idle draw.
             defaultUsage: UsageProfile(chargesPerWeek: 3),
+            deferrableLoad: .eBike,
             estimates: [.carbon: est(165, 120, 250), .powerOn: est(250, 200, 350), .standbyPower: est(0, 0, 0.1),
                         .yearlyElectricity: est(80, 40, 140), .lifespan: est(8, 5, 12), .repairability: est(7, 5, 9),
                         .plasticMass: est(2500, 1500, 4000), .recyclablePercent: est(75, 60, 90)]),
@@ -128,10 +130,9 @@ enum DemoFixtures {
             name: "E-bike battery charger", category: .electronic,
             boundingBox: NormalizedRect(x: 0.72, y: 0.62, width: 0.18, height: 0.15),
             quantities: Quantities(massKg: 0.6, ratedPowerW: 170, deviceType: "ebike_charger"),
-            defaultUsage: UsageProfile(hoursOnPerDay: 1.5, standbyHoursPerDay: 22.5),
-            deferrableLoad: .eBike,
+            defaultUsage: UsageProfile(hoursOnPerDay: 0, standbyHoursPerDay: 24),
             estimates: [.carbon: est(6, 3, 10), .powerOn: est(170, 120, 200), .standbyPower: est(0.5, 0.2, 1),
-                        .yearlyElectricity: est(90, 50, 140), .lifespan: est(6, 4, 9), .repairability: est(3, 1, 5),
+                        .yearlyElectricity: est(4, 2, 9), .lifespan: est(6, 4, 9), .repairability: est(3, 1, 5),
                         .plasticMass: est(250, 150, 400), .recyclablePercent: est(40, 20, 60)]),
         IdentifiedComponent(
             name: "Power strip", category: .electronic,

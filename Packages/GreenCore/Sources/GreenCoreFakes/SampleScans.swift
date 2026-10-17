@@ -3,14 +3,19 @@ import GreenCore
 
 /// Fully resolved sample results for SwiftUI previews and UI tests.
 public enum SampleScans {
-    /// The desk scene resolved through the demo ladder (T1 records, then T4 estimates).
+    /// A demo scene resolved through the demo record databases (T1), then T4 estimates.
     public static func resolved(_ scene: DemoScene = .deskSetup, profile: UserProfile = .default) async -> ScanResult {
-        let ladder = EvidenceLadder(resolvers: [FakeRecordResolver(), EstimateResolver()])
+        let ladder = EvidenceLadder(resolvers: demoRecordResolvers + [EstimateResolver()])
         var components: [Component] = []
         for identified in scene.identifyResponse.components {
             components.append(await ladder.resolve(identified.makeComponent(), profile: profile))
         }
         return ScanResult(title: scene.title, components: components, totals: ScanTotals.sum(components))
+    }
+
+    /// The real T1 resolvers over the in-memory demo databases.
+    public static var demoRecordResolvers: [any MetricResolver] {
+        [OpenFoodFactsResolver(products: FakeProductDatabase()), EnergyStarResolver(appliances: FakeApplianceDatabase())]
     }
 
     /// Synchronous variant for previews: estimates only (T4), no async resolution needed.

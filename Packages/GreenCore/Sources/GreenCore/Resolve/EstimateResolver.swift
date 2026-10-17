@@ -10,12 +10,28 @@ public struct EstimateResolver: MetricResolver {
         for (metric, estimate) in request.component.fallbackEstimates where request.metrics.contains(metric) {
             let minDelta = abs(estimate.value) * 0.5
             let source = Source(title: "Claude estimate (no record found)", tier: .estimate)
-            metrics[metric] = Measured(
-                value: estimate.value,
-                low: min(estimate.low, estimate.value - minDelta),
-                high: max(estimate.high, estimate.value + minDelta),
-                unit: metric.unit, tier: .estimate, sources: [source])
+            var low = min(estimate.low, estimate.value - minDelta)
+            var high = max(estimate.high, estimate.value + minDelta)
+            var value = estimate.value
+            if let bounds = Self.bounds(for: metric.unit) {
+                value = min(max(value, bounds.lowerBound), bounds.upperBound)
+                low = min(max(low, bounds.lowerBound), value)
+                high = max(min(high, bounds.upperBound), value)
+            } else {
+                low = max(low, 0)
+            }
+            metrics[metric] = Measured(value: value, low: low, high: high, unit: metric.unit, tier: .estimate,
+                                       sources: [source])
         }
         return ResolverOutput(metrics: metrics)
+    }
+
+    /// Bounded scales: a percentage or a 0–10 score cannot be widened past its ends.
+    static func bounds(for unit: MetricUnit) -> ClosedRange<Double>? {
+        switch unit {
+        case .percent: 0...100
+        case .score10: 0...10
+        default: nil
+        }
     }
 }

@@ -24,7 +24,7 @@ struct ScanResultView: View {
     @State private var didOfferQuestions = false
     @State private var isRerunning = false
 
-    /// - Parameter rerun: overrides the default local `UsageRecalculator` re-run.
+    /// - Parameter rerun: overrides the default local impact-engine re-run.
     init(result: ScanResult, rerun: Rerun? = nil) {
         self.result = result
         self.rerun = rerun
@@ -232,17 +232,10 @@ struct ScanResultView: View {
         }
     }
 
-    /// Default re-run: deterministic, on-device, using the region's grid intensity.
+    /// Default re-run: GreenCore's impact engine, deterministic and on-device (spec §5.5).
     private func localRerun(_ result: ScanResult, _ answers: [QuestionAnswer]) async -> ScanResult {
-        let reference = model.services.reference
-        let gramsPerKWh = model.profile.gridLookupKeys.lazy
-            .compactMap { reference.gridIntensity(region: $0)?.annualAverageGPerKWh }
-            .first ?? Self.fallbackGridGramsPerKWh
-        return UsageRecalculator(gridKgPerKWh: gramsPerKWh / 1000).apply(answers, to: result)
+        model.makeScanCoordinator().applying(answers, to: result)
     }
-
-    /// Approximate world-average grid intensity, used only when no regional figure is bundled.
-    private static let fallbackGridGramsPerKWh = 475.0
 }
 
 #Preview("Desk setup") {
