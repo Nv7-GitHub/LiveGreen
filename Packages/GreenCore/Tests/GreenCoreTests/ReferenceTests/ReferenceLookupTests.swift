@@ -63,11 +63,12 @@ struct ReferenceLookupTests {
         let ma = try #require(store.perCapita(region: "US-MA"))
         let wy = try #require(store.perCapita(for: Region(countryCode: "US", usState: "WY")))
         let usCarbon = try #require(us.medians[.carbon])
-        // Median = mean × exp(−σ²/2): 17,527 kg × exp(−0.18).
-        #expect(abs(usCarbon - 17_527 * exp(-0.18)) < 1)
+        // Median = mean × exp(−σ²/2): 17,527 kg × exp(−0.45²/2).
+        #expect(abs(usCarbon - 17_527 * exp(-0.45 * 0.45 / 2)) < 1)
         #expect(ma.medians[.carbon]! < usCarbon)
-        // Production-heavy states are clamped to 1.6× the US.
-        #expect(abs(wy.medians[.carbon]! - usCarbon * 1.6) < 0.01)
+        // Production-heavy states are clamped to 1.25× the US, production-light ones to 0.8×.
+        #expect(abs(wy.medians[.carbon]! - usCarbon * 1.25) < 0.01)
+        #expect(abs(ma.medians[.carbon]! - usCarbon * 0.8) < 0.01)
         #expect(store.perCapita(region: "CA")?.region == "CA") // Canada, not California
         #expect(store.perCapita(for: Region(countryCode: "US", postalCode: "94103"))?.region == "US-CA")
     }

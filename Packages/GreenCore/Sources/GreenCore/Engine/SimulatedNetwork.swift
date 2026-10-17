@@ -1,12 +1,12 @@
 import Foundation
 
-/// A seeded "friend" sampled from the cohort distribution. Always labeled as a simulated network (spec §9).
+/// A seeded "friend" sampled from the region's distribution. Always labeled as a simulated network (spec §9).
 public struct SimulatedFriend: Sendable, Hashable, Identifiable {
     public var id: Int
     public var name: String
     /// SF Symbol for the avatar.
     public var avatarSymbol: String
-    /// Yearly sub-footprint per metric for the same categories as the user.
+    /// Whole yearly footprint per leaderboard metric, canonical units.
     public var yearly: [MetricKey: Double]
 
     public var initials: String {
@@ -31,43 +31,50 @@ extension CohortModel {
     /// Fixed base seed so the network is stable across launches.
     public static let networkSeed: UInt64 = 0x4C69_7665_4772_6565 // "LiveGree"
 
-    /// Eight deterministic friends. Each has one lifestyle factor shared across metrics (correlation 0.8),
-    /// so a low-carbon friend tends to be low on water and land too.
-    public func simulatedFriends(categories: Set<Category>, count: Int = friendNames.count) -> [SimulatedFriend] {
+    /// Nine deterministic friends drawn from the region's people (`regionalDistribution`), not from people like
+    /// you, so your profile decides where you land. Draws are stratified: each friend gets their own slice of
+    /// the distribution (jittered within it), so the nine span it like a real circle of people instead of
+    /// bunching by chance. A shared lifestyle factor orders the slices across metrics (correlation ≈ 0.8),
+    /// so a low-carbon friend tends to use less electricity too.
+    public func simulatedFriends(count: Int = friendNames.count) -> [SimulatedFriend] {
         var generator = Xoshiro256StarStar(seed: Self.networkSeed ^ StableHash.fnv1a(baseline.region))
         // Names are dealt in a shuffled order, so who lands where on the board is random but stable.
         var names = Self.friendNames
         for index in names.indices.reversed() where index > 0 {
             names.swapAt(index, Int(generator.next() % UInt64(index + 1)))
         }
-        return (0..<count).map { index in
-            let lifestyle = generator.nextStandardNormal()
-            var yearly: [MetricKey: Double] = [:]
-            for metric in Self.comparedMetrics {
-                let noise = generator.nextStandardNormal()
-                guard let distribution = distribution(for: metric, categories: categories) else { continue }
-                let z = 0.8 * lifestyle + 0.6 * noise
-                yearly[metric] = exp(distribution.mu + distribution.sigma * z)
+        let lifestyle = (0..<count).map { _ in generator.nextStandardNormal() }
+        var yearly = Array(repeating: [MetricKey: Double](), count: count)
+        for metric in Self.leaderboardMetrics {
+            guard let distribution = regionalDistribution(for: metric) else { continue }
+            let slices = (0..<count).map { slice in
+                Normal.quantile((Double(slice) + 0.25 + 0.5 * generator.nextUnitInterval()) / Double(count))
             }
-            return SimulatedFriend(id: index, name: names[index % names.count],
-                                   avatarSymbol: Self.friendSymbols[index % Self.friendSymbols.count], yearly: yearly)
+            let order = (0..<count).map { (0.8 * lifestyle[$0] + 0.6 * generator.nextStandardNormal(), $0) }
+                .sorted { $0 < $1 }
+            for (slice, friend) in order.enumerated() {
+                yearly[friend.1][metric] = exp(distribution.mu + distribution.sigma * slices[slice])
+            }
+        }
+        return (0..<count).map { index in
+            SimulatedFriend(id: index, name: names[index % names.count],
+                            avatarSymbol: Self.friendSymbols[index % Self.friendSymbols.count], yearly: yearly[index])
         }
     }
 
-    /// The user plus friends for one metric, greenest (smallest footprint) first.
+    /// The user plus friends for one metric, greenest (smallest footprint) first. Everyone is a whole yearly
+    /// footprint: friends from the region's distribution, you from `estimate` (profile plus scans).
     public func leaderboard(for footprint: ScannedFootprint, metric: MetricKey = .carbon,
                             userName: String = "You") -> [LeaderboardEntry] {
-        let categories = footprint.categories(for: metric)
-        guard let distribution = distribution(for: metric, categories: categories) else { return [] }
-        var entries = simulatedFriends(categories: categories).compactMap { friend -> LeaderboardEntry? in
+        guard let distribution = regionalDistribution(for: metric),
+              let value = estimate(for: metric, scanned: footprint) else { return [] }
+        var entries = simulatedFriends().compactMap { friend -> LeaderboardEntry? in
             guard let value = friend.yearly[metric] else { return nil }
             return LeaderboardEntry(id: "friend-\(friend.id)", name: friend.name, isUser: false, value: value,
                                     greenerThan: Percentiles.greenerThan(value, in: distribution))
         }
-        if let value = footprint.yearly[metric] {
-            entries.append(LeaderboardEntry(id: "user", name: userName, isUser: true, value: value,
-                                            greenerThan: Percentiles.greenerThan(value, in: distribution)))
-        }
+        entries.append(LeaderboardEntry(id: "user", name: userName, isUser: true, value: value,
+                                        greenerThan: Percentiles.greenerThan(value, in: distribution)))
         return entries.sorted { ($0.value, $0.id) < ($1.value, $1.id) }
     }
 }

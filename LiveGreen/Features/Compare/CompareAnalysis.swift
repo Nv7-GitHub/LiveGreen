@@ -46,9 +46,9 @@ nonisolated struct CompareAnalysis: Sendable {
 
     var isEmpty: Bool { footprint.yearly.isEmpty }
 
-    /// Peer distribution scoped to the categories that contribute to `metric`.
+    /// The region's per-person distribution for `metric` (what friends are drawn from).
     func distribution(for metric: MetricKey) -> LogNormal? {
-        cohort?.distribution(for: metric, categories: footprint.categories(for: metric))
+        cohort?.regionalDistribution(for: metric)
     }
 
     func greenerThan(for metric: MetricKey) -> Double? { comparisons[metric]?.greenerThan }

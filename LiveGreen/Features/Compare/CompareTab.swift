@@ -61,7 +61,7 @@ struct CompareTab: View {
             CohortDistributionChart(metric: metric, distribution: distribution, userValue: comparison.userValue)
             PercentileTrendCard(points: analysis.trend[metric] ?? [])
             if let citation = analysis.cohort?.baseline.citation {
-                Text("Baseline: \(citation.title). Compared only for the categories you've scanned, adjusted for your diet, clothing habits and household size.")
+                Text("Simulated network: friends are drawn from your region's per-person footprints. Your number is estimated from your answers (diet, getting around, home, household, clothing), and a scanned category counts when it's more than that estimate. Baseline: \(citation.title).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -87,7 +87,7 @@ struct CompareTab: View {
     }
 }
 
-/// Glass chips for the four cohort metrics, each showing its percentile; tapping selects the metric.
+/// Glass chips for the leaderboard metrics, each showing its percentile; tapping selects the metric.
 private struct MetricChips: View {
     @Binding var selection: MetricKey
     let analysis: CompareAnalysis
