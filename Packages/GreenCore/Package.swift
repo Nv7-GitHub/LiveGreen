@@ -9,7 +9,7 @@ let package = Package(
         .library(name: "GreenCoreFakes", targets: ["GreenCoreFakes"]),
     ],
     targets: [
-        .target(name: "GreenCore"),
+        .target(name: "GreenCore", resources: [.process("Resources")]),
         .target(name: "GreenCoreFakes", dependencies: ["GreenCore"]),
         .testTarget(name: "GreenCoreTests", dependencies: ["GreenCore", "GreenCoreFakes"]),
     ]

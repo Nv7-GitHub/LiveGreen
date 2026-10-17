@@ -1,0 +1,292 @@
+{
+ "description": "Cradle-to-gate per-kg fiber impacts (kg CO2e, blue water L, land m²·yr, g PO4e). processing adds spinning, weaving/knitting, wet processing and making per kg of garment.",
+ "processing": {
+  "kgCO2ePerKg": 11.0,
+  "litersPerKg": 100,
+  "gPO4ePerKg": 10.0,
+  "verified": false,
+  "citation": {
+   "title": "Quantis, Measuring Fashion: Environmental Impact of the Global Apparel and Footwear Industries (2018)",
+   "tier": 3,
+   "url": "https://quantis.com/report/measuring-fashion-report/"
+  }
+ },
+ "garmentLifespan": {
+  "years": 3.3,
+  "verified": false,
+  "citation": {
+   "title": "WRAP, Valuing Our Clothes (2012)",
+   "tier": 3,
+   "url": "https://www.wrap.ngo/resources/report/valuing-our-clothes-cost-uk-fashion"
+  }
+ },
+ "records": [
+  {
+   "material": "cotton",
+   "aliases": [
+    "conventional_cotton",
+    "denim"
+   ],
+   "kgCO2ePerKg": 1.8,
+   "litersPerKg": 2120,
+   "landM2YearPerKg": 12.0,
+   "gPO4ePerKg": 3.8,
+   "isSynthetic": false,
+   "verified": false,
+   "citation": {
+    "title": "Cotton Incorporated, LCA Update of Cotton Fiber and Fabric (2016)",
+    "tier": 3,
+    "url": "https://cottontoday.cottoninc.com/sustainability-about/life-cycle-assessment/"
+   }
+  },
+  {
+   "material": "organic_cotton",
+   "aliases": [],
+   "kgCO2ePerKg": 0.98,
+   "litersPerKg": 182,
+   "landM2YearPerKg": 16.0,
+   "gPO4ePerKg": 2.8,
+   "isSynthetic": false,
+   "verified": false,
+   "citation": {
+    "title": "Textile Exchange, Life Cycle Assessment of Organic Cotton Fiber (PE International, 2014)",
+    "tier": 3,
+    "url": "https://textileexchange.org/knowledge-center/documents/life-cycle-assessment-of-organic-cotton-fiber/"
+   }
+  },
+  {
+   "material": "polyester",
+   "aliases": [
+    "pet_fiber",
+    "poly"
+   ],
+   "kgCO2ePerKg": 3.4,
+   "litersPerKg": 60,
+   "landM2YearPerKg": 0.1,
+   "gPO4ePerKg": 1.2,
+   "isSynthetic": true,
+   "verified": false,
+   "citation": {
+    "title": "Textile Exchange, Material Change Insights / Preferred Fiber & Materials Market Report",
+    "tier": 3,
+    "url": "https://textileexchange.org/knowledge-center/reports/"
+   }
+  },
+  {
+   "material": "recycled_polyester",
+   "aliases": [
+    "rpet"
+   ],
+   "kgCO2ePerKg": 1.8,
+   "litersPerKg": 20,
+   "landM2YearPerKg": 0.05,
+   "gPO4ePerKg": 0.6,
+   "isSynthetic": true,
+   "verified": false,
+   "citation": {
+    "title": "Textile Exchange, Material Change Insights / Preferred Fiber & Materials Market Report",
+    "tier": 3,
+    "url": "https://textileexchange.org/knowledge-center/reports/"
+   }
+  },
+  {
+   "material": "nylon",
+   "aliases": [
+    "polyamide",
+    "nylon_6",
+    "nylon_66"
+   ],
+   "kgCO2ePerKg": 7.3,
+   "litersPerKg": 150,
+   "landM2YearPerKg": 0.1,
+   "gPO4ePerKg": 2.5,
+   "isSynthetic": true,
+   "verified": false,
+   "citation": {
+    "title": "Textile Exchange, Material Change Insights / Preferred Fiber & Materials Market Report",
+    "tier": 3,
+    "url": "https://textileexchange.org/knowledge-center/reports/"
+   }
+  },
+  {
+   "material": "recycled_nylon",
+   "aliases": [
+    "econyl"
+   ],
+   "kgCO2ePerKg": 2.5,
+   "litersPerKg": 40,
+   "landM2YearPerKg": 0.05,
+   "gPO4ePerKg": 0.8,
+   "isSynthetic": true,
+   "verified": false,
+   "citation": {
+    "title": "Textile Exchange, Material Change Insights / Preferred Fiber & Materials Market Report",
+    "tier": 3,
+    "url": "https://textileexchange.org/knowledge-center/reports/"
+   }
+  },
+  {
+   "material": "wool",
+   "aliases": [
+    "merino"
+   ],
+   "kgCO2ePerKg": 22.0,
+   "litersPerKg": 170,
+   "landM2YearPerKg": 150.0,
+   "gPO4ePerKg": 60.0,
+   "isSynthetic": false,
+   "verified": false,
+   "citation": {
+    "title": "IWTO, Wool LCA technical guidelines and cradle-to-farm-gate studies",
+    "tier": 3,
+    "url": "https://iwto.org/sustainability/lca/"
+   }
+  },
+  {
+   "material": "linen",
+   "aliases": [
+    "flax"
+   ],
+   "kgCO2ePerKg": 1.7,
+   "litersPerKg": 50,
+   "landM2YearPerKg": 9.0,
+   "gPO4ePerKg": 6.0,
+   "isSynthetic": false,
+   "verified": false,
+   "citation": {
+    "title": "Textile Exchange, Material Change Insights / Preferred Fiber & Materials Market Report",
+    "tier": 3,
+    "url": "https://textileexchange.org/knowledge-center/reports/"
+   }
+  },
+  {
+   "material": "hemp",
+   "aliases": [],
+   "kgCO2ePerKg": 1.6,
+   "litersPerKg": 30,
+   "landM2YearPerKg": 6.0,
+   "gPO4ePerKg": 4.0,
+   "isSynthetic": false,
+   "verified": false,
+   "citation": {
+    "title": "Textile Exchange, Material Change Insights / Preferred Fiber & Materials Market Report",
+    "tier": 3,
+    "url": "https://textileexchange.org/knowledge-center/reports/"
+   }
+  },
+  {
+   "material": "viscose",
+   "aliases": [
+    "rayon"
+   ],
+   "kgCO2ePerKg": 3.0,
+   "litersPerKg": 40,
+   "landM2YearPerKg": 3.0,
+   "gPO4ePerKg": 4.0,
+   "isSynthetic": false,
+   "verified": false,
+   "citation": {
+    "title": "Textile Exchange, Material Change Insights / Preferred Fiber & Materials Market Report",
+    "tier": 3,
+    "url": "https://textileexchange.org/knowledge-center/reports/"
+   }
+  },
+  {
+   "material": "lyocell",
+   "aliases": [
+    "tencel"
+   ],
+   "kgCO2ePerKg": 2.0,
+   "litersPerKg": 40,
+   "landM2YearPerKg": 3.0,
+   "gPO4ePerKg": 2.0,
+   "isSynthetic": false,
+   "verified": false,
+   "citation": {
+    "title": "Textile Exchange, Material Change Insights / Preferred Fiber & Materials Market Report",
+    "tier": 3,
+    "url": "https://textileexchange.org/knowledge-center/reports/"
+   }
+  },
+  {
+   "material": "modal",
+   "aliases": [],
+   "kgCO2ePerKg": 2.5,
+   "litersPerKg": 40,
+   "landM2YearPerKg": 3.0,
+   "gPO4ePerKg": 3.0,
+   "isSynthetic": false,
+   "verified": false,
+   "citation": {
+    "title": "Textile Exchange, Material Change Insights / Preferred Fiber & Materials Market Report",
+    "tier": 3,
+    "url": "https://textileexchange.org/knowledge-center/reports/"
+   }
+  },
+  {
+   "material": "acrylic",
+   "aliases": [],
+   "kgCO2ePerKg": 6.0,
+   "litersPerKg": 80,
+   "landM2YearPerKg": 0.1,
+   "gPO4ePerKg": 2.0,
+   "isSynthetic": true,
+   "verified": false,
+   "citation": {
+    "title": "Textile Exchange, Material Change Insights / Preferred Fiber & Materials Market Report",
+    "tier": 3,
+    "url": "https://textileexchange.org/knowledge-center/reports/"
+   }
+  },
+  {
+   "material": "elastane",
+   "aliases": [
+    "spandex",
+    "lycra"
+   ],
+   "kgCO2ePerKg": 15.0,
+   "litersPerKg": 100,
+   "landM2YearPerKg": 0.1,
+   "gPO4ePerKg": 3.0,
+   "isSynthetic": true,
+   "verified": false,
+   "citation": {
+    "title": "Textile Exchange, Material Change Insights / Preferred Fiber & Materials Market Report",
+    "tier": 3,
+    "url": "https://textileexchange.org/knowledge-center/reports/"
+   }
+  },
+  {
+   "material": "silk",
+   "aliases": [],
+   "kgCO2ePerKg": 25.0,
+   "litersPerKg": 1000,
+   "landM2YearPerKg": 30.0,
+   "gPO4ePerKg": 40.0,
+   "isSynthetic": false,
+   "verified": false,
+   "citation": {
+    "title": "Textile Exchange, Material Change Insights / Preferred Fiber & Materials Market Report",
+    "tier": 3,
+    "url": "https://textileexchange.org/knowledge-center/reports/"
+   }
+  },
+  {
+   "material": "leather",
+   "aliases": [
+    "bovine_leather"
+   ],
+   "kgCO2ePerKg": 17.0,
+   "litersPerKg": 1500,
+   "landM2YearPerKg": 60.0,
+   "gPO4ePerKg": 100.0,
+   "isSynthetic": false,
+   "verified": false,
+   "citation": {
+    "title": "Higg Materials Sustainability Index (bovine leather)",
+    "tier": 3,
+    "url": "https://howtohigg.org/higg-msi/"
+   }
+  }
+ ]
+}

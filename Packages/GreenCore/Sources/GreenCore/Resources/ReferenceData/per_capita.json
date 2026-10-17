@@ -1,0 +1,1617 @@
+{
+ "description": "Per-capita yearly means by country (carbon kg CO2e incl. land use, water withdrawals L, agricultural land m²·yr (world average, since territorial land misattributes food exporters), electricity demand kWh). The cohort model converts means to lognormal medians with median = mean·exp(−σ²/2). US states scale the US carbon mean by their production-based EIA ratio, clamped to [stateRatioMin, stateRatioMax].",
+ "countries": [
+  {
+   "region": "CA",
+   "meanCarbonKg": 20198.0,
+   "meanWaterL": 918214.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 16090.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "MX",
+   "meanCarbonKg": 4858.0,
+   "meanWaterL": 692186.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 2703.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "BR",
+   "meanCarbonKg": 13229.0,
+   "meanWaterL": 306900.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 3581.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "AR",
+   "meanCarbonKg": 9125.0,
+   "meanWaterL": 829629.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 3543.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "CL",
+   "meanCarbonKg": 5282.0,
+   "meanWaterL": 1646588.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 4456.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "GB",
+   "meanCarbonKg": 5645.0,
+   "meanWaterL": 122592.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 4621.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "IE",
+   "meanCarbonKg": 11457.0,
+   "meanWaterL": 376783.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 7091.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "FR",
+   "meanCarbonKg": 5077.0,
+   "meanWaterL": 353588.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 7152.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "DE",
+   "meanCarbonKg": 7802.0,
+   "meanWaterL": 271450.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 6188.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "ES",
+   "meanCarbonKg": 5742.0,
+   "meanWaterL": 605699.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 5744.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "IT",
+   "meanCarbonKg": 5999.0,
+   "meanWaterL": 568879.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 5268.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "PT",
+   "meanCarbonKg": 5198.0,
+   "meanWaterL": 591441.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 5805.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "NL",
+   "meanCarbonKg": 8075.0,
+   "meanWaterL": 407214.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 6601.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "BE",
+   "meanCarbonKg": 9196.0,
+   "meanWaterL": 420231.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 7361.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "CH",
+   "meanCarbonKg": 4496.0,
+   "meanWaterL": 195343.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 7262.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "AT",
+   "meanCarbonKg": 7483.0,
+   "meanWaterL": 343905.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 8322.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "SE",
+   "meanCarbonKg": 5369.0,
+   "meanWaterL": 195991.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 12866.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "NO",
+   "meanCarbonKg": 10076.0,
+   "meanWaterL": 487267.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 24490.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "DK",
+   "meanCarbonKg": 7685.0,
+   "meanWaterL": 165558.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 6775.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "FI",
+   "meanCarbonKg": 15658.0,
+   "meanWaterL": 499730.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 15610.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "PL",
+   "meanCarbonKg": 8624.0,
+   "meanWaterL": 253676.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 4570.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "CZ",
+   "meanCarbonKg": 7866.0,
+   "meanWaterL": 122482.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 6413.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "IN",
+   "meanCarbonKg": 2938.0,
+   "meanWaterL": 529182.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 1423.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "CN",
+   "meanCarbonKg": 9939.0,
+   "meanWaterL": 426126.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 7460.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "JP",
+   "meanCarbonKg": 8138.0,
+   "meanWaterL": 619116.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 8366.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "KR",
+   "meanCarbonKg": 12192.0,
+   "meanWaterL": 523336.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 12090.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "AU",
+   "meanCarbonKg": 22832.0,
+   "meanWaterL": 633621.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 10615.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "NZ",
+   "meanCarbonKg": 15713.0,
+   "meanWaterL": 960208.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 8252.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "ZA",
+   "meanCarbonKg": 8479.0,
+   "meanWaterL": 330147.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 3658.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "SG",
+   "meanCarbonKg": 10490.0,
+   "meanWaterL": 62588.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 10295.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "ID",
+   "meanCarbonKg": 6711.0,
+   "meanWaterL": 791760.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 1314.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2024
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "TR",
+   "meanCarbonKg": 7774.0,
+   "meanWaterL": 739856.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 4014.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "SA",
+   "meanCarbonKg": 24198.0,
+   "meanWaterL": 781378.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 13385.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2024
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "AE",
+   "meanCarbonKg": 23771.0,
+   "meanWaterL": 462266.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 16053.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2024
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "NG",
+   "meanCarbonKg": 1653.0,
+   "meanWaterL": 54743.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 165.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "EG",
+   "meanCarbonKg": 2853.0,
+   "meanWaterL": 676645.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 2064.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "VN",
+   "meanCarbonKg": 5778.0,
+   "meanWaterL": 799185.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 3087.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "TH",
+   "meanCarbonKg": 6373.0,
+   "meanWaterL": 799220.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 3143.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "PH",
+   "meanCarbonKg": 2639.0,
+   "meanWaterL": 793834.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 1054.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "IS",
+   "meanCarbonKg": 12854.0,
+   "meanWaterL": 718087.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 48424.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2024
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  },
+  {
+   "region": "US",
+   "meanCarbonKg": 17527.0,
+   "meanWaterL": 1293506.0,
+   "meanLandM2Year": 5931.0,
+   "meanElectricityKWh": 13061.0,
+   "years": {
+    "carbon": 2024,
+    "water": 2023,
+    "electricity": 2025
+   },
+   "verified": true,
+   "citation": {
+    "title": "Our World in Data, Per capita greenhouse gas emissions including land use (Jones et al. 2024)",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/per-capita-ghg-emissions"
+   },
+   "otherCitations": [
+    {
+     "title": "Our World in Data / FAO AQUASTAT, Water withdrawals per capita",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/water-withdrawals-per-capita"
+    },
+    {
+     "title": "Our World in Data / Ember, Per capita electricity demand",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/per-capita-electricity-demand"
+    },
+    {
+     "title": "Our World in Data / FAO, Agricultural land per capita (world average)",
+     "tier": 3,
+     "url": "https://ourworldindata.org/grapher/agricultural-area-per-capita"
+    }
+   ]
+  }
+ ],
+ "usStates": {
+  "usAverageTonnes": 14.81,
+  "stateRatioMin": 0.6,
+  "stateRatioMax": 1.6,
+  "verified": true,
+  "citation": {
+   "title": "US EIA, Energy-related CO2 emissions by state, Table 4: per capita (2022)",
+   "tier": 3,
+   "url": "https://www.eia.gov/environment/emissions/state/"
+  },
+  "tonnesPerCapita": {
+   "AL": 21.54,
+   "AK": 56.33,
+   "AZ": 11.05,
+   "AR": 20.74,
+   "CA": 8.36,
+   "CO": 15.18,
+   "CT": 10.26,
+   "DE": 12.42,
+   "DC": 3.94,
+   "FL": 10.38,
+   "GA": 11.43,
+   "HI": 12.57,
+   "ID": 10.69,
+   "IL": 14.6,
+   "IN": 23.88,
+   "IA": 22.34,
+   "KS": 21.16,
+   "KY": 24.29,
+   "LA": 41.8,
+   "ME": 10.75,
+   "MD": 8.2,
+   "MA": 8.48,
+   "MI": 15.35,
+   "MN": 14.77,
+   "MS": 22.14,
+   "MO": 18.27,
+   "MT": 26.27,
+   "NE": 24.42,
+   "NV": 12.71,
+   "NH": 9.87,
+   "NJ": 9.99,
+   "NM": 21.98,
+   "NY": 8.44,
+   "NC": 10.9,
+   "ND": 73.21,
+   "OH": 16.68,
+   "OK": 21.67,
+   "OR": 8.87,
+   "PA": 16.46,
+   "RI": 9.3,
+   "SC": 12.74,
+   "SD": 17.19,
+   "TN": 12.93,
+   "TX": 22.08,
+   "UT": 17.76,
+   "VT": 8.51,
+   "VA": 11.09,
+   "WA": 9.6,
+   "WV": 44.63,
+   "WI": 15.38,
+   "WY": 96.6
+  }
+ },
+ "sigmas": {
+  "values": {
+   "carbon": 0.6,
+   "water": 0.55,
+   "land": 0.6,
+   "yearlyElectricity": 0.5
+  },
+  "verified": false,
+  "citation": {
+   "title": "Chancel, Piketty et al., World Inequality Report 2022 (carbon inequality within countries); lognormal σ derived",
+   "tier": 3,
+   "url": "https://wir2022.wid.world/chapter-6/"
+  }
+ },
+ "dietModifiers": {
+  "values": {
+   "omnivore": 1.0,
+   "flexitarian": 0.83,
+   "vegetarian": 0.68,
+   "vegan": 0.51
+  },
+  "appliesTo": "food",
+  "verified": false,
+  "citation": {
+   "title": "Scarborough et al. (2014), Dietary greenhouse gas emissions of meat-eaters, fish-eaters, vegetarians and vegans in the UK, Climatic Change 125:179",
+   "tier": 3,
+   "url": "https://doi.org/10.1007/s10584-014-1169-1"
+  }
+ },
+ "clothingModifiers": {
+  "values": {
+   "mostlyNew": 1.25,
+   "mixed": 1.0,
+   "mostlySecondHand": 0.6
+  },
+  "appliesTo": "clothing",
+  "verified": false,
+  "citation": {
+   "title": "Ivanova et al. (2016), Environmental Impact Assessment of Household Consumption, J. Ind. Ecol. 20:526",
+   "tier": 3,
+   "url": "https://doi.org/10.1111/jiec.12371"
+  }
+ },
+ "commuteModifiers": {
+  "values": {
+   "car": 1.1,
+   "electricCar": 1.0,
+   "transit": 0.95,
+   "bike": 0.9,
+   "eBike": 0.9,
+   "walk": 0.9,
+   "remote": 0.92
+  },
+  "appliesTo": "whole footprint",
+  "verified": false,
+  "citation": {
+   "title": "Ivanova et al. (2016), Environmental Impact Assessment of Household Consumption, J. Ind. Ecol. 20:526",
+   "tier": 3,
+   "url": "https://doi.org/10.1111/jiec.12371"
+  }
+ },
+ "householdSizeExponent": {
+  "value": 0.75,
+  "appliesTo": "electronic, household",
+  "verified": false,
+  "citation": {
+   "title": "Underwood & Zahran (2015), The carbon implications of declining household scale, Ecological Economics 116:182",
+   "tier": 3,
+   "url": "https://doi.org/10.1016/j.ecolecon.2015.04.028"
+  }
+ },
+ "categoryShares": {
+  "verified": false,
+  "citation": {
+   "title": "Ivanova et al. (2016), Environmental Impact Assessment of Household Consumption, J. Ind. Ecol. 20:526",
+   "tier": 3,
+   "url": "https://doi.org/10.1111/jiec.12371"
+  },
+  "values": {
+   "carbon": {
+    "food": 0.15,
+    "electronic": 0.1,
+    "clothing": 0.04,
+    "packaging": 0.03,
+    "household": 0.06,
+    "personalCare": 0.02
+   },
+   "water": {
+    "food": 0.4,
+    "electronic": 0.15,
+    "clothing": 0.03,
+    "packaging": 0.01,
+    "household": 0.05,
+    "personalCare": 0.03
+   },
+   "land": {
+    "food": 0.8,
+    "electronic": 0.01,
+    "clothing": 0.04,
+    "packaging": 0.03,
+    "household": 0.03,
+    "personalCare": 0.01
+   },
+   "yearlyElectricity": {
+    "electronic": 0.3,
+    "household": 0.06,
+    "food": 0.0,
+    "clothing": 0.0,
+    "packaging": 0.0,
+    "personalCare": 0.0
+   }
+  }
+ }
+}

@@ -1,0 +1,1427 @@
+{
+ "description": "Annual average grid carbon intensity in g CO2e/kWh (US eGRID2023 subregions; countries from Ember via OWID) and normalized 24-hour shapes (mean 1.0, index = local hour) used when live data is unavailable.",
+ "shapes": {
+  "solar_heavy": {
+   "hourly": [
+    1.03,
+    1.03,
+    1.03,
+    1.03,
+    1.03,
+    1.0299,
+    1.0294,
+    1.0268,
+    1.0173,
+    0.991,
+    0.9364,
+    0.8551,
+    0.7755,
+    0.7416,
+    0.7756,
+    0.8563,
+    0.9439,
+    1.0216,
+    1.1006,
+    1.1786,
+    1.2148,
+    1.1817,
+    1.1133,
+    1.0606
+   ],
+   "verified": false,
+   "citation": {
+    "title": "LiveGreen modeled diurnal shapes (qualitative fit to Electricity Maps / CAISO / ERCOT daily curves)",
+    "tier": 3,
+    "url": "https://app.electricitymaps.com/"
+   }
+  },
+  "wind_night": {
+   "hourly": [
+    0.9151,
+    0.8961,
+    0.8841,
+    0.88,
+    0.8841,
+    0.8961,
+    0.9151,
+    0.94,
+    0.9689,
+    1.0,
+    1.0311,
+    1.06,
+    1.0849,
+    1.1039,
+    1.1159,
+    1.12,
+    1.1159,
+    1.1039,
+    1.0849,
+    1.06,
+    1.0311,
+    1.0,
+    0.9689,
+    0.94
+   ],
+   "verified": false,
+   "citation": {
+    "title": "LiveGreen modeled diurnal shapes (qualitative fit to Electricity Maps / CAISO / ERCOT daily curves)",
+    "tier": 3,
+    "url": "https://app.electricitymaps.com/"
+   }
+  },
+  "flat": {
+   "hourly": [
+    0.9906,
+    0.985,
+    0.9795,
+    0.9771,
+    0.9795,
+    0.985,
+    0.9906,
+    0.9944,
+    0.9962,
+    0.9969,
+    0.9971,
+    0.9972,
+    0.9979,
+    0.9995,
+    1.0031,
+    1.0092,
+    1.0171,
+    1.0241,
+    1.027,
+    1.0241,
+    1.0171,
+    1.0092,
+    1.0031,
+    0.9995
+   ],
+   "verified": false,
+   "citation": {
+    "title": "LiveGreen modeled diurnal shapes (qualitative fit to Electricity Maps / CAISO / ERCOT daily curves)",
+    "tier": 3,
+    "url": "https://app.electricitymaps.com/"
+   }
+  },
+  "temperate_mixed": {
+   "hourly": [
+    0.973,
+    0.9447,
+    0.9169,
+    0.9051,
+    0.9169,
+    0.9447,
+    0.973,
+    0.9919,
+    1.0003,
+    1.0004,
+    0.992,
+    0.9748,
+    0.9547,
+    0.9463,
+    0.9594,
+    0.993,
+    1.0419,
+    1.0983,
+    1.1398,
+    1.1406,
+    1.1024,
+    1.0554,
+    1.024,
+    1.0105
+   ],
+   "verified": false,
+   "citation": {
+    "title": "LiveGreen modeled diurnal shapes (qualitative fit to Electricity Maps / CAISO / ERCOT daily curves)",
+    "tier": 3,
+    "url": "https://app.electricitymaps.com/"
+   }
+  }
+ },
+ "zoneAliases": {
+  "US-NE-ISNE": "NEWE",
+  "US-CAL-CISO": "CAMX",
+  "US-TEX-ERCO": "ERCT",
+  "US-FLA-FPL": "FRCC",
+  "US-NW-BPAT": "NWPP",
+  "US-CAR-DUK": "SRVC",
+  "US-SE-SOCO": "SRSO",
+  "US-TEN-TVA": "SRTV",
+  "US-CENT-SWPP": "SPSO",
+  "US-HI": "HIOA",
+  "US-AK": "AKGD",
+  "US-NY-NYIS": "NYUP",
+  "US-MIDA-PJM": "RFCE",
+  "US-MIDW-MISO": "MROW",
+  "US-SW-SRP": "AZNM",
+  "US-NW-PACE": "NWPP",
+  "US-SW-PNM": "AZNM",
+  "US-CAL-LDWP": "CAMX",
+  "GB": "GB",
+  "DK-DK1": "DK",
+  "DK-DK2": "DK",
+  "NO-NO1": "NO",
+  "SE-SE3": "SE",
+  "IT-NO": "IT",
+  "AU-NSW": "AU",
+  "AU-VIC": "AU",
+  "JP-TK": "JP",
+  "IN-WE": "IN"
+ },
+ "stateSubregions": {
+  "AL": "SRSO",
+  "AK": "AKGD",
+  "AZ": "AZNM",
+  "AR": "SRMV",
+  "CA": "CAMX",
+  "CO": "RMPA",
+  "CT": "NEWE",
+  "DE": "RFCE",
+  "DC": "RFCE",
+  "FL": "FRCC",
+  "GA": "SRSO",
+  "HI": "HIOA",
+  "ID": "NWPP",
+  "IL": "RFCW",
+  "IN": "RFCW",
+  "IA": "MROW",
+  "KS": "SPNO",
+  "KY": "SRTV",
+  "LA": "SRMV",
+  "ME": "NEWE",
+  "MD": "RFCE",
+  "MA": "NEWE",
+  "MI": "RFCM",
+  "MN": "MROW",
+  "MS": "SRMV",
+  "MO": "SRMW",
+  "MT": "NWPP",
+  "NE": "MROW",
+  "NV": "AZNM",
+  "NH": "NEWE",
+  "NJ": "RFCE",
+  "NM": "AZNM",
+  "NY": "NYUP",
+  "NC": "SRVC",
+  "ND": "MROW",
+  "OH": "RFCW",
+  "OK": "SPSO",
+  "OR": "NWPP",
+  "PA": "RFCE",
+  "RI": "NEWE",
+  "SC": "SRVC",
+  "SD": "MROW",
+  "TN": "SRTV",
+  "TX": "ERCT",
+  "UT": "NWPP",
+  "VT": "NEWE",
+  "VA": "SRVC",
+  "WA": "NWPP",
+  "WV": "RFCW",
+  "WI": "MROE",
+  "WY": "RMPA",
+  "PR": "PRMS"
+ },
+ "zip3Subregions": [
+  {
+   "from": 100,
+   "to": 104,
+   "subregion": "NYCW"
+  },
+  {
+   "from": 105,
+   "to": 108,
+   "subregion": "NYCW"
+  },
+  {
+   "from": 110,
+   "to": 119,
+   "subregion": "NYLI"
+  },
+  {
+   "from": 150,
+   "to": 168,
+   "subregion": "RFCW"
+  }
+ ],
+ "zip3States": [
+  [
+   5,
+   5,
+   "NY"
+  ],
+  [
+   6,
+   7,
+   "PR"
+  ],
+  [
+   9,
+   9,
+   "PR"
+  ],
+  [
+   10,
+   27,
+   "MA"
+  ],
+  [
+   28,
+   29,
+   "RI"
+  ],
+  [
+   30,
+   38,
+   "NH"
+  ],
+  [
+   39,
+   49,
+   "ME"
+  ],
+  [
+   50,
+   54,
+   "VT"
+  ],
+  [
+   55,
+   55,
+   "MA"
+  ],
+  [
+   56,
+   59,
+   "VT"
+  ],
+  [
+   60,
+   69,
+   "CT"
+  ],
+  [
+   70,
+   89,
+   "NJ"
+  ],
+  [
+   100,
+   149,
+   "NY"
+  ],
+  [
+   150,
+   196,
+   "PA"
+  ],
+  [
+   197,
+   199,
+   "DE"
+  ],
+  [
+   200,
+   200,
+   "DC"
+  ],
+  [
+   201,
+   201,
+   "VA"
+  ],
+  [
+   202,
+   205,
+   "DC"
+  ],
+  [
+   206,
+   219,
+   "MD"
+  ],
+  [
+   220,
+   246,
+   "VA"
+  ],
+  [
+   247,
+   268,
+   "WV"
+  ],
+  [
+   270,
+   289,
+   "NC"
+  ],
+  [
+   290,
+   299,
+   "SC"
+  ],
+  [
+   300,
+   319,
+   "GA"
+  ],
+  [
+   320,
+   339,
+   "FL"
+  ],
+  [
+   341,
+   349,
+   "FL"
+  ],
+  [
+   350,
+   369,
+   "AL"
+  ],
+  [
+   370,
+   385,
+   "TN"
+  ],
+  [
+   386,
+   397,
+   "MS"
+  ],
+  [
+   398,
+   399,
+   "GA"
+  ],
+  [
+   400,
+   427,
+   "KY"
+  ],
+  [
+   430,
+   459,
+   "OH"
+  ],
+  [
+   460,
+   479,
+   "IN"
+  ],
+  [
+   480,
+   499,
+   "MI"
+  ],
+  [
+   500,
+   528,
+   "IA"
+  ],
+  [
+   530,
+   549,
+   "WI"
+  ],
+  [
+   550,
+   567,
+   "MN"
+  ],
+  [
+   569,
+   569,
+   "DC"
+  ],
+  [
+   570,
+   577,
+   "SD"
+  ],
+  [
+   580,
+   588,
+   "ND"
+  ],
+  [
+   590,
+   599,
+   "MT"
+  ],
+  [
+   600,
+   629,
+   "IL"
+  ],
+  [
+   630,
+   658,
+   "MO"
+  ],
+  [
+   660,
+   679,
+   "KS"
+  ],
+  [
+   680,
+   693,
+   "NE"
+  ],
+  [
+   700,
+   714,
+   "LA"
+  ],
+  [
+   716,
+   729,
+   "AR"
+  ],
+  [
+   730,
+   732,
+   "OK"
+  ],
+  [
+   733,
+   733,
+   "TX"
+  ],
+  [
+   734,
+   749,
+   "OK"
+  ],
+  [
+   750,
+   799,
+   "TX"
+  ],
+  [
+   800,
+   816,
+   "CO"
+  ],
+  [
+   820,
+   831,
+   "WY"
+  ],
+  [
+   832,
+   838,
+   "ID"
+  ],
+  [
+   840,
+   847,
+   "UT"
+  ],
+  [
+   850,
+   865,
+   "AZ"
+  ],
+  [
+   870,
+   884,
+   "NM"
+  ],
+  [
+   885,
+   885,
+   "TX"
+  ],
+  [
+   889,
+   898,
+   "NV"
+  ],
+  [
+   900,
+   961,
+   "CA"
+  ],
+  [
+   967,
+   968,
+   "HI"
+  ],
+  [
+   970,
+   979,
+   "OR"
+  ],
+  [
+   980,
+   994,
+   "WA"
+  ],
+  [
+   995,
+   999,
+   "AK"
+  ]
+ ],
+ "records": [
+  {
+   "region": "AKGD",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 410.5,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "AKMS",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 237.0,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "AZNM",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 320.3,
+   "shapeFamily": "solar_heavy",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "CAMX",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 195.0,
+   "shapeFamily": "solar_heavy",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "ERCT",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 334.1,
+   "shapeFamily": "solar_heavy",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "FRCC",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 356.0,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "HIMS",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 514.1,
+   "shapeFamily": "solar_heavy",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "HIOA",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 679.9,
+   "shapeFamily": "solar_heavy",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "MROE",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 637.3,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "MROW",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 420.3,
+   "shapeFamily": "wind_night",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "NEWE",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 246.4,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "NWPP",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 288.2,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "NYCW",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 392.7,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "NYLI",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 539.5,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "NYUP",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 110.1,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "PRMS",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 702.4,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "RFCE",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 271.8,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "RFCM",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 442.7,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "RFCW",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 415.5,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "RMPA",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 472.9,
+   "shapeFamily": "wind_night",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "SPNO",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 393.6,
+   "shapeFamily": "wind_night",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "SPSO",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 397.2,
+   "shapeFamily": "wind_night",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "SRMV",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 336.4,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "SRMW",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 566.4,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "SRSO",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 383.7,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "SRTV",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 409.7,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "SRVC",
+   "kind": "egridSubregion",
+   "annualAverageGPerKWh": 270.5,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "US",
+   "kind": "country",
+   "annualAverageGPerKWh": 349.7,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "US EPA eGRID2023 Summary Tables, subregion total output CO2e emission rates (rev 2, 2025)",
+    "tier": 3,
+    "url": "https://www.epa.gov/egrid/summary-data"
+   }
+  },
+  {
+   "region": "AE",
+   "kind": "country",
+   "year": 2024,
+   "annualAverageGPerKWh": 467.51,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "AR",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 346.0,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "AU",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 525.18,
+   "shapeFamily": "solar_heavy",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "AT",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 116.91,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "BE",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 149.82,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "BR",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 109.95,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "CA",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 190.72,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "CH",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 39.22,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "CL",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 289.49,
+   "shapeFamily": "solar_heavy",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "CN",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 525.34,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "CZ",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 401.46,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "DE",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 329.65,
+   "shapeFamily": "solar_heavy",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "DK",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 114.41,
+   "shapeFamily": "wind_night",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "EG",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 563.23,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "ES",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 153.6,
+   "shapeFamily": "solar_heavy",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "FI",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 57.47,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "FR",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 41.44,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "GB",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 217.41,
+   "shapeFamily": "wind_night",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "ID",
+   "kind": "country",
+   "year": 2024,
+   "annualAverageGPerKWh": 680.25,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "IN",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 670.13,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "IE",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 256.54,
+   "shapeFamily": "wind_night",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "IS",
+   "kind": "country",
+   "year": 2024,
+   "annualAverageGPerKWh": 27.82,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "IT",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 284.78,
+   "shapeFamily": "solar_heavy",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "JP",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 477.26,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "KR",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 417.06,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "MX",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 474.02,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "NG",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 455.71,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "NL",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 253.56,
+   "shapeFamily": "solar_heavy",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "NO",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 28.11,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "NZ",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 92.76,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "PH",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 588.29,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "PL",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 588.6,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "PT",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 127.91,
+   "shapeFamily": "solar_heavy",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "SA",
+   "kind": "country",
+   "year": 2024,
+   "annualAverageGPerKWh": 691.95,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "SG",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 497.09,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "SE",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 35.26,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "TH",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 545.74,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "TR",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 474.74,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "VN",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 460.73,
+   "shapeFamily": "temperate_mixed",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  },
+  {
+   "region": "ZA",
+   "kind": "country",
+   "year": 2025,
+   "annualAverageGPerKWh": 699.29,
+   "shapeFamily": "flat",
+   "verified": true,
+   "citation": {
+    "title": "Ember (2025) via Our World in Data, Carbon intensity of electricity generation",
+    "tier": 3,
+    "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+   }
+  }
+ ]
+}

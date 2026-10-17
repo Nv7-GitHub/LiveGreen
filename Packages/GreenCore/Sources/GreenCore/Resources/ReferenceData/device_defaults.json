@@ -1,0 +1,1183 @@
+{
+ "description": "Typical figures by device type. onWatts is average draw while in use (not the label maximum). stageShares split the embodied (non-use) footprint; the factor model adds the use phase. batteryKWh is energy per charge (EV: typical daily session).",
+ "records": [
+  {
+   "deviceType": "laptop",
+   "aliases": [
+    "notebook",
+    "macbook",
+    "ultrabook"
+   ],
+   "onWatts": 20,
+   "standbyWatts": 0.5,
+   "typicalHoursOnPerDay": 6,
+   "lifespanYears": 4,
+   "repairability": 6.0,
+   "embodiedKgCO2e": 250,
+   "plasticMassG": 300,
+   "recyclablePercent": 60,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "Dell Product Carbon Footprints",
+    "tier": 3,
+    "url": "https://www.dell.com/en-us/dt/corporate/social-impact/advancing-sustainability/climate-action/product-carbon-footprints.htm"
+   },
+   "deferrable": "laptopCharger",
+   "chargerWatts": 65
+  },
+  {
+   "deviceType": "laptop_charger",
+   "aliases": [
+    "usb_c_charger",
+    "power_adapter"
+   ],
+   "onWatts": 30,
+   "standbyWatts": 0.1,
+   "typicalHoursOnPerDay": 3,
+   "lifespanYears": 5,
+   "repairability": 1.0,
+   "embodiedKgCO2e": 4,
+   "plasticMassG": 120,
+   "recyclablePercent": 30,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   },
+   "deferrable": "laptopCharger",
+   "chargerWatts": 65
+  },
+  {
+   "deviceType": "desktop_pc",
+   "aliases": [
+    "desktop",
+    "computer",
+    "pc_tower"
+   ],
+   "onWatts": 60,
+   "standbyWatts": 2.0,
+   "typicalHoursOnPerDay": 6,
+   "lifespanYears": 6,
+   "repairability": 7.0,
+   "embodiedKgCO2e": 400,
+   "plasticMassG": 1500,
+   "recyclablePercent": 70,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "Dell Product Carbon Footprints",
+    "tier": 3,
+    "url": "https://www.dell.com/en-us/dt/corporate/social-impact/advancing-sustainability/climate-action/product-carbon-footprints.htm"
+   }
+  },
+  {
+   "deviceType": "monitor",
+   "aliases": [
+    "display",
+    "computer_monitor"
+   ],
+   "onWatts": 18,
+   "standbyWatts": 0.3,
+   "typicalHoursOnPerDay": 6,
+   "lifespanYears": 6,
+   "repairability": 4.0,
+   "embodiedKgCO2e": 300,
+   "plasticMassG": 1800,
+   "recyclablePercent": 55,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   },
+   "referenceScreenInches": 24
+  },
+  {
+   "deviceType": "tv",
+   "aliases": [
+    "television",
+    "smart_tv"
+   ],
+   "onWatts": 90,
+   "standbyWatts": 0.5,
+   "typicalHoursOnPerDay": 4,
+   "lifespanYears": 7,
+   "repairability": 4.0,
+   "embodiedKgCO2e": 500,
+   "plasticMassG": 6000,
+   "recyclablePercent": 50,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   },
+   "referenceScreenInches": 55
+  },
+  {
+   "deviceType": "smartphone",
+   "aliases": [
+    "phone",
+    "iphone",
+    "mobile_phone"
+   ],
+   "onWatts": 2,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 3,
+   "lifespanYears": 3,
+   "repairability": 5.0,
+   "embodiedKgCO2e": 60,
+   "plasticMassG": 15,
+   "recyclablePercent": 70,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "Apple Product Environmental Reports",
+    "tier": 3,
+    "url": "https://www.apple.com/environment/"
+   },
+   "chargerWatts": 20
+  },
+  {
+   "deviceType": "phone_charger",
+   "aliases": [
+    "usb_charger",
+    "wall_charger"
+   ],
+   "onWatts": 10,
+   "standbyWatts": 0.05,
+   "typicalHoursOnPerDay": 2,
+   "lifespanYears": 5,
+   "repairability": 1.0,
+   "embodiedKgCO2e": 2,
+   "plasticMassG": 40,
+   "recyclablePercent": 30,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   },
+   "chargerWatts": 20
+  },
+  {
+   "deviceType": "tablet",
+   "aliases": [
+    "ipad"
+   ],
+   "onWatts": 3,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 3,
+   "lifespanYears": 4,
+   "repairability": 4.0,
+   "embodiedKgCO2e": 100,
+   "plasticMassG": 30,
+   "recyclablePercent": 70,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "Apple Product Environmental Reports",
+    "tier": 3,
+    "url": "https://www.apple.com/environment/"
+   },
+   "chargerWatts": 20
+  },
+  {
+   "deviceType": "smartwatch",
+   "aliases": [
+    "watch",
+    "fitness_tracker"
+   ],
+   "onWatts": 0.3,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 2,
+   "lifespanYears": 3,
+   "repairability": 2.0,
+   "embodiedKgCO2e": 30,
+   "plasticMassG": 10,
+   "recyclablePercent": 40,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "Apple Product Environmental Reports",
+    "tier": 3,
+    "url": "https://www.apple.com/environment/"
+   },
+   "chargerWatts": 5
+  },
+  {
+   "deviceType": "headphones",
+   "aliases": [
+    "earbuds",
+    "headset"
+   ],
+   "onWatts": 0.5,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 1,
+   "lifespanYears": 3,
+   "repairability": 2.0,
+   "embodiedKgCO2e": 15,
+   "plasticMassG": 100,
+   "recyclablePercent": 30,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "Apple Product Environmental Reports",
+    "tier": 3,
+    "url": "https://www.apple.com/environment/"
+   },
+   "chargerWatts": 5
+  },
+  {
+   "deviceType": "power_bank",
+   "aliases": [
+    "portable_charger",
+    "battery_pack"
+   ],
+   "onWatts": 18,
+   "standbyWatts": 0.05,
+   "typicalHoursOnPerDay": 0.5,
+   "lifespanYears": 3,
+   "repairability": 1.0,
+   "embodiedKgCO2e": 10,
+   "plasticMassG": 80,
+   "recyclablePercent": 20,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   },
+   "deferrable": "powerBank",
+   "chargerWatts": 18,
+   "batteryKWh": 0.074
+  },
+  {
+   "deviceType": "ebike",
+   "aliases": [
+    "e_bike",
+    "electric_bike",
+    "electric_bicycle"
+   ],
+   "onWatts": 170,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 1.5,
+   "lifespanYears": 8,
+   "repairability": 7.0,
+   "embodiedKgCO2e": 165,
+   "plasticMassG": 2500,
+   "recyclablePercent": 75,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ITF/ECF e-bike life-cycle comparisons and manufacturer battery specs",
+    "tier": 3,
+    "url": "https://www.itf-oecd.org/good-to-go-assessing-environmental-performance-new-mobility"
+   },
+   "deferrable": "eBike",
+   "chargerWatts": 170,
+   "batteryKWh": 0.5
+  },
+  {
+   "deviceType": "ebike_charger",
+   "aliases": [
+    "e_bike_charger",
+    "bike_charger"
+   ],
+   "onWatts": 170,
+   "standbyWatts": 0.5,
+   "typicalHoursOnPerDay": 1.5,
+   "lifespanYears": 6,
+   "repairability": 2.0,
+   "embodiedKgCO2e": 6,
+   "plasticMassG": 250,
+   "recyclablePercent": 40,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   },
+   "deferrable": "eBike",
+   "chargerWatts": 170,
+   "batteryKWh": 0.5
+  },
+  {
+   "deviceType": "escooter",
+   "aliases": [
+    "e_scooter",
+    "electric_scooter"
+   ],
+   "onWatts": 71,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 3,
+   "lifespanYears": 4,
+   "repairability": 5.0,
+   "embodiedKgCO2e": 110,
+   "plasticMassG": 3000,
+   "recyclablePercent": 60,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "Hollingsworth et al. (2019), Are e-scooters polluters? Environ. Res. Lett. 14 084031",
+    "tier": 3,
+    "url": "https://doi.org/10.1088/1748-9326/ab2da8"
+   },
+   "deferrable": "eScooter",
+   "chargerWatts": 71,
+   "batteryKWh": 0.35
+  },
+  {
+   "deviceType": "ev_charger",
+   "aliases": [
+    "evse",
+    "wall_box",
+    "level_2_charger"
+   ],
+   "onWatts": 7200,
+   "standbyWatts": 3.0,
+   "typicalHoursOnPerDay": 1.3,
+   "lifespanYears": 10,
+   "repairability": 4.0,
+   "embodiedKgCO2e": 60,
+   "plasticMassG": 1500,
+   "recyclablePercent": 60,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   },
+   "deferrable": "evCharger",
+   "chargerWatts": 7200,
+   "batteryKWh": 9.5
+  },
+  {
+   "deviceType": "dishwasher",
+   "aliases": [],
+   "onWatts": 1000,
+   "standbyWatts": 0.5,
+   "typicalHoursOnPerDay": 0.74,
+   "lifespanYears": 10,
+   "repairability": 6.0,
+   "embodiedKgCO2e": 300,
+   "plasticMassG": 8000,
+   "recyclablePercent": 70,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   },
+   "deferrable": "dishwasher",
+   "chargerWatts": 1000
+  },
+  {
+   "deviceType": "washer",
+   "aliases": [
+    "washing_machine",
+    "clothes_washer"
+   ],
+   "onWatts": 500,
+   "standbyWatts": 0.5,
+   "typicalHoursOnPerDay": 0.6,
+   "lifespanYears": 11,
+   "repairability": 6.0,
+   "embodiedKgCO2e": 300,
+   "plasticMassG": 15000,
+   "recyclablePercent": 75,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   },
+   "deferrable": "washer",
+   "chargerWatts": 500
+  },
+  {
+   "deviceType": "dryer",
+   "aliases": [
+    "clothes_dryer",
+    "tumble_dryer"
+   ],
+   "onWatts": 3000,
+   "standbyWatts": 0.5,
+   "typicalHoursOnPerDay": 0.6,
+   "lifespanYears": 13,
+   "repairability": 6.0,
+   "embodiedKgCO2e": 250,
+   "plasticMassG": 10000,
+   "recyclablePercent": 75,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "refrigerator",
+   "aliases": [
+    "fridge"
+   ],
+   "onWatts": 50,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 24,
+   "lifespanYears": 14,
+   "repairability": 5.0,
+   "embodiedKgCO2e": 350,
+   "plasticMassG": 10000,
+   "recyclablePercent": 75,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "freezer",
+   "aliases": [
+    "chest_freezer"
+   ],
+   "onWatts": 40,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 24,
+   "lifespanYears": 14,
+   "repairability": 5.0,
+   "embodiedKgCO2e": 250,
+   "plasticMassG": 8000,
+   "recyclablePercent": 75,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "microwave",
+   "aliases": [
+    "microwave_oven"
+   ],
+   "onWatts": 1100,
+   "standbyWatts": 2.0,
+   "typicalHoursOnPerDay": 0.15,
+   "lifespanYears": 9,
+   "repairability": 4.0,
+   "embodiedKgCO2e": 90,
+   "plasticMassG": 2000,
+   "recyclablePercent": 60,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "US DOE Energy Saver appliance energy use calculator",
+    "tier": 3,
+    "url": "https://www.energy.gov/energysaver/estimating-appliance-and-home-electronic-energy-use"
+   }
+  },
+  {
+   "deviceType": "electric_kettle",
+   "aliases": [
+    "kettle"
+   ],
+   "onWatts": 2000,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 0.15,
+   "lifespanYears": 5,
+   "repairability": 3.0,
+   "embodiedKgCO2e": 15,
+   "plasticMassG": 600,
+   "recyclablePercent": 50,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "US DOE Energy Saver appliance energy use calculator",
+    "tier": 3,
+    "url": "https://www.energy.gov/energysaver/estimating-appliance-and-home-electronic-energy-use"
+   }
+  },
+  {
+   "deviceType": "coffee_maker",
+   "aliases": [
+    "coffee_machine",
+    "espresso_machine"
+   ],
+   "onWatts": 900,
+   "standbyWatts": 1.0,
+   "typicalHoursOnPerDay": 0.3,
+   "lifespanYears": 6,
+   "repairability": 4.0,
+   "embodiedKgCO2e": 40,
+   "plasticMassG": 1500,
+   "recyclablePercent": 50,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "US DOE Energy Saver appliance energy use calculator",
+    "tier": 3,
+    "url": "https://www.energy.gov/energysaver/estimating-appliance-and-home-electronic-energy-use"
+   }
+  },
+  {
+   "deviceType": "toaster",
+   "aliases": [],
+   "onWatts": 900,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 0.1,
+   "lifespanYears": 6,
+   "repairability": 3.0,
+   "embodiedKgCO2e": 15,
+   "plasticMassG": 400,
+   "recyclablePercent": 60,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "US DOE Energy Saver appliance energy use calculator",
+    "tier": 3,
+    "url": "https://www.energy.gov/energysaver/estimating-appliance-and-home-electronic-energy-use"
+   }
+  },
+  {
+   "deviceType": "air_conditioner",
+   "aliases": [
+    "window_ac",
+    "room_ac"
+   ],
+   "onWatts": 900,
+   "standbyWatts": 1.0,
+   "typicalHoursOnPerDay": 3,
+   "lifespanYears": 10,
+   "repairability": 4.0,
+   "embodiedKgCO2e": 200,
+   "plasticMassG": 6000,
+   "recyclablePercent": 65,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "space_heater",
+   "aliases": [
+    "heater"
+   ],
+   "onWatts": 1500,
+   "standbyWatts": 0.5,
+   "typicalHoursOnPerDay": 2,
+   "lifespanYears": 6,
+   "repairability": 3.0,
+   "embodiedKgCO2e": 20,
+   "plasticMassG": 1500,
+   "recyclablePercent": 50,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "US DOE Energy Saver appliance energy use calculator",
+    "tier": 3,
+    "url": "https://www.energy.gov/energysaver/estimating-appliance-and-home-electronic-energy-use"
+   }
+  },
+  {
+   "deviceType": "led_bulb",
+   "aliases": [
+    "light_bulb",
+    "bulb"
+   ],
+   "onWatts": 9,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 5,
+   "lifespanYears": 13,
+   "repairability": 0.0,
+   "embodiedKgCO2e": 1.5,
+   "plasticMassG": 30,
+   "recyclablePercent": 20,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "led_lamp",
+   "aliases": [
+    "desk_lamp",
+    "lamp"
+   ],
+   "onWatts": 8,
+   "standbyWatts": 0.4,
+   "typicalHoursOnPerDay": 4,
+   "lifespanYears": 10,
+   "repairability": 5.0,
+   "embodiedKgCO2e": 12,
+   "plasticMassG": 200,
+   "recyclablePercent": 50,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "incandescent_bulb",
+   "aliases": [
+    "halogen_bulb"
+   ],
+   "onWatts": 60,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 5,
+   "lifespanYears": 1,
+   "repairability": 0.0,
+   "embodiedKgCO2e": 0.5,
+   "plasticMassG": 5,
+   "recyclablePercent": 10,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "US DOE Energy Saver appliance energy use calculator",
+    "tier": 3,
+    "url": "https://www.energy.gov/energysaver/estimating-appliance-and-home-electronic-energy-use"
+   }
+  },
+  {
+   "deviceType": "router",
+   "aliases": [
+    "wifi_router",
+    "modem"
+   ],
+   "onWatts": 8,
+   "standbyWatts": 8.0,
+   "typicalHoursOnPerDay": 24,
+   "lifespanYears": 5,
+   "repairability": 3.0,
+   "embodiedKgCO2e": 50,
+   "plasticMassG": 300,
+   "recyclablePercent": 40,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "game_console",
+   "aliases": [
+    "playstation",
+    "xbox",
+    "console"
+   ],
+   "onWatts": 160,
+   "standbyWatts": 1.0,
+   "typicalHoursOnPerDay": 2,
+   "lifespanYears": 7,
+   "repairability": 4.0,
+   "embodiedKgCO2e": 90,
+   "plasticMassG": 1500,
+   "recyclablePercent": 60,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "smart_speaker",
+   "aliases": [
+    "speaker",
+    "echo"
+   ],
+   "onWatts": 3,
+   "standbyWatts": 2.0,
+   "typicalHoursOnPerDay": 2,
+   "lifespanYears": 5,
+   "repairability": 2.0,
+   "embodiedKgCO2e": 15,
+   "plasticMassG": 300,
+   "recyclablePercent": 40,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "power_strip",
+   "aliases": [
+    "extension_cord",
+    "surge_protector"
+   ],
+   "onWatts": 0.5,
+   "standbyWatts": 0.5,
+   "typicalHoursOnPerDay": 24,
+   "lifespanYears": 10,
+   "repairability": 2.0,
+   "embodiedKgCO2e": 4,
+   "plasticMassG": 300,
+   "recyclablePercent": 30,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "vacuum_cleaner",
+   "aliases": [
+    "vacuum",
+    "robot_vacuum"
+   ],
+   "onWatts": 1200,
+   "standbyWatts": 0.5,
+   "typicalHoursOnPerDay": 0.2,
+   "lifespanYears": 8,
+   "repairability": 6.0,
+   "embodiedKgCO2e": 60,
+   "plasticMassG": 4000,
+   "recyclablePercent": 60,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "EU Ecodesign preparatory studies and French repairability index (indice de réparabilité) averages",
+    "tier": 3,
+    "url": "https://www.ecologie.gouv.fr/indice-reparabilite"
+   }
+  },
+  {
+   "deviceType": "hair_dryer",
+   "aliases": [
+    "blow_dryer"
+   ],
+   "onWatts": 1600,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 0.15,
+   "lifespanYears": 6,
+   "repairability": 3.0,
+   "embodiedKgCO2e": 10,
+   "plasticMassG": 500,
+   "recyclablePercent": 40,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "US DOE Energy Saver appliance energy use calculator",
+    "tier": 3,
+    "url": "https://www.energy.gov/energysaver/estimating-appliance-and-home-electronic-energy-use"
+   }
+  },
+  {
+   "deviceType": "electric_toothbrush",
+   "aliases": [
+    "toothbrush_charger"
+   ],
+   "onWatts": 1.5,
+   "standbyWatts": 0.5,
+   "typicalHoursOnPerDay": 2,
+   "lifespanYears": 4,
+   "repairability": 2.0,
+   "embodiedKgCO2e": 5,
+   "plasticMassG": 80,
+   "recyclablePercent": 20,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "printer",
+   "aliases": [
+    "inkjet_printer",
+    "laser_printer"
+   ],
+   "onWatts": 15,
+   "standbyWatts": 1.5,
+   "typicalHoursOnPerDay": 0.2,
+   "lifespanYears": 5,
+   "repairability": 4.0,
+   "embodiedKgCO2e": 60,
+   "plasticMassG": 4000,
+   "recyclablePercent": 50,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "streaming_device",
+   "aliases": [
+    "set_top_box",
+    "cable_box",
+    "streaming_stick"
+   ],
+   "onWatts": 6,
+   "standbyWatts": 3.0,
+   "typicalHoursOnPerDay": 4,
+   "lifespanYears": 6,
+   "repairability": 2.0,
+   "embodiedKgCO2e": 15,
+   "plasticMassG": 200,
+   "recyclablePercent": 40,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "ceiling_fan",
+   "aliases": [
+    "fan"
+   ],
+   "onWatts": 40,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 6,
+   "lifespanYears": 15,
+   "repairability": 6.0,
+   "embodiedKgCO2e": 30,
+   "plasticMassG": 500,
+   "recyclablePercent": 70,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "dehumidifier",
+   "aliases": [],
+   "onWatts": 300,
+   "standbyWatts": 0.5,
+   "typicalHoursOnPerDay": 4,
+   "lifespanYears": 8,
+   "repairability": 4.0,
+   "embodiedKgCO2e": 60,
+   "plasticMassG": 4000,
+   "recyclablePercent": 60,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ENERGY STAR product category data and specifications",
+    "tier": 3,
+    "url": "https://www.energystar.gov/products"
+   }
+  },
+  {
+   "deviceType": "induction_cooktop",
+   "aliases": [
+    "cooktop",
+    "hob"
+   ],
+   "onWatts": 1800,
+   "standbyWatts": 1.0,
+   "typicalHoursOnPerDay": 0.5,
+   "lifespanYears": 12,
+   "repairability": 5.0,
+   "embodiedKgCO2e": 120,
+   "plasticMassG": 1500,
+   "recyclablePercent": 70,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "US DOE Energy Saver appliance energy use calculator",
+    "tier": 3,
+    "url": "https://www.energy.gov/energysaver/estimating-appliance-and-home-electronic-energy-use"
+   }
+  },
+  {
+   "deviceType": "electric_oven",
+   "aliases": [
+    "oven",
+    "range"
+   ],
+   "onWatts": 2400,
+   "standbyWatts": 2.0,
+   "typicalHoursOnPerDay": 0.3,
+   "lifespanYears": 15,
+   "repairability": 6.0,
+   "embodiedKgCO2e": 250,
+   "plasticMassG": 3000,
+   "recyclablePercent": 75,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "US DOE Energy Saver appliance energy use calculator",
+    "tier": 3,
+    "url": "https://www.energy.gov/energysaver/estimating-appliance-and-home-electronic-energy-use"
+   }
+  },
+  {
+   "deviceType": "electric_water_heater",
+   "aliases": [
+    "water_heater"
+   ],
+   "onWatts": 4500,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 3,
+   "lifespanYears": 12,
+   "repairability": 5.0,
+   "embodiedKgCO2e": 150,
+   "plasticMassG": 3000,
+   "recyclablePercent": 70,
+   "stageShares": {
+    "materials": 0.6,
+    "manufacturing": 0.25,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "US DOE Energy Saver appliance energy use calculator",
+    "tier": 3,
+    "url": "https://www.energy.gov/energysaver/estimating-appliance-and-home-electronic-energy-use"
+   }
+  }
+ ]
+}
