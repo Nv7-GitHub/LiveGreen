@@ -7,7 +7,7 @@ nonisolated enum ARFrameOCR {
     static func hints(for image: CGImage) async -> OCRHints {
         async let barcodes = barcodePayloads(in: image)
         async let lines = textLines(in: image)
-        return await ARHintParser.hints(textLines: lines, barcodes: barcodes)
+        return await OCRTextParser.hints(barcodePayloads: barcodes, textLines: lines)
     }
 
     private static func barcodePayloads(in image: CGImage) async -> [String] {
