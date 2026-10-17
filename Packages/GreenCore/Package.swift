@@ -11,6 +11,7 @@ let package = Package(
     targets: [
         .target(name: "GreenCore"),
         .target(name: "GreenCoreFakes", dependencies: ["GreenCore"]),
-        .testTarget(name: "GreenCoreTests", dependencies: ["GreenCore", "GreenCoreFakes"]),
+        .testTarget(name: "GreenCoreTests", dependencies: ["GreenCore", "GreenCoreFakes"],
+                    resources: [.copy("Fixtures")]),
     ]
 )

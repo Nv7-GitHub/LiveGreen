@@ -1,0 +1,11 @@
+{
+  "id": 1,
+  "src": "shellyplugus-d4d4dae0a1b2",
+  "result": {
+    "jobs": [
+      {"id": 1, "enable": true, "timespec": "0 0 1,13 * * *", "calls": [{"method": "Switch.Set", "params": {"id": 0, "on": true}}]},
+      {"id": 2, "enable": true, "timespec": "0 0 4,15 * * *", "calls": [{"method": "Switch.Set", "params": {"id": 0, "on": false}}]}
+    ],
+    "rev": 7
+  }
+}

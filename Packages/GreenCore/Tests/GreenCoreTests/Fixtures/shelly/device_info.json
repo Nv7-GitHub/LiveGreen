@@ -1,0 +1,17 @@
+{
+  "id": 1,
+  "src": "shellyplugus-d4d4dae0a1b2",
+  "result": {
+    "name": "E-bike charger",
+    "id": "shellyplugus-d4d4dae0a1b2",
+    "mac": "D4D4DAE0A1B2",
+    "slot": 1,
+    "model": "SNPL-00116US",
+    "gen": 2,
+    "fw_id": "20241011-114455/1.4.4-g6d2a586",
+    "ver": "1.4.4",
+    "app": "PlugUS",
+    "auth_en": true,
+    "auth_domain": "shellyplugus-d4d4dae0a1b2"
+  }
+}
