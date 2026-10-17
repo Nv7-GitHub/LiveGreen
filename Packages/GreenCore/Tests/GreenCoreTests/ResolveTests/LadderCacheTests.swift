@@ -37,6 +37,24 @@ struct LadderCacheTests {
         #expect(await cache.count == 0)
     }
 
+    @Test func genericItemsAreCachedByKindAndKeepTheCachedCategory() async {
+        let cache = InMemoryResolutionCache()
+        let ladder = EvidenceLadder(resolvers: [FactorModelResolver(), EstimateResolver()], cache: cache)
+        let tote = Component(name: "Green tote bag", category: .clothing,
+                             identifiers: Identifiers(materials: [MaterialShare(material: "cotton", percent: 100)],
+                                                      genericKey: "tote bag"),
+                             quantities: Quantities(massKg: 0.2))
+        let first = await ladder.resolve(tote, profile: .default)
+        #expect(await cache.count == 1)
+
+        let rescan = Component(name: "Red tote bag", category: .household,
+                               identifiers: Identifiers(genericKey: "tote bag"), quantities: Quantities(massKg: 0.5),
+                               fallbackEstimates: [.carbon: EstimateRange(value: 9, low: 5, high: 14)])
+        let second = await ladder.resolve(rescan, profile: .default)
+        #expect(second.category == .clothing)
+        #expect(second.metrics == first.metrics)
+    }
+
     @Test func tierFilterRunsOnlyThatPhase() async {
         let ladder = EvidenceLadder(resolvers: [
             FakeMetricResolver(tier: .exactRecord, values: [.powerOn: 18]),

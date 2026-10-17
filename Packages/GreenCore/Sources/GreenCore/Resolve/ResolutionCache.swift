@@ -3,16 +3,20 @@ public struct CachedResolution: Codable, Sendable, Hashable {
     public var metrics: [MetricKey: Measured]
     public var stageShares: [LifecycleStage: Double]
     public var plasticPackagingShare: Double?
+    /// The category the metrics were resolved for; nil in entries saved by older builds.
+    public var category: Category?
 
     public init(metrics: [MetricKey: Measured], stageShares: [LifecycleStage: Double] = [:],
-                plasticPackagingShare: Double? = nil) {
+                plasticPackagingShare: Double? = nil, category: Category? = nil) {
         self.metrics = metrics
         self.stageShares = stageShares
         self.plasticPackagingShare = plasticPackagingShare
+        self.category = category
     }
 }
 
-/// Resolution cache keyed by `Identifiers.cacheKey` (GTIN or brand|model). The app backs it with SwiftData.
+/// Resolution cache keyed by `Identifiers.resolutionKey` (GTIN, brand|model or generic item kind). The app
+/// backs it with SwiftData.
 public protocol ResolutionCache: Sendable {
     func cachedResolution(forKey key: String) async -> CachedResolution?
     func store(_ resolution: CachedResolution, forKey key: String) async
