@@ -4,32 +4,64 @@ import GreenCore
 /// Country and ZIP / postal code; previews the resolved state and grid zone.
 struct LocationStepView: View {
     @Binding var region: Region
+    @FocusState private var postalFocused: Bool
 
     private var resolved: Region { USRegionLookup.resolved(region) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Picker("Country", selection: $region.countryCode) {
-                ForEach(Countries.all, id: \.code) { country in
-                    Text(country.name).tag(country.code)
+            // A menu with a full-width label: a menu-style Picker only took taps on its short text, not the capsule.
+            Menu {
+                Picker("Country", selection: $region.countryCode) {
+                    ForEach(Countries.all, id: \.code) { country in
+                        Text(country.name).tag(country.code)
+                    }
                 }
+            } label: {
+                HStack {
+                    Text(countryName)
+                    Spacer()
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 16)
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .contentShape(.capsule)
+                .glassEffect(.regular.interactive(), in: .capsule)
             }
-            .pickerStyle(.menu)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 6)
-            .glassEffect(.regular.interactive(), in: .capsule)
+            .accessibilityLabel("Country")
+            .accessibilityValue(countryName)
+            .accessibilityIdentifier("onboarding.country")
 
+            // The whole capsule focuses the field, not only the 22 pt text line inside it.
             TextField(region.countryCode == "US" ? "ZIP code" : "Postal code (optional)", text: postalCode)
                 .keyboardType(region.countryCode == "US" ? .numberPad : .numbersAndPunctuation)
                 .textContentType(.postalCode)
+                .focused($postalFocused)
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .frame(minHeight: 48)
+                .contentShape(.capsule)
+                .onTapGesture { postalFocused = true }
                 .glassEffect(.regular, in: .capsule)
+                .accessibilityIdentifier("onboarding.postalCode")
+                .toolbar {
+                    // The number pad has no return key; this is the way to put it away besides Next.
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") { postalFocused = false }
+                            .accessibilityIdentifier("onboarding.keyboardDone")
+                    }
+                }
 
             Label(summary, systemImage: "bolt.horizontal")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private var countryName: String {
+        Countries.all.first { $0.code == region.countryCode }?.name ?? region.countryCode
     }
 
     private var summary: String {

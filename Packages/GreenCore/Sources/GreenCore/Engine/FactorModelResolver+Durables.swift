@@ -6,7 +6,7 @@ extension FactorModelResolver {
     func electronic(_ component: Component, profile: UserProfile) -> ResolverOutput {
         let q = component.quantities
         guard let device = store.deviceProfile(deviceType: q.deviceType ?? component.name) else {
-            return ratedPowerOnly(component)
+            return unknownDevice(component)
         }
         let d = device.defaults
         let sources = [d.citation]
@@ -56,11 +56,25 @@ extension FactorModelResolver {
                               plasticPackagingShare: metrics[.plasticMass] == nil ? nil : 0)
     }
 
-    /// Unknown device type: only a label wattage is known; typical draw is taken as half of it (±50%).
-    private func ratedPowerOnly(_ component: Component) -> ResolverOutput {
-        guard let rated = component.quantities.ratedPowerW, rated > 0 else { return .empty }
-        let source = Source(title: "Label rating × 0.5 typical-load factor", tier: .factorModel)
-        return ResolverOutput(metrics: [.powerOn: FactorRanges.relative(rated * 0.5, 0.5, unit: .watts, sources: [source])])
+    /// Unknown device type: typical draw is half the label wattage (±50%), plastic comes from the reported mass and
+    /// materials, and recyclability is the documented global e-waste recycling rate. Carbon is left to better
+    /// evidence or the estimate: material factors alone miss the electronics.
+    func unknownDevice(_ component: Component) -> ResolverOutput {
+        var metrics: [MetricKey: Measured] = [:]
+        if let rated = component.quantities.ratedPowerW, rated > 0 {
+            let source = Source(title: "Label rating × 0.5 typical-load factor", tier: .factorModel)
+            metrics[.powerOn] = FactorRanges.relative(rated * 0.5, 0.5, unit: .watts, sources: [source])
+        }
+        let massG = (component.quantities.massKg ?? 0) * 1000
+        // Every device has some plastic, so a blend without any (all "electronics_mixed") is not read as zero.
+        if let blend = MaterialBlend(materials: component.identifiers.materials, massG: massG, store: store), blend.plasticG > 0 {
+            metrics[.plasticMass] = blend.endOfLifeMetrics()[.plasticMass]
+        }
+        if let eWaste = store.materialFactor(material: "electronics_mixed") {
+            metrics[.recyclablePercent] = FactorRanges.percent(eWaste.endOfLife.recyclablePercent, spread: 10,
+                                                               sources: [eWaste.citation])
+        }
+        return ResolverOutput(metrics: metrics, plasticPackagingShare: metrics[.plasticMass] == nil ? nil : 0)
     }
 
     // MARK: Clothing (per garment lifetime)
@@ -91,10 +105,17 @@ extension FactorModelResolver {
                                                 0.1, unit: .grams, sources: sources),
             .lifespan: FactorRanges.relative(garment.lifespanYears, 0.4, unit: .years, sources: [garment.lifespanCitation]),
         ]
-        let endOfLife = parts.compactMap { part in store.endOfLife(material: part.name).map { (eol: $0, fraction: part.fraction) } }
-        if !endOfLife.isEmpty {
-            let eolSources = endOfLife.map(\.eol.citation)
-            let recyclable = endOfLife.reduce(0) { $0 + $1.fraction * $1.eol.recyclablePercent }
+        // Synthetic fibers without their own end-of-life row (elastane) behave like other synthetic textiles.
+        let endOfLife = parts.compactMap { part in
+            (store.endOfLife(material: part.name) ?? (part.fiber.isSynthetic ? store.endOfLife(material: "synthetic_textile") : nil))
+                .map { (eol: $0, fraction: part.fraction) }
+        }
+        let covered = endOfLife.reduce(0) { $0 + $1.fraction }
+        if covered > 0 {
+            var seenEOL = Set<Source>()
+            let eolSources = endOfLife.map(\.eol.citation).filter { seenEOL.insert($0).inserted }
+            // Averaged over the fibers with end-of-life data, so a part without it does not read as unrecyclable.
+            let recyclable = endOfLife.reduce(0) { $0 + $1.fraction * $1.eol.recyclablePercent } / covered
             let decomposition = endOfLife.filter { $0.fraction >= 0.05 }.map(\.eol.decompositionYears).max() ?? 0
             metrics[.recyclablePercent] = FactorRanges.percent(recyclable, spread: 10, sources: eolSources)
             metrics[.decompositionTime] = FactorRanges.multiplicative(decomposition, factor: 2, unit: .years, sources: eolSources)

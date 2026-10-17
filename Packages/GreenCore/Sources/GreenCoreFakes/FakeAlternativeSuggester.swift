@@ -1,8 +1,9 @@
 import Foundation
 import GreenCore
 
-/// Suggests one deterministic greener alternative per component, with estimates 40% better
-/// than the component's own fallback estimates.
+/// Suggests one deterministic greener alternative per component, with estimates 40% better than the
+/// component's resolved metrics (its own fallback estimates where a metric is unresolved), so every metric
+/// improves and the swap passes the GreenScore trade-off rule.
 public struct FakeAlternativeSuggester: AlternativeSuggester {
     public var latency: Duration
 
@@ -19,8 +20,16 @@ public struct FakeAlternativeSuggester: AlternativeSuggester {
 
     private func alternative(for component: Component) -> Alternative {
         let (name, rationale, practicality) = Self.swap(for: component)
+        var baseline = component.fallbackEstimates
+        for (metric, measured) in component.metrics {
+            // An estimated swap's carbon is embodied only; the pipeline adds its use phase, as for originals.
+            let share = metric == .carbon && component.category == .electronic
+                ? 1 - (ImpactEngine().stageShares(for: component)[.use] ?? 0) : 1
+            baseline[metric] = EstimateRange(value: measured.value * share, low: measured.low * share,
+                                             high: measured.high * share)
+        }
         var estimates: [MetricKey: EstimateRange] = [:]
-        for (metric, estimate) in component.fallbackEstimates {
+        for (metric, estimate) in baseline {
             let factor = metric.higherIsBetter ? 1.3 : 0.6
             let bound = metric == .recyclablePercent ? 100.0 : .infinity
             estimates[metric] = EstimateRange(value: min(estimate.value * factor, bound),
@@ -56,6 +65,9 @@ public struct FakeAlternativeSuggester: AlternativeSuggester {
         case .food:
             ("Plant-based \(inline(withoutMeat(component.name)))",
              "Plant proteins need far less land and emit less methane.", Practicality(cost: .similar, effort: .easy))
+        case .packaging where component.name.lowercased().contains("box"):
+            ("Reusable food container", "Bring your own container; one replaces hundreds of takeout boxes.",
+             Practicality(cost: .higher, effort: .moderate))
         case .packaging:
             ("Reusable steel cup", "One cup replaces hundreds of disposables.", Practicality(cost: .higher, effort: .easy))
         case .clothing:

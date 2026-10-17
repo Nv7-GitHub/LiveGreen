@@ -2,7 +2,8 @@ import SwiftUI
 import GreenCore
 
 /// Where the scan's carbon figures come from (spec §6): a bar segmented by evidence tier with a
-/// plain-language verdict. The confidence value is the share resolved from exact records or cited specs.
+/// plain-language verdict when some of it comes from product records. The confidence value is the share
+/// resolved from exact records or cited specs.
 struct ConfidenceMeter: View {
     let components: [Component]
 
@@ -10,12 +11,14 @@ struct ConfidenceMeter: View {
         let byTier = ResultInsights.carbonShareByTier(components)
         let confidence = ResultInsights.confidence(components)
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Image(systemName: confidence >= 0.5 ? "checkmark.seal.fill" : "info.circle")
-                    .foregroundStyle(confidence >= 0.5 ? Theme.leaf : .secondary)
-                Text(Self.verdict(confidence))
-                    .font(.footnote.weight(.semibold))
-                Spacer()
+            if let verdict = Self.verdict(confidence) {
+                HStack(spacing: 6) {
+                    Image(systemName: confidence >= 0.5 ? "checkmark.seal.fill" : "info.circle")
+                        .foregroundStyle(confidence >= 0.5 ? Theme.leaf : .secondary)
+                    Text(verdict)
+                        .font(.footnote.weight(.semibold))
+                    Spacer()
+                }
             }
             GeometryReader { geometry in
                 HStack(spacing: 2) {
@@ -40,17 +43,24 @@ struct ConfidenceMeter: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(Self.verdict(confidence)). \(Int((confidence * 100).rounded())) percent of carbon from records or cited specs")
+        .accessibilityLabel(accessibilitySummary(confidence))
         .accessibilityIdentifier("confidenceMeter")
     }
 
-    static func verdict(_ confidence: Double) -> String {
+    /// Headline for the share from records or cited specs; nil when there is none, and the tier legend
+    /// below says where the numbers come from.
+    static func verdict(_ confidence: Double) -> String? {
         switch confidence {
         case 0.66...: "Mostly from product records"
         case 0.33...: "Partly from product records"
-        case 0.01...: "Mostly typical values for similar items"
-        default: "Estimated from typical values for similar items"
+        case 0.01...: "Some figures from product records"
+        default: nil
         }
+    }
+
+    private func accessibilitySummary(_ confidence: Double) -> String {
+        let share = "\(Int((confidence * 100).rounded())) percent of carbon from records or cited specs"
+        return Self.verdict(confidence).map { "\($0). \(share)" } ?? share
     }
 
     static func sourceName(_ tier: Tier) -> String {

@@ -3,9 +3,10 @@ import GreenCore
 
 /// Inspector row for one metric (spec §6): value, range bar, tier badge, an optional breakdown (item vs
 /// packaging plastic, carbon per year vs lifetime) and a Sources disclosure with tappable citations.
+/// Only metrics with a value get a row; missing ones are left off rather than shown as gaps.
 struct MeasuredRow: View {
     let metric: MetricKey
-    let measured: Measured?
+    let measured: Measured
     var breakdown: [MeasuredBreakdown] = []
 
     @State private var showsSources = false
@@ -16,34 +17,28 @@ struct MeasuredRow: View {
                 Label(metric.displayName, systemImage: metric.systemImage)
                     .font(.subheadline)
                 Spacer()
-                if let measured {
-                    Text(measured.formatted)
-                        .font(.subheadline.weight(.semibold).monospacedDigit())
-                        .contentTransition(.numericText())
-                    TierBadge(tier: measured.tier)
-                } else {
-                    Text("Not resolved").font(.caption).foregroundStyle(.secondary)
-                }
+                Text(measured.formatted)
+                    .font(.subheadline.weight(.semibold).monospacedDigit())
+                    .contentTransition(.numericText())
+                TierBadge(tier: measured.tier)
             }
-            if let measured {
-                RangeBar(measured: measured)
-                HStack {
-                    Text(measured.formattedRange)
-                    Spacer()
-                    Text(measured.tier.displayName)
-                }
-                .font(.caption2.monospacedDigit())
-                .foregroundStyle(.secondary)
-                if !breakdown.isEmpty { breakdownRow }
-                DisclosureGroup(isExpanded: $showsSources) {
-                    SourcesList(sources: measured.sources, tier: measured.tier)
-                        .padding(.top, 4)
-                } label: {
-                    Text(measured.sources.isEmpty ? "Sources" : "Sources (\(measured.sources.count))")
-                        .font(.caption.weight(.medium))
-                }
-                .tint(Theme.leaf)
+            RangeBar(measured: measured)
+            HStack {
+                Text(measured.formattedRange)
+                Spacer()
+                Text(measured.tier.displayName)
             }
+            .font(.caption2.monospacedDigit())
+            .foregroundStyle(.secondary)
+            if !breakdown.isEmpty { breakdownRow }
+            DisclosureGroup(isExpanded: $showsSources) {
+                SourcesList(sources: measured.sources, tier: measured.tier)
+                    .padding(.top, 4)
+            } label: {
+                Text(measured.sources.isEmpty ? "Sources" : "Sources (\(measured.sources.count))")
+                    .font(.caption.weight(.medium))
+            }
+            .tint(Theme.leaf)
         }
         .padding(.vertical, 6)
         .accessibilityElement(children: .contain)

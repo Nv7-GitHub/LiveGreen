@@ -211,6 +211,17 @@ struct ClaudeIdentifyTests {
         }
     }
 
+    @Test func brandsMustBeLegibleAndSchemaHasNoExampleBrand() {
+        let system = ClaudeClient.identifySystemPrompt(vocabulary: .default, carbonEstimateOnly: true)
+        #expect(system.contains("never infer it from shape"))
+        #expect(system.contains("keep the brand out of `name`"))
+        let item = ReportComponentsTool.carbonEstimateOnlySchema["properties"]?["components"]?["items"]?["properties"]
+        let name = item?["name"]?["description"]?.string ?? ""
+        let brand = item?["identifiers"]?["properties"]?["brand"]?["description"]?.string ?? ""
+        #expect(!name.isEmpty && !name.contains("Dell"))
+        #expect(brand.contains("never inferred"))
+    }
+
     @Test func labelsPNGInput() {
         let png = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A])
         #expect(ImageBlock.mediaType(of: png) == "image/png")

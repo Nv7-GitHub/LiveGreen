@@ -13,7 +13,10 @@ final class AppModel {
         didSet {
             guard flags != oldValue else { return }
             flags.save()
+            // Scan mode and plug visibility don't change the services, so background swap fetches keep running.
+            guard flags.servicesDiffer(from: oldValue) else { return }
             services = ServiceContainer.make(flags: flags, secrets: secrets)
+            swapPrefetch.reset()
         }
     }
     private(set) var services: ServiceContainer
@@ -21,6 +24,8 @@ final class AppModel {
     var selectedTab: AppTab = .scan
     /// Last persistence error, surfaced in Settings.
     private(set) var storageError: String?
+    /// Greener swaps fetched in the background for scans whose swaps screen has not been opened yet.
+    @ObservationIgnored let swapPrefetch = SwapPrefetcher()
 
     @ObservationIgnored let container: ModelContainer
     @ObservationIgnored private var store: ScanStore { ScanStore(context: container.mainContext) }
@@ -70,10 +75,18 @@ final class AppModel {
             scans.insert(result, at: 0)
         }
         perform { try store.save(result) }
+        prefetchSwaps(for: result)
+    }
+
+    /// Starts fetching a scan's greener swaps in the background, with no UI, unless the saved copy has them or a
+    /// fetch for the same items is running, so "See greener swaps" opens on finished results.
+    func prefetchSwaps(for result: ScanResult) {
+        swapPrefetch.prefetch(scans.first { $0.id == result.id } ?? result, app: self)
     }
 
     func deleteScan(id: UUID) {
         scans.removeAll { $0.id == id }
+        swapPrefetch.forget(id)
         perform { try store.deleteScan(id: id) }
     }
 
@@ -86,6 +99,7 @@ final class AppModel {
 
     func refreshServices() {
         services = ServiceContainer.make(flags: flags, secrets: secrets)
+        swapPrefetch.reset()
     }
 
     private func perform(_ work: () throws -> Void) {

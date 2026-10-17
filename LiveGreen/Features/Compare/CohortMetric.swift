@@ -1,9 +1,17 @@
 import Foundation
 import GreenCore
 
-/// The metrics the cohort compares (per-capita baselines exist only for these).
+/// The metrics on the leaderboard: whole yearly footprints a profile can be placed against.
 nonisolated enum CohortMetric {
-    static let all: [MetricKey] = CohortModel.comparedMetrics
+    static let all: [MetricKey] = CohortModel.leaderboardMetrics
+
+    /// What one number on the board stands for.
+    static func basis(_ metric: MetricKey) -> String {
+        switch metric {
+        case .yearlyElectricity: "Yearly home electricity"
+        default: "Whole yearly footprint"
+        }
+    }
 
     static func shortName(_ metric: MetricKey) -> String {
         switch metric {

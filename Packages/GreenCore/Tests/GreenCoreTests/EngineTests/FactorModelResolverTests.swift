@@ -84,6 +84,30 @@ struct FactorModelResolverTests {
         #expect(try #require(output.metrics[.decompositionTime]).value == 200)
     }
 
+    @Test func clothingEndOfLifeAveragesOverFibersWithData() async throws {
+        // Linen has no end-of-life row; elastane falls back to synthetic textiles.
+        let shirt = Component(name: "Shirt", category: .clothing,
+                              identifiers: Identifiers(materials: [MaterialShare(material: "linen", percent: 50),
+                                                                   MaterialShare(material: "elastane", percent: 50)]),
+                              quantities: Quantities(massKg: 0.2))
+        let output = try await resolve(shirt)
+        #expect(abs(try #require(output.metrics[.recyclablePercent]).value - 14.7) < 1e-9)
+        #expect(try #require(output.metrics[.decompositionTime]).value == 200)
+    }
+
+    @Test func unknownDevicesGetPlasticAndRecyclabilityButNoCarbon() async throws {
+        let keyboard = Component(name: "Mechanical keyboard", category: .electronic,
+                                 identifiers: Identifiers(materials: [MaterialShare(material: "abs", percent: 80),
+                                                                      MaterialShare(material: "steel", percent: 20)]),
+                                 quantities: Quantities(massKg: 0.9))
+        let output = try await resolve(keyboard)
+        #expect(abs(try #require(output.metrics[.plasticMass]).value - 720) < 1e-9)
+        #expect(try #require(output.metrics[.recyclablePercent]).sources.first?.title.contains("E-waste") == true)
+        #expect(output.metrics[.carbon] == nil)
+        #expect(output.metrics[.powerOn] == nil)
+        #expect(output.plasticPackagingShare == 0)
+    }
+
     @Test func asusRecordWinsForMatchingModel() async throws {
         let laptop = Component(name: "Zenbook", category: .electronic, identifiers: Identifiers(brand: "ASUS", model: "UX3405MA"))
         let output = try await ASUSPCFResolver().resolve(ResolutionRequest(component: laptop, metrics: Set(MetricKey.allCases),

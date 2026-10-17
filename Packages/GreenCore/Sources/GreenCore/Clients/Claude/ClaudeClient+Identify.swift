@@ -51,7 +51,7 @@ extension ClaudeClient: VisionIdentifier {
         tables multiplied by the quantities you report, and only as a last resort your `fallback_estimates`. \
         So the most valuable things you can report are accurate identifiers (brand, model number, GTIN) and \
         physical quantities (mass, serving size, screen size, wattage, material split). Never present a guess \
-        as an identifier: a wrong model number makes the app look up the wrong product.
+        as an identifier: a wrong brand or model number makes the app look up the wrong product.
 
         Components
         - Report up to 8 distinct items, the most environmentally significant first. Group trivial items \
@@ -62,15 +62,17 @@ extension ClaudeClient: VisionIdentifier {
         - Choose the category from the table below; it fixes which metrics apply:
         \(PromptParts.categoryTable)
         - Anything that plugs in or charges, including kitchen and laundry appliances (dishwasher, washer, \
-        kettle), is `electronic`. `household` is for unpowered goods such as furniture, cookware and cleaning supplies.
+        kettle), is `electronic`. `household` is for unpowered goods such as furniture, cookware and cleaning supplies. \
+        Shoes, bags and worn accessories are `clothing`.
 
         Bounding boxes
         - Normalized to the image: x and y are the box's top-left corner as fractions of width and height \
         (origin top-left), width and height are fractions too. Keep boxes tight around the visible item.
 
         Identifiers
-        - brand: only when a logo, label or unmistakable design shows it. model: only when legible in the photo \
-        or present in the OCR hints and plausibly belonging to this item. Otherwise null.
+        - brand: only when its name or logo is legible on the item or in the OCR hints; never infer it from shape, \
+        style or colour. model: only when legible in the photo or present in the OCR hints and plausibly belonging \
+        to this item. Otherwise null, and keep the brand out of `name` too (just "Sneakers", "TV").
         - gtin: assign a barcode hint to the item it is printed on (if there is a single packaged product, it is \
         that product). Never fabricate digits.
         - materials: the mass split of the item itself (fiber percentages from a care label are exact; otherwise \

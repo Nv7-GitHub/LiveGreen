@@ -47,13 +47,20 @@ enum SchemaParts {
         "percent": number("Share of the item's mass, 0-100."),
     ], required: ["material", "percent"]), "Material split by mass; percentages should sum to ~100. Empty when unknown.")
 
-    static let identifiers = object([
-        "brand": nullableString("Brand exactly as printed or recognizable; null if not visible."),
-        "model": nullableString("Model number/name exactly as printed on the item or in the OCR hints; null if none is legible. Never guess one."),
-        "gtin": nullableString("GTIN/EAN/UPC digits if a barcode hint or printed number belongs to this item; else null."),
-        "materials": materials,
-        "visible_text": nullableString("Short label text read from this item (energy label, care label, nutrition panel), if any."),
-    ], required: ["brand", "model", "gtin", "materials"])
+    static let identifiers = identifiersSchema(brand: "Brand exactly as printed or recognizable; null if not visible.")
+
+    /// Identify's brand rule: read off the item, never inferred from its look (a guessed brand mislabels the item).
+    static let legibleBrand = "Brand only if its name or logo is legible in the photo or hints, never inferred from shape or style; else null."
+
+    static func identifiersSchema(brand: String) -> JSONValue {
+        object([
+            "brand": nullableString(brand),
+            "model": nullableString("Model number/name exactly as printed on the item or in the OCR hints; null if none is legible. Never guess one."),
+            "gtin": nullableString("GTIN/EAN/UPC digits if a barcode hint or printed number belongs to this item; else null."),
+            "materials": materials,
+            "visible_text": nullableString("Short label text read from this item (energy label, care label, nutrition panel), if any."),
+        ], required: ["brand", "model", "gtin", "materials"])
+    }
 
     static let quantities = object([
         "mass_kg": nullableNumber("Mass of the item as pictured (one unit or one serving), kg."),

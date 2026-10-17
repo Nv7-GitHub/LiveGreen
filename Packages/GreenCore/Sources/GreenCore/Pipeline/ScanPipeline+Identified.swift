@@ -2,9 +2,51 @@ import Foundation
 
 extension ScanPipeline {
     /// Post-processing of the identify output before the ladder runs: plugged-in appliances are scored as
-    /// electronics, and unambiguous on-device hints become identifiers (spec §5.2).
+    /// electronics, model names the labels do not back up are dropped, unambiguous on-device hints become
+    /// identifiers (spec §5.2), and unidentified items get their generic kind.
     func prepared(_ components: [IdentifiedComponent], hints: OCRHints) -> [IdentifiedComponent] {
-        Self.applyingHints(hints, to: components.map(reclassified))
+        let checked = components.map(reclassified).map { Self.droppingUnreadModel(from: $0, hints: hints) }
+        return Self.withGenericKeys(Self.applyingHints(hints, to: checked))
+    }
+
+    /// A model the on-device text does not contain and that is not a printed-looking code (one word with a
+    /// digit) was most likely inferred from the item's look, such as a product line guessed from a shoe's shape.
+    /// Looking it up would score the wrong product, so it is dropped; the brand is kept.
+    static func droppingUnreadModel(from component: IdentifiedComponent, hints: OCRHints) -> IdentifiedComponent {
+        guard let model = component.identifiers.model?.trimmedNonEmpty else { return component }
+        let key = ReferenceKey.modelKey(model)
+        let read = !key.isEmpty && (hints.modelNumbers + hints.textLines).contains { ReferenceKey.modelKey($0).contains(key) }
+        let codeLike = !model.contains(where: \.isWhitespace) && model.contains(where: \.isNumber)
+        guard !read, !codeLike else { return component }
+        var copy = component
+        copy.identifiers.model = nil
+        return copy
+    }
+
+    /// Gives items without a GTIN or brand|model their generic kind, the key they are cached under, so a blue and
+    /// a beige backpack resolve alike. Items of one kind in the same scan also share the best-informed one's
+    /// category, quantities, materials and fallback estimate: those are guesses that differ from call to call.
+    static func withGenericKeys(_ components: [IdentifiedComponent]) -> [IdentifiedComponent] {
+        var result = components
+        var leads: [String: Int] = [:]
+        for index in result.indices where result[index].identifiers.cacheKey == nil {
+            guard let key = Identifiers.genericKey(name: result[index].name, category: result[index].category) else { continue }
+            result[index].identifiers.genericKey = key
+            if leads[key].map({ detail(of: result[index]) > detail(of: result[$0]) }) ?? true { leads[key] = index }
+        }
+        for index in result.indices {
+            guard let key = result[index].identifiers.genericKey, let lead = leads[key], lead != index else { continue }
+            result[index].category = result[lead].category
+            result[index].quantities = result[lead].quantities
+            result[index].identifiers.materials = result[lead].identifiers.materials
+            result[index].estimates = result[lead].estimates
+        }
+        return result
+    }
+
+    /// How much the factor model has to go on: materials matter most, then a mass.
+    private static func detail(of component: IdentifiedComponent) -> Int {
+        (component.identifiers.materials.isEmpty ? 0 : 2) + (component.quantities.massKg == nil ? 0 : 1)
     }
 
     /// A `household` item with a known powered device type (dishwasher, kettle…) is an electronic, so it gets

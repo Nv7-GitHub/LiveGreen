@@ -11,36 +11,22 @@ nonisolated enum SmartPlugAlternative {
         var savings: Measured
     }
 
-    /// Adds the plug alternative to every deferrable-load component that lacks one, and returns the
-    /// charging comparison per component id for the chart.
-    static func attach(to result: ScanResult, profile: UserProfile,
-                       services: ServiceContainer) async -> (ScanResult, [UUID: ChargingCarbon]) {
-        var updated = result
+    /// The charging comparison per deferrable-load component id, for the chart. The scan pipeline already added
+    /// the plug alternative itself; this only needs the grid outlook, loaded once for the whole scan.
+    static func charging(for result: ScanResult, profile: UserProfile,
+                         services: ServiceContainer) async -> [UUID: ChargingCarbon] {
+        guard result.components.contains(where: { $0.plugCandidate != nil }),
+              let outlook = try? await GridOutlook.load(grid: services.grid, reference: services.reference,
+                                                         profile: profile) else { return [:] }
         var charging: [UUID: ChargingCarbon] = [:]
-        for index in updated.components.indices {
-            let component = updated.components[index]
-            guard let candidate = component.plugCandidate,
-                  let estimate = await chargingCarbon(candidate, profile: profile, services: services) else { continue }
-            charging[component.id] = estimate
-            let savings = candidate.estimatedSavings ?? estimate.savings
-            updated.components[index].plugCandidate?.estimatedSavings = savings
-            if !component.alternatives.contains(where: { $0.kind == .smartPlugScheduling }) {
-                updated.components[index].alternatives.append(make(for: updated.components[index]))
-            }
+        for component in result.components {
+            guard let candidate = component.plugCandidate else { continue }
+            charging[component.id] = chargingCarbon(candidate, forecast: outlook.forecast)
         }
-        return (updated, charging)
+        return charging
     }
 
     static func make(for component: Component) -> Alternative { .smartPlugScheduling(for: component) }
-
-    /// kWh/yr × the day's average intensity vs. kWh/yr × the planned cleanest hours (spec §8.3), using the
-    /// same forecast and planner as the Plugs tab.
-    static func chargingCarbon(_ candidate: PlugCandidate, profile: UserProfile,
-                               services: ServiceContainer) async -> ChargingCarbon? {
-        guard let outlook = try? await GridOutlook.load(grid: services.grid, reference: services.reference,
-                                                         profile: profile) else { return nil }
-        return chargingCarbon(candidate, forecast: outlook.forecast)
-    }
 
     static func chargingCarbon(_ candidate: PlugCandidate, forecast: GridForecast) -> ChargingCarbon {
         let savings = GreenHoursPlanner.estimatedSavings(for: candidate, forecast: forecast)

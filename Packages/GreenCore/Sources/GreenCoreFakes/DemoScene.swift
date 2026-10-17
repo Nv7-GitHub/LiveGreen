@@ -113,6 +113,14 @@ enum DemoFixtures {
             estimates: [.carbon: est(0.17, 0.1, 0.3), .water: est(2, 1, 5), .land: est(0.05, 0.02, 0.1),
                         .waterPollution: est(0.2, 0.1, 0.4), .plasticMass: est(0.5, 0.2, 1),
                         .recyclablePercent: est(70, 50, 90), .decompositionTime: est(200, 80, 500)]),
+        // No material identified, so its carbon stays a T4 estimate and the scan asks what it is made of.
+        IdentifiedComponent(
+            name: "Takeout box", category: .packaging,
+            boundingBox: NormalizedRect(x: 0.62, y: 0.68, width: 0.30, height: 0.22),
+            quantities: Quantities(packagingMassG: 30),
+            defaultUsage: UsageProfile(usesPerWeek: 2),
+            estimates: [.carbon: est(0.08, 0.03, 0.2), .water: est(1, 0.3, 3), .plasticMass: est(10, 0, 30),
+                        .recyclablePercent: est(15, 0, 50), .decompositionTime: est(100, 1, 500)]),
     ], sceneTitle: "Lunch")
 
     static let eBike = IdentifyResponse(components: [

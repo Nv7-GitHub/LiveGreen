@@ -40,22 +40,21 @@ private struct HouseholdPicker: View {
 
     var body: some View {
         HStack(spacing: 20) {
-            Button("Fewer", systemImage: "minus") { size = max(1, size - 1) }
-                .labelStyle(.iconOnly)
-                .buttonStyle(.glass)
+            stepButton("Fewer", systemImage: "minus") { size = max(1, size - 1) }
                 .disabled(size <= 1)
+                .accessibilityIdentifier("onboarding.household.fewer")
             VStack(spacing: 0) {
                 Text("\(size)")
                     .font(.system(size: 48, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .contentTransition(.numericText(value: Double(size)))
+                    .accessibilityIdentifier("onboarding.household.count")
                 Text(size == 1 ? "person" : "people").font(.subheadline).foregroundStyle(.secondary)
             }
             .frame(minWidth: 90)
-            Button("More", systemImage: "plus") { size = min(12, size + 1) }
-                .labelStyle(.iconOnly)
-                .buttonStyle(.glass)
+            stepButton("More", systemImage: "plus") { size = min(12, size + 1) }
                 .disabled(size >= 12)
+                .accessibilityIdentifier("onboarding.household.more")
         }
         .frame(maxWidth: .infinity)
         .animation(.snappy, value: size)
@@ -68,6 +67,19 @@ private struct HouseholdPicker: View {
             @unknown default: break
             }
         }
+    }
+
+    /// A round glass stepper button, comfortably over 44 pt (the icon-only default was about 30 pt tall).
+    private func stepButton(_ title: String, systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.title2.weight(.semibold))
+                .frame(width: 44, height: 44)
+                .contentShape(.circle)
+        }
+        .buttonStyle(.glass)
+        .buttonBorderShape(.circle)
+        .accessibilityLabel(title)
     }
 }
 

@@ -1,10 +1,17 @@
 import Foundation
 
 /// Lognormal peer distributions built from the profile and per-capita baselines (spec §9).
-/// Comparisons are of category sub-footprints: the peer median for a set of categories is the per-capita
-/// median × those categories' shares, adjusted by diet, clothing habit, household size, home type and heating.
+/// The leaderboard and percentiles compare whole yearly footprints: the region's people (`regionalDistribution`)
+/// against your estimate (`estimate`), which is the per-capita figure × category shares × your profile
+/// modifiers, with scanned items counted where they exceed it. `median(for:categories:)` gives a category
+/// sub-footprint for people like you.
 public struct CohortModel: Sendable {
+    /// Metrics a scanned footprint keeps.
     public static let comparedMetrics: [MetricKey] = [.carbon, .water, .land, .yearlyElectricity]
+    /// Metrics on the leaderboard and percentile cards. Water is left out because its baseline is national
+    /// withdrawals (power-plant cooling and irrigation included). Land is left out because it is one world
+    /// farmland average for every country. Neither is a per-person number a profile can place.
+    public static let leaderboardMetrics: [MetricKey] = [.carbon, .yearlyElectricity]
 
     public let profile: UserProfile
     public let baseline: PerCapitaBaseline
@@ -72,11 +79,43 @@ public struct CohortModel: Sendable {
         return base * modifier
     }
 
-    /// Compares a scanned footprint with peers for every metric it covers.
+    /// Per-person yearly footprint of the region's people, before any profile adjustment: the whole carbon
+    /// footprint, or home electricity (the electronics and household shares of per-capita demand, which also
+    /// covers industry and commerce). Nil for metrics not on the leaderboard.
+    public func regionalDistribution(for metric: MetricKey) -> LogNormal? {
+        guard Self.leaderboardMetrics.contains(metric), let total = baseline.medians[metric],
+              let sigma = baseline.sigmas[metric] else { return nil }
+        let share = metric == .carbon ? 1 : Category.allCases.reduce(0) { $0 + reference.share(of: $1, for: metric) }
+        guard total * share > 0 else { return nil }
+        return LogNormal(median: total * share, sigma: sigma)
+    }
+
+    /// Your yearly footprint on the same basis as `regionalDistribution`. Each category counts the larger of
+    /// two amounts: your profile's typical amount (per-capita × share × modifiers) or what you've scanned in
+    /// it. Carbon adds your commute and the rest of the footprint (services, other goods), so with nothing
+    /// scanned it equals `LifestyleEstimate.totalKg`.
+    public func estimate(for metric: MetricKey, scanned: ScannedFootprint = .empty) -> Double? {
+        guard Self.leaderboardMetrics.contains(metric), let total = baseline.medians[metric] else { return nil }
+        let heating = reference.heatingModifiers[profile.heating] ?? 1
+        var value = Category.allCases.reduce(0.0) { sum, category in
+            var typical = total * reference.share(of: category, for: metric) * modifier(for: category, metric: metric)
+            // As in `LifestyleEstimate`: the heating fuel shifts home-energy carbon too.
+            if metric == .carbon, category == .electronic || category == .household { typical *= heating }
+            return sum + max(typical, scanned.byCategory[category]?[metric] ?? 0)
+        }
+        if metric == .carbon {
+            let shares = Category.allCases.reduce(0) { $0 + reference.share(of: $1, for: .carbon) }
+            value += profile.commuteKmPerWeekByMode.reduce(0) { $0 + (LifestyleEstimate.kgPerKm[$1.key] ?? 0) * $1.value * 52 }
+            value += max(0, total * (1 - shares - LifestyleEstimate.averageTravelShare))
+        }
+        return value
+    }
+
+    /// Compares your estimated footprint (profile plus scans) with the region's people for each leaderboard metric.
     public func compare(_ footprint: ScannedFootprint) -> [CohortComparison] {
-        Self.comparedMetrics.compactMap { metric in
-            guard let value = footprint.yearly[metric],
-                  let distribution = distribution(for: metric, categories: footprint.categories(for: metric)) else { return nil }
+        Self.leaderboardMetrics.compactMap { metric in
+            guard let value = estimate(for: metric, scanned: footprint),
+                  let distribution = regionalDistribution(for: metric) else { return nil }
             return CohortComparison(metric: metric, userValue: value, cohortMedian: distribution.median,
                                     greenerThan: Percentiles.greenerThan(value, in: distribution))
         }
@@ -86,10 +125,10 @@ public struct CohortModel: Sendable {
 /// One metric's peer comparison.
 public struct CohortComparison: Sendable, Hashable, Identifiable {
     public var metric: MetricKey
-    /// The user's yearly sub-footprint, canonical units.
+    /// The user's estimated yearly footprint (profile plus scans), canonical units.
     public var userValue: Double
     public var cohortMedian: Double
-    /// Share of peers (0–1) with a larger footprint: "You're greener than 68% of people like you."
+    /// Share of the region's people (0–1) with a larger footprint: "You're greener than 68% of people like you."
     public var greenerThan: Double
 
     public var id: MetricKey { metric }

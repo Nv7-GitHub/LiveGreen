@@ -1439,8 +1439,9 @@
  ],
  "usStates": {
   "usAverageTonnes": 14.81,
-  "stateRatioMin": 0.6,
-  "stateRatioMax": 1.6,
+  "stateRatioMin": 0.8,
+  "stateRatioMax": 1.25,
+  "note": "EIA figures are production-based (power plants, refineries and industry that serve other states), so they spread far wider (MA 0.57×, WY 6.5× the US) than what residents consume; the ratio is clamped to 0.8–1.25× so a state baseline stays a plausible personal footprint.",
   "verified": true,
   "citation": {
    "title": "US EIA, Energy-related CO2 emissions by state, Table 4: per capita (2022)",
@@ -1503,11 +1504,12 @@
  },
  "sigmas": {
   "values": {
-   "carbon": 0.6,
+   "carbon": 0.45,
    "water": 0.55,
    "land": 0.6,
    "yearlyElectricity": 0.5
   },
+  "note": "Carbon σ is narrower than WIR's ownership-based inequality (which attributes investment emissions to owners): a personal consumption footprint at σ 0.45 has its 10th–90th percentiles at 0.56×–1.78× the median (US ≈ 9–28 t).",
   "verified": false,
   "citation": {
    "title": "Chancel, Piketty et al., World Inequality Report 2022 (carbon inequality within countries); lognormal σ derived",

@@ -23,8 +23,8 @@ struct AlternativeRow: View {
                         Text(alternative.name).font(.subheadline.weight(.semibold))
                         Text(alternative.rationale).font(.caption).foregroundStyle(.secondary)
                         PracticalityTags(practicality: alternative.practicality)
-                        if let saving = carbonSavingText {
-                            Text(saving).font(.caption.bold().monospacedDigit()).foregroundStyle(Theme.leaf)
+                        if let summary {
+                            Text(summary).font(.caption.bold().monospacedDigit()).foregroundStyle(Theme.leaf)
                         }
                     }
                     .multilineTextAlignment(.leading)
@@ -53,10 +53,24 @@ struct AlternativeRow: View {
         }
     }
 
-    private var carbonSavingText: String? {
-        guard let saving = SwapMath.yearlySaving(.carbon, component: component, alternative: alternative),
-              saving.value > 0 else { return nil }
-        return "−\(DisplayUnits.carbon(kg: saving.value))/yr"
+    /// GreenScore's average gain across every metric that counts, then the yearly carbon saving when it is a
+    /// net change.
+    private var summary: String? {
+        var parts: [String] = []
+        if !isPlug {
+            let assessment = GreenScore.assess(alternative, replacing: component, engine: SwapMath.engine)
+            let percent = Int((assessment.averageImprovement * 100).rounded())
+            if percent > 0 {
+                let count = assessment.changes.count
+                parts.append("\(percent)% greener across \(count) metric\(count == 1 ? "" : "s")")
+            }
+        }
+        let baseline = (component.metrics[.carbon]?.value ?? 0) * SwapMath.yearlyFactor(.carbon, for: component)
+        if let saving = SwapMath.yearlySaving(.carbon, component: component, alternative: alternative),
+           saving.value > 0, SwapMath.isNetChange(saving, baseline: baseline) {
+            parts.append("−\(DisplayUnits.carbon(kg: saving.value))/yr")
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 }
 

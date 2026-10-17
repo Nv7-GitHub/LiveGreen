@@ -38,6 +38,7 @@ final class LiveGreenTourTests: XCTestCase {
             XCTAssertTrue(button.waitForExistence(timeout: 10))
             button.tap()
             let results = app.descendants(matching: .any)["confidenceMeter"]
+            answerDetailsIfAsked(app, before: results, snapshot: file + "-details")
             XCTAssertTrue(results.waitForExistence(timeout: 30), "\(scene) opens results")
             let useEstimate = app.buttons["useEstimate"]
             if useEstimate.waitForExistence(timeout: 2) { useEstimate.tap() }
@@ -189,6 +190,20 @@ final class LiveGreenTourTests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// Lunch's takeout box has no known material, so that scan asks one detail question before the results;
+    /// answer it ("Foam") so the box moves to the factor model. Other scenes go straight to `results`.
+    @MainActor
+    private func answerDetailsIfAsked(_ app: XCUIApplication, before results: XCUIElement, snapshot: String) {
+        let apply = app.buttons["specApply"]
+        let deadline = Date().addingTimeInterval(30)
+        while Date() < deadline, !apply.exists, !results.exists { Thread.sleep(forTimeInterval: 0.25) }
+        guard apply.exists else { return }
+        snap(snapshot)
+        let foam = app.buttons["specOption.Foam"]
+        if foam.exists { foam.tap() }
+        if apply.isEnabled { apply.tap() } else { app.buttons["specSkip"].tap() }
+    }
 
     /// The tab bar minimizes on scroll, so scroll back up until the tab is reachable.
     @MainActor

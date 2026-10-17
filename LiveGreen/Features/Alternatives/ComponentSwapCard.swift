@@ -16,7 +16,7 @@ struct ComponentSwapCard: View {
                 HStack {
                     Label(component.name, systemImage: component.category.systemImage).font(.headline)
                     Spacer()
-                    if let carbon = component.metrics[.carbon] {
+                    if let carbon = component.displayable(.carbon) {
                         Text(carbon.formatted).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                     }
                 }

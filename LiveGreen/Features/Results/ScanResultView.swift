@@ -94,6 +94,7 @@ struct ScanResultView: View {
         }
         // Greener swaps save picks and the image to the stored scan; pick them up when returning here.
         .onAppear { if let saved = savedCopy, saved != current { current = saved } }
+        .onAppear { model.prefetchSwaps(for: current) }
         .task { await offerQuestionsOnce() }
     }
 
@@ -269,7 +270,7 @@ struct ScanResultView: View {
         isRerunning = true
         Task {
             let base = savedCopy ?? current
-            var updated = await (rerun ?? localRerun)(base, answers)
+            var updated = rebasingSwaps(from: base, onto: await (rerun ?? localRerun)(base, answers))
             updated.components = QuestionGate.settling(settled, in: updated.components)
             withAnimation(.smooth) { current = updated }
             model.save(updated)
@@ -280,9 +281,18 @@ struct ScanResultView: View {
     /// Usage edited in the detail sheet: re-run the engine on-device and save.
     private func applyUsage(_ field: UsageField, _ value: Double, to componentID: UUID) {
         let base = savedCopy ?? current
-        let updated = model.makeScanCoordinator().applying(usage: field, value: value, to: componentID, in: base)
+        let updated = rebasingSwaps(from: base,
+                                    onto: model.makeScanCoordinator().applying(usage: field, value: value,
+                                                                               to: componentID, in: base))
         withAnimation(.smooth) { current = updated }
         model.save(updated)
+    }
+
+    /// Saved swaps take the new usage too (`SwapPrefetcher.rebase`), so the swaps screen still compares like with like.
+    private func rebasingSwaps(from base: ScanResult, onto updated: ScanResult) -> ScanResult {
+        guard base.hasAlternatives else { return updated }
+        return SwapPrefetcher.rebase(base, onto: updated, engine: ImpactEngine(reference: model.services.reference),
+                                     profile: model.profile)
     }
 
     /// Default re-run: GreenCore's impact engine, deterministic and on-device (spec §5.5).

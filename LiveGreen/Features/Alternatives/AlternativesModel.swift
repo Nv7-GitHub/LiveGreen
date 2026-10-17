@@ -6,6 +6,8 @@ import GreenCore
 @Observable
 final class AlternativesModel {
     enum Phase: Equatable {
+        /// Not checked yet. Nothing is drawn, so swaps prefetched in the background appear without a loading flash.
+        case pending
         case loading
         case ready
         case failed(String)
@@ -36,13 +38,27 @@ final class AlternativesModel {
         self.selection = result.selectedAlternatives
         self.keptOriginals = result.keptOriginals
         self.imageState = result.greenerImage.map { .ready($0) } ?? .idle
-        self.phase = result.components.contains { !$0.alternatives.isEmpty } ? .ready : .loading
+        self.phase = result.hasAlternatives ? .ready : .pending
     }
 
     var hasPhoto: Bool { !(result.photo ?? Data()).isEmpty }
 
+    /// A greener picture only suits a scene: for one item or a pair the edit looks odd, so it is not offered.
+    static func showsGreenerImage(for result: ScanResult) -> Bool { result.components.count > 2 }
+
+    var showsGreenerImage: Bool { Self.showsGreenerImage(for: result) }
+
     func alternatives(for component: Component, plugFeatures: Bool) -> [Alternative] {
-        component.alternatives.filter { plugFeatures || $0.kind != .smartPlugScheduling }
+        Self.alternatives(for: component, plugFeatures: plugFeatures)
+    }
+
+    /// The swaps to offer: plug scheduling when plug features are on, product swaps that pass the GreenScore
+    /// trade-off rule (scans saved before it existed may still hold others).
+    static func alternatives(for component: Component, plugFeatures: Bool) -> [Alternative] {
+        component.alternatives.filter { alternative in
+            alternative.kind == .smartPlugScheduling
+                ? plugFeatures : GreenScore.accepts(alternative, replacing: component, engine: SwapMath.engine)
+        }
     }
 
     func pick(for component: Component) -> Alternative? {
@@ -60,11 +76,11 @@ final class AlternativesModel {
 
     // MARK: - Loading
 
-    /// Suggests and resolves alternatives unless the scan already has them, then adds plug options.
+    /// Shows the scan's swaps: saved ones, else the background prefetch (awaiting it if it is still running),
+    /// then default picks and the plug rows' charging comparison.
     func load(app: AppModel) async {
         // The pushed result can be stale; a saved copy carries earlier picks and swaps.
-        if let saved = app.scans.first(where: { $0.id == result.id }), saved != result,
-           saved.components.contains(where: { !$0.alternatives.isEmpty }) {
+        if let saved = app.scans.first(where: { $0.id == result.id }), saved != result, saved.hasAlternatives {
             result = saved
             selection = saved.selectedAlternatives
             keptOriginals = saved.keptOriginals
@@ -73,31 +89,54 @@ final class AlternativesModel {
         let before = result
         let beforeSelection = selection
         let beforeKept = keptOriginals
-        var working = result
-        if !working.components.contains(where: { !$0.alternatives.isEmpty }) {
-            phase = .loading
+        if !result.hasAlternatives {
             do {
-                working = try await app.makeScanCoordinator(mode: result.mode).suggestAlternatives(for: working)
+                let fetched: ScanResult
+                if let ready = app.swapPrefetch.fetched(for: result) {
+                    fetched = ready
+                } else {
+                    phase = .loading
+                    fetched = try await app.swapPrefetch.swaps(for: result, app: app)
+                }
+                result = SwapPrefetcher.rebase(fetched, onto: result, engine: ImpactEngine(reference: app.services.reference),
+                                               profile: app.profile)
             } catch {
                 phase = .failed(error.localizedDescription)
                 return
             }
         }
-        let (withPlugs, charging) = await SmartPlugAlternative.attach(to: working, profile: app.profile,
-                                                                      services: app.services)
-        self.charging = charging
-        result = withPlugs
-        applyDefaultPicks(plugFeatures: app.flags.plugFeaturesEnabled)
+        selection = Self.defaultPicks(for: result, selection: selection, kept: keptOriginals,
+                                      plugFeatures: app.flags.plugFeaturesEnabled)
         phase = .ready
         if result != before || selection != beforeSelection || keptOriginals != beforeKept { persist(app) }
+        await loadCharging(app: app)
     }
 
-    /// Spec §7: each component defaults to its biggest carbon saving, unless the user kept the original.
-    private func applyDefaultPicks(plugFeatures: Bool) {
-        for component in result.components where selection[component.id] == nil && !keptOriginals.contains(component.id) {
+    /// Spec §7 default picks for components without one, unless the user kept the original
+    /// (`SwapMath.defaultPick`: the best GreenScore).
+    static func defaultPicks(for result: ScanResult, selection: [UUID: UUID], kept: Set<UUID>,
+                             plugFeatures: Bool) -> [UUID: UUID] {
+        var picks = selection
+        for component in result.components where picks[component.id] == nil && !kept.contains(component.id) {
             let options = alternatives(for: component, plugFeatures: plugFeatures)
-            if let best = SwapMath.defaultPick(for: component, among: options) { selection[component.id] = best.id }
+            if let best = SwapMath.defaultPick(for: component, among: options) { picks[component.id] = best.id }
         }
+        return picks
+    }
+
+    /// The plug rows' charging comparison. The grid outlook can take a while on a cold start, so the swaps show
+    /// first and the chart fills in.
+    private func loadCharging(app: AppModel) async {
+        let charging = await SmartPlugAlternative.charging(for: result, profile: app.profile, services: app.services)
+        guard !charging.isEmpty else { return }
+        self.charging = charging
+        var filled = false
+        for index in result.components.indices where result.components[index].plugCandidate?.estimatedSavings == nil {
+            guard let savings = charging[result.components[index].id]?.savings else { continue }
+            result.components[index].plugCandidate?.estimatedSavings = savings
+            filled = true
+        }
+        if filled { persist(app) }
     }
 
     // MARK: - Selection
@@ -118,15 +157,23 @@ final class AlternativesModel {
 
     // MARK: - Greener image
 
+    /// Generates the greener picture for the current picks, using the background edit when it was made for
+    /// exactly these picks (the defaults).
     func generateImage(app: AppModel) async {
-        guard let photo = result.photo, !photo.isEmpty else { return }
+        guard showsGreenerImage, let photo = result.photo, !photo.isEmpty else { return }
         let swaps = GreenerImagePrompt.swaps(for: result, selection: visibleSelection(plugFeatures: app.flags.plugFeaturesEnabled))
         guard let prompt = GreenerImagePrompt.make(swaps: swaps) else { return }
         imageState = .generating
         let editor = app.services.imageEditor
+        let prefetched = app.swapPrefetch.image(for: result.id, prompt: prompt)
         do {
-            let image = try await Self.withTimeout(Self.imageTimeout) {
-                try await editor.editImage(photo, prompt: prompt)
+            let image: Data
+            if let prefetched, let ready = try? await prefetched.value {
+                image = ready
+            } else {
+                image = try await Self.withTimeout(Self.imageTimeout) {
+                    try await editor.editImage(photo, prompt: prompt)
+                }
             }
             imageState = .ready(image)
             result.greenerImage = image
@@ -153,8 +200,8 @@ final class AlternativesModel {
         }
     }
 
-    private static func withTimeout<T: Sendable>(_ limit: Duration,
-                                                 _ work: @escaping @Sendable () async throws -> T) async throws -> T {
+    static func withTimeout<T: Sendable>(_ limit: Duration,
+                                         _ work: @escaping @Sendable () async throws -> T) async throws -> T {
         try await withThrowingTaskGroup(of: T.self) { group in
             group.addTask { try await work() }
             group.addTask {

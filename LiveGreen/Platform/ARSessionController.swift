@@ -17,6 +17,9 @@ final class ARSessionController: NSObject {
     private(set) var labelPositions: [UUID: CGPoint] = [:]
     /// The scan whose components are currently anchored.
     private(set) var anchoredResultID: UUID?
+    /// UIKit's top safe-area inset of the full-screen AR view: status bar plus navigation bar, the band labels
+    /// must stay below. SwiftUI reports no top inset here because the scan tab ignores it.
+    private(set) var topBarInset: CGFloat = 0
 
     @ObservationIgnored private(set) lazy var arView: ARView = makeView()
     @ObservationIgnored private var anchors: [UUID: AnchorEntity] = [:]
@@ -94,6 +97,8 @@ final class ARSessionController: NSObject {
     // MARK: - Projection
 
     private func projectLabels() {
+        let top = arView.safeAreaInsets.top
+        if top != topBarInset { topBarInset = top }
         guard !anchors.isEmpty, let camera = arView.session.currentFrame?.camera else {
             if !labelPositions.isEmpty { labelPositions = [:] }
             return

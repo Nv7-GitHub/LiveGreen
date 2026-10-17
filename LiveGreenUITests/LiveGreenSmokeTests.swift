@@ -17,6 +17,17 @@ final class LiveGreenSmokeTests: XCTestCase {
         return app
     }
 
+    /// Waits for the results titled `title`, skipping the detail questions sheet a scan with T4 items shows first.
+    @MainActor
+    private func waitForResults(_ title: String, in app: XCUIApplication) -> Bool {
+        let results = app.navigationBars[title]
+        let skip = app.buttons["specSkip"]
+        let deadline = Date().addingTimeInterval(20)
+        while Date() < deadline, !results.exists, !skip.exists { Thread.sleep(forTimeInterval: 0.25) }
+        if skip.exists { skip.tap() }
+        return results.waitForExistence(timeout: 10)
+    }
+
     /// Dismisses the gated questions sheet if the scan raised one.
     @MainActor
     private func skipQuestions(in app: XCUIApplication) {
@@ -28,7 +39,23 @@ final class LiveGreenSmokeTests: XCTestCase {
     func testDemoScanShowsResults() {
         let app = launch()
         app.buttons["Desk setup"].tap()
-        XCTAssertTrue(app.navigationBars["Desk setup"].waitForExistence(timeout: 20))
+        XCTAssertTrue(waitForResults("Desk setup", in: app))
+        skipQuestions(in: app)
+        XCTAssertTrue(app.descendants(matching: .any)["confidenceMeter"].waitForExistence(timeout: 5))
+    }
+
+    /// The Lunch takeout box is a T4 estimate, so one detail question comes before the results.
+    @MainActor
+    func testLunchAsksForDetailsBeforeResults() {
+        let app = launch()
+        app.buttons["Lunch"].tap()
+        let apply = app.buttons["specApply"]
+        XCTAssertTrue(apply.waitForExistence(timeout: 20), "The takeout box has no known material")
+        XCTAssertFalse(apply.isEnabled, "Nothing picked yet")
+        app.buttons["specOption.Foam"].tap()
+        XCTAssertTrue(apply.isEnabled)
+        apply.tap()
+        XCTAssertTrue(app.navigationBars["Lunch"].waitForExistence(timeout: 10))
         skipQuestions(in: app)
         XCTAssertTrue(app.descendants(matching: .any)["confidenceMeter"].waitForExistence(timeout: 5))
     }
@@ -37,7 +64,7 @@ final class LiveGreenSmokeTests: XCTestCase {
     func testComponentAlternativesAndComparison() {
         let app = launch()
         app.buttons["Desk setup"].tap()
-        XCTAssertTrue(app.navigationBars["Desk setup"].waitForExistence(timeout: 20))
+        XCTAssertTrue(waitForResults("Desk setup", in: app))
         skipQuestions(in: app)
 
         let monitor = app.descendants(matching: .any)["componentRow.27-inch monitor"]
@@ -63,7 +90,7 @@ final class LiveGreenSmokeTests: XCTestCase {
     func testEBikeOffersSmartPlugAndMockPlugDashboard() {
         let app = launch(["-MockPlug", "YES"])
         app.buttons["E-bike corner"].tap()
-        XCTAssertTrue(app.navigationBars["E-bike corner"].waitForExistence(timeout: 20))
+        XCTAssertTrue(waitForResults("E-bike corner", in: app))
         skipQuestions(in: app)
 
         let alternatives = app.descendants(matching: .any)["openAlternatives"]

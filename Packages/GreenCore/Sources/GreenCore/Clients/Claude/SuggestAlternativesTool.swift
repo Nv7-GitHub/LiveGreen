@@ -8,14 +8,15 @@ enum SuggestAlternativesTool {
     static let definition: JSONValue = [
         "name": .string(name),
         "description": """
-            Report 1-3 greener alternatives for each listed component, each with identifiers or quantities \
+            Report 1-3 greener alternatives for each listed component, each better across all applicable metrics \
+            weighted equally (not carbon first) with no metric clearly worse, with identifiers or quantities \
             precise enough for LiveGreen to look up or model its impacts, a one-sentence rationale and an honest \
             practicality rating.
             """,
         "input_schema": SchemaParts.object([
             "suggestions": SchemaParts.array(of: SchemaParts.object([
                 "component_id": SchemaParts.string("The id of the component exactly as given."),
-                "alternatives": SchemaParts.array(of: alternative, "1-3 alternatives, best first."),
+                "alternatives": SchemaParts.array(of: alternative, "1-3 alternatives, best overall first."),
             ], required: ["component_id", "alternatives"]), "One entry per component."),
         ], required: ["suggestions"]),
     ]
@@ -23,7 +24,7 @@ enum SuggestAlternativesTool {
     static let alternative = SchemaParts.object([
         "name": SchemaParts.string("Specific swap, e.g. 'Refurbished Dell P2722H monitor', 'Lentil burger', 'Reusable steel cup'."),
         "category": SchemaParts.enumeration(SchemaParts.categories, "Category of the alternative."),
-        "rationale": SchemaParts.string("One plain sentence on why it is greener. No invented statistics."),
+        "rationale": SchemaParts.string("One plain sentence on why it is greener overall. No invented statistics."),
         "cost": SchemaParts.enumeration(Practicality.CostTier.allCases.map(\.rawValue), "Upfront or ongoing cost versus the original."),
         "effort": SchemaParts.enumeration(Practicality.Effort.allCases.map(\.rawValue), "Effort to switch."),
         "identifiers": SchemaParts.identifiers,

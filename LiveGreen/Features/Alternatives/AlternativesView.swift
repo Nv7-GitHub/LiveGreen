@@ -3,7 +3,7 @@ import GreenCore
 import GreenCoreFakes
 
 /// Greener swaps per component (spec §7): pick one per component, compare like-for-like,
-/// see projected yearly savings and generate a picture of the greener setup.
+/// see projected yearly savings and, for scenes of more than two items, generate a picture of the greener setup.
 struct AlternativesView: View {
     /// Read in `body` so converted numbers refresh when Settings switches units.
     @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
@@ -23,21 +23,25 @@ struct AlternativesView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     switch screen.phase {
+                    case .pending:
+                        EmptyView()
                     case .loading:
                         loadingCard
                     case let .failed(message):
                         failureCard(message)
+                    case .ready where !hasSwaps:
+                        noSwapsCard
                     case .ready:
                         swapCards
                         ProjectedSavingsCard(savings: SwapMath.projectedSavings(screen.result, selection: selection),
                                              swapCount: selection.count)
-                        imageSection.id(Self.imageAnchor)
+                        if screen.showsGreenerImage { imageSection.id(Self.imageAnchor) }
                     }
                 }
                 .padding()
             }
             .safeAreaInset(edge: .bottom) {
-                if screen.phase == .ready { generateBar }
+                if screen.phase == .ready, hasSwaps, screen.showsGreenerImage { generateBar }
             }
             // The image section is empty until generation starts, so scroll once it has content.
             .onChange(of: screen.imageState) { _, state in
@@ -53,6 +57,10 @@ struct AlternativesView: View {
 
     private var selection: [UUID: UUID] { screen.visibleSelection(plugFeatures: plugFeatures) }
 
+    private var hasSwaps: Bool {
+        screen.result.components.contains { !screen.alternatives(for: $0, plugFeatures: plugFeatures).isEmpty }
+    }
+
     // MARK: - Sections
 
     private var loadingCard: some View {
@@ -66,6 +74,18 @@ struct AlternativesView: View {
                 }
             }
         }
+    }
+
+    private var noSwapsCard: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("No greener swaps found", systemImage: "leaf").font(.headline)
+                Text("Every swap we checked made at least one thing a lot worse, so none is suggested.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityIdentifier("alternatives.none")
     }
 
     private func failureCard(_ message: String) -> some View {

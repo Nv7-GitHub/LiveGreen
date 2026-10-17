@@ -1,7 +1,7 @@
 import Foundation
 
 /// The scan pipeline of spec §5: identify → evidence ladder (cache first, then one phase per tier) →
-/// impact engine → questions. Pure GreenCore so it runs the same in the app, demo mode and tests.
+/// impact engine → questions (usage questions, plus detail questions for T4 items). Pure GreenCore so it runs the same in the app, demo mode and tests.
 public struct ScanPipeline: Sendable {
     public var vision: any VisionIdentifier
     public var alternatives: any AlternativeSuggester
@@ -49,7 +49,7 @@ public struct ScanPipeline: Sendable {
         // A cache hit skips the ladder, so the same identifier always gives the same numbers.
         var cachedIDs = Set<UUID>()
         for index in components.indices {
-            if let hit = await ladder.cached(components[index]) {
+            if let hit = await ladder.cached(components[index], acceptingEstimates: false) {
                 components[index] = hit
                 cachedIDs.insert(hit.id)
             }
@@ -59,11 +59,22 @@ public struct ScanPipeline: Sendable {
             components = await resolveAll(components, tiers: phase.tiers, skipping: cachedIDs, emit: emit)
             emit(.stepFinished(phase.step))
         }
+        // A generic item that still only has an estimate takes the one cached for its kind, so it reads the same.
+        for index in components.indices where !cachedIDs.contains(components[index].id)
+            && components[index].metrics[.carbon]?.tier == .estimate {
+            if let hit = await ladder.cached(components[index]) {
+                components[index] = hit
+                cachedIDs.insert(hit.id)
+            }
+        }
         for component in components where !cachedIDs.contains(component.id) { await ladder.remember(component) }
 
         components = components.map { completed($0, deferrable: deferrable[$0.id] ?? nil) }
         let pending = QuestionGate.pendingQuestions(for: components)
         if !pending.isEmpty { emit(.questionsNeeded(pending)) }
+        // Items still on a T4 estimate get a few plain detail questions before the results (`refining`).
+        let details = await specQuestions(for: components)
+        if !details.isEmpty { emit(.specQuestionsNeeded(details)) }
 
         var result = ScanResult(id: id, date: date, title: response.sceneTitle ?? components.first?.name ?? "Scan",
                                 mode: mode, photo: image.isEmpty ? await productPhoto : image, components: components)
@@ -72,7 +83,8 @@ public struct ScanPipeline: Sendable {
     }
 
     /// Asks for greener alternatives and resolves them through the same ladder and engine as the
-    /// originals (spec §7); deferrable loads also get the local smart-plug alternative.
+    /// originals (spec §7), then keeps only swaps without a big trade-off on any metric, best GreenScore
+    /// first; deferrable loads also get the local smart-plug alternative.
     public func suggestAlternatives(for result: ScanResult) async throws -> ScanResult {
         let suggestions = try await alternatives.suggestAlternatives(for: result.components, profile: profile)
         var updated = result
@@ -82,7 +94,8 @@ public struct ScanPipeline: Sendable {
             for alternative in suggestion.alternatives where alternative.kind == .product {
                 resolved.append(await resolve(alternative))
             }
-            updated.components[index].alternatives = resolved
+            updated.components[index].alternatives = GreenScore.ranked(resolved, replacing: updated.components[index],
+                                                                        engine: engine)
         }
         for index in updated.components.indices where updated.components[index].plugCandidate != nil {
             let component = updated.components[index]

@@ -1,12 +1,16 @@
 import SwiftUI
 import GreenCore
 
-/// Glass label floating over an anchored component: name, headline metric and its tier.
+/// Glass label floating over an anchored component: name, headline metric and its tier. The whole label is
+/// the tap target (at least 44 pt tall).
 struct ARComponentLabel: View {
     let component: Component
     /// Share of the scan's carbon (0–1), shown as the glass tint.
     let carbonShare: Double
+    var isSelected = false
     let action: () -> Void
+
+    private var shape: RoundedRectangle { .rect(cornerRadius: Theme.hotspotCornerRadius) }
 
     var body: some View {
         Button(action: action) {
@@ -29,12 +33,19 @@ struct ARComponentLabel: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
+            .frame(minHeight: 44)
             .frame(maxWidth: 220)
+            // The glass sits outside the button, so without this only the text and icon took taps.
+            .contentShape(shape)
         }
         .buttonStyle(.plain)
-        .glassEffect(.regular.tint(Theme.carbonShareTint(carbonShare).opacity(0.35)).interactive(),
-                     in: .rect(cornerRadius: Theme.hotspotCornerRadius))
+        .glassEffect(.regular.tint(Theme.carbonShareTint(carbonShare).opacity(isSelected ? 0.6 : 0.35)).interactive(),
+                     in: shape)
+        .overlay {
+            if isSelected { shape.strokeBorder(.white.opacity(0.9), lineWidth: 2).allowsHitTesting(false) }
+        }
         .accessibilityLabel("\(component.name), \(component.metrics[.carbon]?.formatted ?? "no carbon value yet")")
         .accessibilityHint("Opens details")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

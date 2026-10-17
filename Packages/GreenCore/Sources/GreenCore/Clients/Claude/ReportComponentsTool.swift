@@ -46,7 +46,7 @@ enum ReportComponentsTool {
     }()
 
     static let component = SchemaParts.object([
-        "name": SchemaParts.string("Specific human name, e.g. 'Dell 27-inch monitor', 'Beef burger', 'Cotton T-shirt'."),
+        "name": SchemaParts.string("Plain item name, e.g. '27-inch monitor', 'Beef burger', 'Cotton T-shirt'; with a brand only when identifiers.brand is set."),
         "category": SchemaParts.enumeration(SchemaParts.categories, "Category; decides which metrics apply."),
         "bounding_box": SchemaParts.object([
             "x": SchemaParts.number("Left edge, fraction of image width (0-1)."),
@@ -54,7 +54,7 @@ enum ReportComponentsTool {
             "width": SchemaParts.number("Width, fraction of image width."),
             "height": SchemaParts.number("Height, fraction of image height."),
         ], required: ["x", "y", "width", "height"], description: "Tight box around the item in normalized image coordinates."),
-        "identifiers": SchemaParts.identifiers,
+        "identifiers": SchemaParts.identifiersSchema(brand: SchemaParts.legibleBrand),
         "quantities": SchemaParts.quantities,
         "default_usage": SchemaParts.usage,
         "deferrable_load": SchemaParts.enumeration(DeferrableLoadType.allCases.map(\.rawValue),
