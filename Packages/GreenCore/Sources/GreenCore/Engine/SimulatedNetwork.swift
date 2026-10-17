@@ -24,17 +24,22 @@ public struct LeaderboardEntry: Sendable, Hashable, Identifiable {
 }
 
 extension CohortModel {
-    public static let friendNames = ["Maya Chen", "Jordan Okafor", "Priya Natarajan", "Leo Martins",
-                                     "Sofia Rossi", "Sam Whitfield", "Aiko Tanaka", "Noah Becker"]
+    public static let friendNames = ["Saahil Shah", "Yuti Purohit", "Nishant Vikramaditya", "Vishnu Mangipudi",
+                                     "Sebastian Bagley", "Daniel Hoang", "Albert Wu", "Shuji Hokosawa", "Louis Liu"]
     public static let friendSymbols = ["leaf.fill", "bicycle", "sun.max.fill", "tree.fill",
-                                       "drop.fill", "wind", "mountain.2.fill", "tram.fill"]
+                                       "drop.fill", "wind", "mountain.2.fill", "tram.fill", "flame.fill"]
     /// Fixed base seed so the network is stable across launches.
     public static let networkSeed: UInt64 = 0x4C69_7665_4772_6565 // "LiveGree"
 
     /// Eight deterministic friends. Each has one lifestyle factor shared across metrics (correlation 0.8),
     /// so a low-carbon friend tends to be low on water and land too.
-    public func simulatedFriends(categories: Set<Category>, count: Int = 8) -> [SimulatedFriend] {
+    public func simulatedFriends(categories: Set<Category>, count: Int = friendNames.count) -> [SimulatedFriend] {
         var generator = Xoshiro256StarStar(seed: Self.networkSeed ^ StableHash.fnv1a(baseline.region))
+        // Names are dealt in a shuffled order, so who lands where on the board is random but stable.
+        var names = Self.friendNames
+        for index in names.indices.reversed() where index > 0 {
+            names.swapAt(index, Int(generator.next() % UInt64(index + 1)))
+        }
         return (0..<count).map { index in
             let lifestyle = generator.nextStandardNormal()
             var yearly: [MetricKey: Double] = [:]
@@ -44,7 +49,7 @@ extension CohortModel {
                 let z = 0.8 * lifestyle + 0.6 * noise
                 yearly[metric] = exp(distribution.mu + distribution.sigma * z)
             }
-            return SimulatedFriend(id: index, name: Self.friendNames[index % Self.friendNames.count],
+            return SimulatedFriend(id: index, name: names[index % names.count],
                                    avatarSymbol: Self.friendSymbols[index % Self.friendSymbols.count], yearly: yearly)
         }
     }

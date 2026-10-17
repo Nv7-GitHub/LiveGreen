@@ -27,10 +27,36 @@ struct SummaryHeader: View {
                                     : result.yearlyTotals
     }
 
-    /// Spec §5.6: totals are shown per year and as pictured (one serving or unit of consumables, the whole
-    /// life of durables). Yearly electricity is already per year.
+    /// Carbon is shown per year (purchase amortized over the item's life, plus use) with lifetime below.
+    /// Electricity is already per year. Water, land, plastic and pollution are what it took to make what is
+    /// pictured; they are not a yearly cost for durable items.
     private func yearly(_ metric: MetricKey, in totals: [MetricKey: Measured]) -> Measured? {
-        metric == .yearlyElectricity ? nil : totals[metric]
+        metric == .carbon ? totals[metric] : nil
+    }
+
+    /// For embodied metrics, the yearly amount from consumables only (food, cups, packaging bought again and
+    /// again), or nil when nothing in the scan repeats.
+    private func repeatPurchases(_ metric: MetricKey) -> Measured? {
+        guard metric != .carbon, metric != .yearlyElectricity else { return nil }
+        let engine = ImpactEngine()
+        let consumables = result.components.filter {
+            if case .unitsPerYear = engine.annualBasis(for: $0) { return $0.metrics[metric] != nil }
+            return false
+        }
+        guard !consumables.isEmpty else { return nil }
+        return engine.yearlyTotals(consumables, seed: result.totalsSeed)[metric]
+    }
+
+    private func headlineTitle(_ metric: MetricKey) -> String {
+        switch metric {
+        case .carbon: "Carbon per year"
+        case .yearlyElectricity: "Electricity per year"
+        case .water: "Water to make what's pictured"
+        case .land: "Land to make what's pictured"
+        case .plasticMass: "Plastic in what's pictured"
+        case .waterPollution: "Water pollution from what's pictured"
+        default: metric.displayName
+        }
     }
 
     @ViewBuilder private func singleTotal(_ metric: MetricKey) -> some View {
@@ -39,8 +65,7 @@ struct SummaryHeader: View {
             let headline = perYear ?? total
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Label(perYear == nil ? metric.displayName : "\(metric.displayName) per year",
-                          systemImage: metric.systemImage)
+                    Label(headlineTitle(metric), systemImage: metric.systemImage)
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.secondary)
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -59,6 +84,9 @@ struct SummaryHeader: View {
                 }
                 HStack(spacing: 10) {
                     if perYear != nil { stat("Lifetime", Measured.format(total.displayValue), unit: total.displaySymbol) }
+                    if let repeats = repeatPurchases(metric) {
+                        stat("Per year, re-buying", Measured.format(repeats.displayValue), unit: repeats.displaySymbol)
+                    }
                     stat("Items", "\(result.components.count)", unit: nil)
                 }
             }
@@ -100,7 +128,7 @@ struct SummaryHeader: View {
                             Text(Measured.format(shown.displayValue)).font(.title3.weight(.bold).monospacedDigit())
                             Text(shown.displaySymbol).font(.caption).foregroundStyle(.secondary)
                         }
-                        Text(yearly(metric, in: perYear) == nil ? "total" : "per year")
+                        Text(metric == .carbon || metric == .yearlyElectricity ? "per year" : "as pictured")
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
                     }

@@ -8,10 +8,13 @@ public struct GrokAnalysisClient: Sendable {
     public struct Configuration: Sendable {
         /// `XAI_API_KEY`. Calls throw `GreenCoreError.missingAPIKey` while it is nil or empty.
         public var apiKey: String?
-        /// Defaults to `grok-4.3`: in testing it identified a desk scene in ~25 s without inventing model
-        /// numbers, where `grok-4.7` did not finish within 4 minutes and the non-reasoning model copied
-        /// example identifiers.
+        /// Alternatives and spec research. `grok-4.3` reasons before answering, which suits cited research;
+        /// `grok-4.7` did not finish an identify call within 4 minutes in testing.
         public var model: String
+        /// Identify. The non-reasoning model answers a desk photo in ~9 s with the slim schema versus ~14–25 s
+        /// for `grok-4.3`, with the same box accuracy; it copied example model numbers only while the schema
+        /// contained one.
+        public var identifyModel: String
         public var baseURL: URL
         public var identifyTimeout: Double
         public var alternativesTimeout: Double
@@ -19,11 +22,13 @@ public struct GrokAnalysisClient: Sendable {
         public var vocabulary: ReferenceVocabulary
         public var retry: RetryPolicy
 
-        public init(apiKey: String?, model: String = "grok-4.3", baseURL: URL = URL(string: "https://api.x.ai")!,
-                    identifyTimeout: Double = 90, alternativesTimeout: Double = 90, researchTimeout: Double = 60,
+        public init(apiKey: String?, model: String = "grok-4.3", identifyModel: String = "grok-4.20-0309-non-reasoning",
+                    baseURL: URL = URL(string: "https://api.x.ai")!,
+                    identifyTimeout: Double = 45, alternativesTimeout: Double = 90, researchTimeout: Double = 60,
                     vocabulary: ReferenceVocabulary = .default, retry: RetryPolicy = .default) {
             self.apiKey = apiKey
             self.model = model
+            self.identifyModel = identifyModel
             self.baseURL = baseURL
             self.identifyTimeout = identifyTimeout
             self.alternativesTimeout = alternativesTimeout
@@ -52,15 +57,25 @@ public struct GrokAnalysisClient: Sendable {
 
     /// Sends `content` with `instructions` and decodes the reply with `parse`, retrying once with the decode
     /// error when the output does not fit.
-    func respond<T: Sendable>(instructions: String, content: [JSONValue], schemaName: String, schema: JSONValue,
-                              tools: [JSONValue] = [], timeout: Double,
+    /// With `progress`, the reply is streamed and the partial output text is reported as it arrives.
+    func respond<T: Sendable>(model: String? = nil, instructions: String, content: [JSONValue], schemaName: String,
+                              schema: JSONValue, tools: [JSONValue] = [], timeout: Double,
+                              progress: (@Sendable (String) -> Void)? = nil,
                               parse: @escaping @Sendable (StructuredReply) throws -> T) async throws -> T {
-        try await withDeadline(seconds: timeout) {
+        let model = model ?? configuration.model
+        let streaming = progress == nil ? nil : transport as? any HTTPStreamingTransport
+        return try await withDeadline(seconds: timeout) {
             var input: [JSONValue] = [["role": "user", "content": .array(content)]]
             var lastProblem = ""
             for _ in 0..<Self.maxAttempts {
-                let reply = try await send(instructions: instructions, input: input, schemaName: schemaName,
-                                           schema: schema, tools: tools, timeout: timeout)
+                let request = try makeRequest(model: model, instructions: instructions, input: input, schemaName: schemaName,
+                                              schema: schema, tools: tools, timeout: timeout, stream: streaming != nil)
+                let reply: StructuredReply
+                if let progress, let streaming {
+                    reply = try await stream(request, via: streaming, progress: progress)
+                } else {
+                    reply = try await send(request)
+                }
                 do {
                     return try parse(reply)
                 } catch {
@@ -73,11 +88,11 @@ public struct GrokAnalysisClient: Sendable {
         }
     }
 
-    func send(instructions: String, input: [JSONValue], schemaName: String, schema: JSONValue,
-              tools: [JSONValue], timeout: Double) async throws -> StructuredReply {
+    func makeRequest(model: String, instructions: String, input: [JSONValue], schemaName: String, schema: JSONValue,
+                     tools: [JSONValue], timeout: Double, stream: Bool) throws -> URLRequest {
         guard let apiKey = configuration.apiKey?.trimmedNonEmpty else { throw GreenCoreError.missingAPIKey("XAI_API_KEY") }
         var body: [String: JSONValue] = [
-            "model": .string(configuration.model),
+            "model": .string(model),
             // Requests with images can fail when the server stores them.
             "store": false,
             "instructions": .string(instructions + "\n\n" + Self.structuredOutputNote),
@@ -85,6 +100,7 @@ public struct GrokAnalysisClient: Sendable {
             "text": ["format": ["type": "json_schema", "name": .string(schemaName), "strict": true, "schema": schema]],
         ]
         if !tools.isEmpty { body["tools"] = .array(tools) }
+        if stream { body["stream"] = true }
 
         var request = URLRequest(url: configuration.baseURL.appending(path: "v1/responses"))
         request.httpMethod = "POST"
@@ -94,7 +110,10 @@ public struct GrokAnalysisClient: Sendable {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         request.httpBody = try encoder.encode(JSONValue.object(body))
+        return request
+    }
 
+    func send(_ request: URLRequest) async throws -> StructuredReply {
         let (data, response) = try await configuration.retry.send(request, via: transport)
         guard response.isSuccess else { throw GreenCoreError.http(status: response.statusCode, body: data.bodyPreview) }
         let reply: JSONValue
@@ -104,6 +123,43 @@ public struct GrokAnalysisClient: Sendable {
             throw GreenCoreError.decoding("Grok response: \(error)")
         }
         return try Self.structuredReply(from: reply)
+    }
+
+    /// Reads a server-sent-event stream: `response.output_text.delta` events build the output text (reported
+    /// through `progress`), and `response.completed` carries the full response.
+    func stream(_ request: URLRequest, via transport: any HTTPStreamingTransport,
+                progress: @Sendable (String) -> Void) async throws -> StructuredReply {
+        let (lines, response) = try await transport.lines(for: request)
+        guard response.isSuccess else {
+            var body = ""
+            for try await line in lines { body += line + "\n"; if body.count > 2_000 { break } }
+            throw GreenCoreError.http(status: response.statusCode, body: body)
+        }
+        var text = ""
+        for try await line in lines {
+            guard line.hasPrefix("data:") else { continue }
+            let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
+            guard payload != "[DONE]", let data = payload.data(using: .utf8),
+                  let event = try? JSONDecoder().decode(JSONValue.self, from: data) else { continue }
+            switch event["type"]?.string {
+            case "response.output_text.delta":
+                text += event["delta"]?.string ?? ""
+                progress(text)
+            case "response.completed":
+                if let full = event["response"] { return try Self.structuredReply(from: full) }
+            case "response.failed", "response.incomplete", "error":
+                let message = event["response"]?["error"]?["message"]?.string ?? event["message"]?.string
+                    ?? event["response"]?["incomplete_details"]?["reason"]?.string ?? "stream ended early"
+                throw GreenCoreError.invalidModelOutput("Grok stream: \(message)")
+            default:
+                break
+            }
+        }
+        // No completed event: use what was streamed.
+        guard let data = text.data(using: .utf8), let output = try? JSONDecoder().decode(JSONValue.self, from: data) else {
+            throw GreenCoreError.invalidModelOutput("Grok stream ended without a complete answer.")
+        }
+        return StructuredReply(output: output, sourceURLs: [])
     }
 
     /// Pulls the output text (parsed as JSON) and the web-search source and citation URLs out of a response.

@@ -10,9 +10,9 @@ struct ARUnsupportedView: View {
                 .ignoresSafeArea()
             GlassCard {
                 VStack(alignment: .leading, spacing: 12) {
-                    Label("AR isn't available here", systemImage: "arkit")
+                    Label("Integrated view isn't available here", systemImage: "arkit")
                         .font(.headline)
-                    Text("AR labels need a device with ARKit world tracking. Photo mode gives you the same results with tappable boxes.")
+                    Text("Integrated view pins labels to items in the room and needs a device with ARKit world tracking. Photo mode gives you the same results with tappable pins.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Button("Switch to Photo mode", systemImage: "camera", action: onSwitchToPhoto)

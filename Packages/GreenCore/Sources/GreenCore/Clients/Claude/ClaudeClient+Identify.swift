@@ -13,8 +13,23 @@ extension ClaudeClient: VisionIdentifier {
         return try await runTool(spec, userContent: content) { input, _ in try ReportComponentsTool.parse(input) }
     }
 
-    static func identifySystemPrompt(vocabulary: ReferenceVocabulary) -> String {
-        """
+    /// - Parameter carbonEstimateOnly: ask for one fallback carbon estimate instead of one per metric
+    ///   (pairs with `ReportComponentsTool.carbonEstimateOnlySchema`).
+    static func identifySystemPrompt(vocabulary: ReferenceVocabulary, carbonEstimateOnly: Bool = false) -> String {
+        let estimates = carbonEstimateOnly
+            ? """
+            Fallback estimate (last resort only)
+            - Give exactly one entry, for `carbon`: value, low and high in kg CO2e for one item as pictured. Keep it \
+            rough; the app replaces it whenever a record or factor table exists.
+            """
+            : """
+            Fallback estimates (last resort only)
+            - For every metric that applies to the component's category, give value, low and high in the canonical \
+            unit below. Make the range honest: wide enough that the true value falls inside ~90% of the time. These \
+            are placeholders the app discards whenever a better source exists; do not spend effort refining them.
+            \(PromptParts.metricDefinitions)
+            """
+        return """
         You are the vision step of LiveGreen, a sustainability scanner. The user photographs an item, \
         appliance, meal or setup. You break the photo into components and report what each one is and its \
         physical facts by calling the `report_components` tool. Always answer with exactly one call to that tool.
@@ -62,11 +77,7 @@ extension ClaudeClient: VisionIdentifier {
         - Set deferrable_load when the item is a load whose charging or running could be moved to cleaner-grid \
         hours: \(PromptParts.deferrableLoads). Otherwise null.
 
-        Fallback estimates (last resort only)
-        - For every metric that applies to the component's category, give value, low and high in the canonical \
-        unit below. Make the range honest: wide enough that the true value falls inside ~90% of the time. These \
-        are placeholders the app discards whenever a better source exists; do not spend effort refining them.
-        \(PromptParts.metricDefinitions)
+        \(estimates)
 
         Questions
         - Add a needs_question entry only when one answer from the user would change the component's carbon or \

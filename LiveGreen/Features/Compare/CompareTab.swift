@@ -1,7 +1,7 @@
 import SwiftUI
 import GreenCore
 
-/// Peer comparison and percentiles (spec §9): hero percentile, cohort curve, trend and simulated leaderboard.
+/// The Leaderboard tab (spec §9): how you rank among friends, then your percentile, cohort curve and trend.
 struct CompareTab: View {
     /// Read in `body` so converted numbers refresh when Settings switches units.
     @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
@@ -36,7 +36,7 @@ struct CompareTab: View {
                 .padding()
                 .animation(.smooth, value: metric)
             }
-            .navigationTitle("Compare")
+            .navigationTitle("Leaderboard")
             .settingsToolbarButton()
             .task(id: inputs) { await refresh() }
         }
@@ -55,12 +55,11 @@ struct CompareTab: View {
     private func content(for analysis: CompareAnalysis) -> some View {
         if let distribution = analysis.distribution(for: metric),
            let comparison = analysis.comparisons[metric] {
+            FriendsLeaderboard(metric: metric, entries: analysis.leaderboard(for: metric))
             PercentileHeroCard(metric: metric, greenerThan: comparison.greenerThan, userValue: comparison.userValue,
                                peerMedian: comparison.cohortMedian)
             CohortDistributionChart(metric: metric, distribution: distribution, userValue: comparison.userValue)
             PercentileTrendCard(points: analysis.trend[metric] ?? [])
-            FriendsLeaderboard(metric: metric, entries: analysis.leaderboard(for: metric),
-                               avatarSymbols: analysis.avatarSymbols(for: metric))
             if let citation = analysis.cohort?.baseline.citation {
                 Text("Baseline: \(citation.title). Compared only for the categories you've scanned, adjusted for your diet, clothing habits and household size.")
                     .font(.caption)

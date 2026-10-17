@@ -67,17 +67,50 @@ nonisolated enum SwapMath {
         }
     }
 
-    /// Sums yearly savings over every chosen swap.
-    static func projectedSavings(_ result: ScanResult, selection: [UUID: UUID]) -> [MetricKey: EstimateRange] {
-        var totals: [MetricKey: EstimateRange] = [:]
+    /// Whether a metric's impact repeats every year for this component. Carbon (amortized purchase plus
+    /// use) and electricity always do; water, land, plastic and pollution only for consumables bought over
+    /// and over. For a durable item those are a one-time cost of making it.
+    static func recursYearly(_ metric: MetricKey, for component: Component) -> Bool {
+        if metric == .carbon || metric == .yearlyElectricity { return true }
+        if case .unitsPerYear = engine.annualBasis(for: component) { return true }
+        return false
+    }
+
+    /// One-time saving per item (positive = less impact), for metrics that do not recur.
+    static func oneTimeSaving(_ metric: MetricKey, component: Component, alternative: Alternative) -> EstimateRange? {
+        guard let current = component.metrics[metric], let swapped = alternative.metrics[metric] else { return nil }
+        let value = current.value - swapped.value
+        let a = current.low - swapped.low, b = current.high - swapped.high
+        return EstimateRange(value: value, low: min(a, b, value), high: max(a, b, value))
+    }
+
+    /// A metric's savings across swaps, split into what repeats every year and what is saved once.
+    struct SavingSplit: Hashable {
+        var yearly: EstimateRange?
+        var oneTime: EstimateRange?
+
+        static func adding(_ range: EstimateRange, to sum: EstimateRange?) -> EstimateRange {
+            let sum = sum ?? EstimateRange(value: 0, low: 0, high: 0)
+            return EstimateRange(value: sum.value + range.value, low: sum.low + range.low, high: sum.high + range.high)
+        }
+    }
+
+    /// Sums the savings of every chosen swap: yearly for recurring impacts, once for the rest.
+    static func projectedSavings(_ result: ScanResult, selection: [UUID: UUID]) -> [MetricKey: SavingSplit] {
+        var totals: [MetricKey: SavingSplit] = [:]
         for component in result.components {
             guard let pickID = selection[component.id],
                   let pick = component.alternatives.first(where: { $0.id == pickID }) else { continue }
             for metric in savingsMetrics {
-                guard let saving = yearlySaving(metric, component: component, alternative: pick) else { continue }
-                let sum = totals[metric] ?? EstimateRange(value: 0, low: 0, high: 0)
-                totals[metric] = EstimateRange(value: sum.value + saving.value, low: sum.low + saving.low,
-                                               high: sum.high + saving.high)
+                var split = totals[metric] ?? SavingSplit()
+                if recursYearly(metric, for: component) {
+                    guard let saving = yearlySaving(metric, component: component, alternative: pick) else { continue }
+                    split.yearly = SavingSplit.adding(saving, to: split.yearly)
+                } else {
+                    guard let saving = oneTimeSaving(metric, component: component, alternative: pick) else { continue }
+                    split.oneTime = SavingSplit.adding(saving, to: split.oneTime)
+                }
+                totals[metric] = split
             }
         }
         return totals

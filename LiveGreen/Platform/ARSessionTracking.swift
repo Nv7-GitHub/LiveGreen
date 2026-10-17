@@ -30,7 +30,7 @@ nonisolated enum ARTrackingStatus: Equatable, Sendable {
         case .initializing: "Move your phone slowly to map the scene"
         case .normal: "Frame your items, then capture"
         case let .limited(reason): reason
-        case .interrupted: "AR paused"
+        case .interrupted: "Integrated view paused"
         case let .failed(message): message
         }
     }

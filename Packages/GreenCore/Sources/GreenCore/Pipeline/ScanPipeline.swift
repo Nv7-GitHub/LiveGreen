@@ -123,13 +123,13 @@ public struct ScanPipeline: Sendable {
 
     /// Identify with one retry (spec §11). If both attempts fail and the frame had barcodes, the items are
     /// built from their Open Food Facts records instead.
-    func identify(image: Data, hints: OCRHints, emit: @Sendable (PipelineEvent) -> Void) async throws -> IdentifyResponse {
+    func identify(image: Data, hints: OCRHints, emit: @escaping @Sendable (PipelineEvent) -> Void) async throws -> IdentifyResponse {
         // A barcode scan without a frame goes straight to the product records when they know the item.
         if image.isEmpty, !hints.gtins.isEmpty, let records = try? await barcodeComponents(hints.gtins), !records.isEmpty {
             return IdentifyResponse(components: records, sceneTitle: records.count == 1 ? records[0].name : "Scanned products")
         }
         do {
-            return try await identifyWithRetry(image: image, hints: hints)
+            return try await identifyWithRetry(image: image, hints: hints) { emit(.identifyProgress($0)) }
         } catch is CancellationError {
             throw CancellationError()
         } catch {
@@ -141,15 +141,16 @@ public struct ScanPipeline: Sendable {
         }
     }
 
-    private func identifyWithRetry(image: Data, hints: OCRHints) async throws -> IdentifyResponse {
+    private func identifyWithRetry(image: Data, hints: OCRHints,
+                                   progress: @escaping @Sendable (IdentifyProgress) -> Void) async throws -> IdentifyResponse {
         do {
-            return try await vision.identify(image: image, hints: hints, profile: profile)
+            return try await vision.identify(image: image, hints: hints, profile: profile, progress: progress)
         } catch is CancellationError {
             throw CancellationError()
         } catch GreenCoreError.missingAPIKey(let key) {
             throw GreenCoreError.missingAPIKey(key)
         } catch {
-            return try await vision.identify(image: image, hints: hints, profile: profile)
+            return try await vision.identify(image: image, hints: hints, profile: profile, progress: progress)
         }
     }
 
