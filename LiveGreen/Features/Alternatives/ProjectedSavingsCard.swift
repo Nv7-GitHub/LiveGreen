@@ -16,7 +16,7 @@ struct ProjectedSavingsCard: View {
                     Text("Pick a swap above to see what it saves.")
                         .font(.footnote).foregroundStyle(.secondary)
                 } else {
-                    ForEach(SwapMath.savingsMetrics.filter { savings[$0] != nil }, id: \.self) { metric in
+                    ForEach(SwapMath.savingsMetrics.filter { shows(savings[$0]) }, id: \.self) { metric in
                         if let split = savings[metric] { row(metric, split) }
                     }
                     Text("From \(swapCount) swap\(swapCount == 1 ? "" : "s"), using your usage answers. \"Once\" is the saving from making the item; ranges carry each value's uncertainty.")
@@ -31,8 +31,8 @@ struct ProjectedSavingsCard: View {
             Label(metric.displayName, systemImage: metric.systemImage)
             Spacer()
             VStack(alignment: .trailing, spacing: 6) {
-                if let yearly = split.yearly { amount(yearly, metric, suffix: yearlySuffix(metric)) }
-                if let once = split.oneTime { amount(once, metric, suffix: " once") }
+                if let yearly = split.yearly, Self.isChange(yearly) { amount(yearly, metric, suffix: yearlySuffix(metric)) }
+                if let once = split.oneTime, Self.isChange(once) { amount(once, metric, suffix: " once") }
             }
         }
         .font(.subheadline)
@@ -47,6 +47,15 @@ struct ProjectedSavingsCard: View {
             Text("\(Self.signed(-saving.high, metric)) to \(Self.signed(-saving.low, metric))")
                 .font(.caption2.monospacedDigit()).foregroundStyle(.secondary)
         }
+    }
+
+    /// A total that nets out to nothing gets no line; a net loss still does.
+    private static func isChange(_ saving: EstimateRange) -> Bool {
+        SwapMath.isNetChange(saving, baseline: 0)
+    }
+
+    private func shows(_ split: SwapMath.SavingSplit?) -> Bool {
+        [split?.yearly, split?.oneTime].contains { $0.map(Self.isChange) ?? false }
     }
 
     private static func signed(_ change: Double, _ metric: MetricKey) -> String {

@@ -2,7 +2,9 @@ import SwiftUI
 import Charts
 import GreenCore
 
-/// Current vs. alternative bars per key metric, with range whiskers and a "% better" chip (spec §7).
+/// Current vs. alternative bars per key metric, with range whiskers and a "% better" chip (spec §7). Values are on
+/// the GreenScore comparison basis: per year where the impact recurs (carbon, electricity, and everything for
+/// consumables), else for the item as made. Metrics a swap leaves unchanged are left out.
 struct ComparisonChart: View {
     let component: Component
     let alternative: Alternative
@@ -21,7 +23,7 @@ struct ComparisonChart: View {
         VStack(alignment: .leading, spacing: 8) {
             if let charging {
                 MetricComparison(metric: .carbon, title: "Charging carbon per year", systemImage: "bolt.badge.clock",
-                                 current: charging.current, alternative: charging.scheduled)
+                                 current: charging.current, alternative: charging.scheduled, perYear: true)
             } else if let savings = component.plugCandidate?.estimatedSavings {
                 Label("Saves about \(savings.formatted) a year", systemImage: "bolt.badge.clock")
                     .font(.subheadline.weight(.semibold))
@@ -38,9 +40,11 @@ struct ComparisonChart: View {
                 Text("No shared metrics to compare yet.").font(.footnote).foregroundStyle(.secondary)
             }
             ForEach(metrics, id: \.self) { metric in
-                if let current = component.metrics[metric], let swapped = alternative.metrics[metric] {
-                    MetricComparison(metric: metric, title: metric.displayName, systemImage: metric.systemImage,
-                                     current: current, alternative: swapped)
+                if let values = SwapMath.comparison(metric, component, alternative) {
+                    MetricComparison(metric: metric,
+                                     title: values.annualized ? "\(metric.displayName) per year" : metric.displayName,
+                                     systemImage: metric.systemImage, current: values.current,
+                                     alternative: values.swap, perYear: values.annualized)
                 }
             }
         }
@@ -54,6 +58,8 @@ private struct MetricComparison: View {
     let systemImage: String
     let current: Measured
     let alternative: Measured
+    /// The values are yearly amounts, so the labels say "/yr".
+    var perYear = false
 
     private struct Bar: Identifiable {
         let id: String
@@ -70,10 +76,14 @@ private struct MetricComparison: View {
                 Label(title, systemImage: systemImage).font(.subheadline.weight(.semibold))
                 Spacer()
                 if let percent = SwapMath.percentBetter(metric, current: current, alternative: alternative) {
-                    BetterChip(percent: percent)
+                    // "0% better" says nothing; the bars still show the values.
+                    if Int(percent.rounded()) != 0 { BetterChip(percent: percent) }
+                } else if alternative.value > current.value {
+                    // Up from zero: no percentage, so the chip only says which way it went.
+                    BetterChip(percent: metric.higherIsBetter ? .infinity : -.infinity)
                 }
             }
-            Text("\(current.formatted) → \(alternative.formatted)")
+            Text("\(current.formatted)\(suffix) → \(alternative.formatted)\(suffix)")
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
             Chart(bars) { bar in
@@ -102,21 +112,25 @@ private struct MetricComparison: View {
             .chartForegroundStyleScale(["Current": Color.gray.opacity(0.55), "Swap": Theme.leaf])
             .chartYAxis(.hidden)
             .chartLegend(position: .bottom, alignment: .leading)
-            .chartXAxisLabel(current.displaySymbol, alignment: .trailing)
+            .chartXAxisLabel(current.displaySymbol + suffix, alignment: .trailing)
             .frame(height: 112)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(title): current \(current.formatted), swap \(alternative.formatted)")
+            .accessibilityLabel("\(title): current \(current.formatted)\(suffix), swap \(alternative.formatted)\(suffix)")
         }
     }
+
+    /// kWh/yr already says per year.
+    private var suffix: String { perYear && current.unit != .kilowattHoursPerYear ? "/yr" : "" }
 }
 
-/// Glass capsule with the relative improvement.
+/// Glass capsule with the relative improvement; an infinite percent (a rise from zero) reads "Worse".
 struct BetterChip: View {
     let percent: Double
 
     var body: some View {
         let better = percent >= 0
-        Text(better ? "\(Int(percent.rounded()))% better" : "\(Int((-percent).rounded()))% worse")
+        Text(!percent.isFinite ? (better ? "Better" : "Worse")
+             : better ? "\(Int(percent.rounded()))% better" : "\(Int((-percent).rounded()))% worse")
             .font(.caption.weight(.bold).monospacedDigit())
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
