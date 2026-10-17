@@ -28,7 +28,7 @@ struct PlugDashboard: View {
                                    onUseMock: useMockPlug)
                     gridCard
                     PlugScheduleCard(plug: plug, dashboard: dashboard, components: model.plugCandidateComponents)
-                    PlugSavingsCard(plug: plug, outlook: dashboard.outlook, planner: PlugCenter.shared.planner)
+                    PlugSavingsCard(plug: plug, outlook: dashboard.outlook)
                 }
                 .padding()
             }
@@ -75,7 +75,7 @@ struct PlugDashboard: View {
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("Day average").font(.caption).foregroundStyle(.secondary)
-                    Text(Measured.format(outlook.forecast.average)).font(.headline.monospacedDigit())
+                    Text(Measured.format(outlook.forecast.dayAverage)).font(.headline.monospacedDigit())
                 }
             }
             .glassCard()

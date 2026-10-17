@@ -43,42 +43,23 @@ nonisolated enum SmartPlugAlternative {
                            practicality: Practicality(cost: .lower, effort: .easy), metrics: component.metrics)
     }
 
-    /// kWh/yr × average intensity vs. kWh/yr × intensity of the cleanest hours that cover the charge (spec §8.3).
+    /// kWh/yr × the day's average intensity vs. kWh/yr × the planned cleanest hours (spec §8.3), using the
+    /// same forecast and planner as the Plugs tab.
     static func chargingCarbon(_ candidate: PlugCandidate, profile: UserProfile,
                                services: ServiceContainer) async -> ChargingCarbon? {
-        guard let (hourly, source) = await hourlyIntensity(profile: profile, services: services),
-              hourly.count == 24 else { return nil }
-        let hours = min(max(Int(candidate.requiredHoursPerDay.rounded(.up)), 1), 24)
-        let average = hourly.reduce(0, +) / 24
-        let cleanest = hourly.sorted().prefix(hours)
-        let window = cleanest.reduce(0, +) / Double(cleanest.count)
-        let kWhPerYear = candidate.dailyKWh * 365
-        func measured(_ kg: Double) -> Measured {
-            Measured(value: max(kg, 0), relativeRange: 0.3, unit: .kgCO2e, tier: .factorModel, sources: [source])
-        }
-        return ChargingCarbon(current: measured(kWhPerYear * average / 1000),
-                              scheduled: measured(kWhPerYear * window / 1000),
-                              savings: measured(kWhPerYear * (average - window) / 1000))
+        guard let outlook = try? await GridOutlook.load(grid: services.grid, reference: services.reference,
+                                                         profile: profile) else { return nil }
+        return chargingCarbon(candidate, forecast: outlook.forecast)
     }
 
-    /// A 24-value local-hour intensity profile: bundled regional shape first, then the grid history.
-    private static func hourlyIntensity(profile: UserProfile,
-                                        services: ServiceContainer) async -> ([Double], Source)? {
-        let region = profile.region
-        let keys = [region.gridZone, region.usState.map { "US-\($0)" }, region.countryCode].compactMap { $0 }
-        for key in keys {
-            if let record = services.reference.gridIntensity(region: key) {
-                return ((0..<24).map(record.intensity(atHour:)), record.citation)
-            }
+    static func chargingCarbon(_ candidate: PlugCandidate, forecast: GridForecast) -> ChargingCarbon {
+        let savings = GreenHoursPlanner.estimatedSavings(for: candidate, forecast: forecast)
+        let kWhPerYear = candidate.dailyKWh * ImpactEngine.daysPerYear
+        let current = kWhPerYear * forecast.dayAverage / 1000
+        func measured(_ kg: Double) -> Measured {
+            Measured(value: max(kg, 0), relativeRange: 0.3, unit: .kgCO2e, tier: savings.tier, sources: savings.sources)
         }
-        guard let zone = region.gridZone,
-              let history = try? await services.grid.history(zone: zone, hours: 24 * 7), !history.isEmpty else { return nil }
-        var buckets = Array(repeating: [Double](), count: 24)
-        let calendar = Calendar.current
-        for point in history { buckets[calendar.component(.hour, from: point.date)].append(point.gramsCO2ePerKWh) }
-        let overall = history.map(\.gramsCO2ePerKWh).reduce(0, +) / Double(history.count)
-        let medians = buckets.map { $0.isEmpty ? overall : $0.sorted()[$0.count / 2] }
-        return (medians, Source(title: "Grid intensity history, zone \(zone)", tier: .factorModel))
+        return ChargingCarbon(current: measured(current), scheduled: measured(current - savings.value), savings: savings)
     }
 
     /// Derived from the component id so a re-run keeps the user's pick.

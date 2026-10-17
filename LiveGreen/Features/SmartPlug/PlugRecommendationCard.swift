@@ -70,7 +70,7 @@ struct PlugRecommendationCard: View {
         let services = model.services
         guard let outlook = try? await GridOutlook.load(grid: services.grid, reference: services.reference,
                                                         profile: model.profile) else { return }
-        estimate = PlugSavingsEstimate.yearly(for: candidate, outlook: outlook)
+        estimate = GreenHoursPlanner.estimatedSavings(for: candidate, forecast: outlook.forecast)
     }
 }
 

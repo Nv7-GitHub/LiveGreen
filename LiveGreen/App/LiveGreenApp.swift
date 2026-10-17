@@ -14,7 +14,9 @@ struct LiveGreenApp: App {
             // A corrupt on-disk store should not brick the app; fall back to memory for this session.
             container = try! Persistence.makeContainer(inMemory: true)
         }
-        _model = State(initialValue: AppModel(container: container, launch: launch))
+        let model = AppModel(container: container, launch: launch)
+        _model = State(initialValue: model)
+        BackgroundRefresh.register(model: model)
     }
 
     var body: some Scene {

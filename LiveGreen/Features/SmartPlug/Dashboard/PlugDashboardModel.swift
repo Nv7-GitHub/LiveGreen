@@ -14,7 +14,6 @@ final class PlugDashboardModel {
     var message: String?
 
     @ObservationIgnored private let center: PlugCenter
-    @ObservationIgnored private var lastHour: Int?
 
     static let pollInterval: Duration = .seconds(5)
 
@@ -44,7 +43,6 @@ final class PlugDashboardModel {
 
     func refreshStatus() async {
         guard let plug else { return }
-        lastHour = await center.enforceMockSchedule(for: plug, lastHour: lastHour)
         do {
             let status = try await center.controller(for: plug).status()
             self.status = status

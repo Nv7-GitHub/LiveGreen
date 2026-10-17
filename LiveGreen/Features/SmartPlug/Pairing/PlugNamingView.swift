@@ -11,7 +11,7 @@ struct PlugNamingView: View {
     @State private var name = ""
     @State private var componentID: UUID?
     @State private var requiredHours = 3.0
-    @State private var deadlineHour = PlugSavingsEstimate.defaultDeadlineHour
+    @State private var deadlineHour = GridOutlook.defaultDeadlineHour
 
     private var components: [Component] { model.plugCandidateComponents }
     private var selectedComponent: Component? { componentID.flatMap(model.scannedComponent(withID:)) }

@@ -10,17 +10,14 @@ final class PlugCenter {
 
     private(set) var plugs: [PairedPlug] = []
     @ObservationIgnored let connector: PlugConnector
-    @ObservationIgnored let planner: any GreenHoursPlanning
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let calendar: Calendar
 
     static let defaultsKey = "LiveGreen.pairedPlugs"
     static let keychainService = "com.nv7.LiveGreen.shelly"
 
-    init(connector: PlugConnector = .live, planner: any GreenHoursPlanning = LocalGreenHoursPlanner(),
-         defaults: UserDefaults = .standard, calendar: Calendar = .current) {
+    init(connector: PlugConnector = .live, defaults: UserDefaults = .standard, calendar: Calendar = .current) {
         self.connector = connector
-        self.planner = planner
         self.defaults = defaults
         self.calendar = calendar
         plugs = defaults.data(forKey: Self.defaultsKey)
@@ -67,8 +64,7 @@ final class PlugCenter {
     // MARK: - Scheduling
 
     func plan(for plug: PairedPlug, outlook: GridOutlook, now: Date = Date()) -> PlugSchedule {
-        planner.plan(forecast: outlook.forecast, requiredHours: plug.requiredHours,
-                     deadlineHour: plug.deadlineHour, now: now, calendar: calendar)
+        outlook.schedule(requiredHours: plug.requiredHours, deadlineHour: plug.deadlineHour, now: now, calendar: calendar)
     }
 
     /// Writes the current plan to the plug (the plug enforces it while the app is closed) and
@@ -103,15 +99,6 @@ final class PlugCenter {
         }
     }
 
-    /// The simulated plug doesn't run schedules itself, so follow the plan when the hour changes.
-    func enforceMockSchedule(for plug: PairedPlug, lastHour: Int?, now: Date = Date()) async -> Int {
-        let hour = calendar.component(.hour, from: now)
-        if plug.isMock, let schedule = plug.schedule, let lastHour, lastHour != hour {
-            try? await connector.mock.setSwitch(on: schedule.onHours.contains(hour))
-        }
-        return hour
-    }
-
     // MARK: - Status
 
     /// Records a successful poll: clears the offline flag and accrues measured savings.
@@ -121,7 +108,7 @@ final class PlugCenter {
         if let outlook {
             plug.savings.record(totalEnergyWh: status.totalEnergyWh, at: status.timestamp,
                                 intensity: outlook.intensity(at: status.timestamp, calendar: calendar),
-                                baseline: outlook.forecast.average)
+                                baseline: outlook.forecast.dayAverage)
         } else {
             plug.savings.lastEnergyWh = status.totalEnergyWh
             plug.savings.lastSampleDate = status.timestamp

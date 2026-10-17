@@ -5,12 +5,11 @@ import GreenCore
 struct PlugSavingsCard: View {
     let plug: PairedPlug
     let outlook: GridOutlook?
-    let planner: any GreenHoursPlanning
 
     private var yearlyEstimateKg: Double? {
         guard let outlook, let schedule = plug.schedule,
               let dailyKWh = plug.candidate?.dailyKWh, dailyKWh > 0 else { return nil }
-        return planner.yearlySavingsKg(dailyKWh: dailyKWh, schedule: schedule, forecast: outlook.forecast)
+        return outlook.yearlySavingsKg(dailyKWh: dailyKWh, schedule: schedule)
     }
 
     var body: some View {

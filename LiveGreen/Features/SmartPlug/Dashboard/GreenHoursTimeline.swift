@@ -3,13 +3,13 @@ import GreenCore
 
 /// Today's 24-h grid forecast as glass bars: taller is dirtier, planned green hours are tinted.
 struct GreenHoursTimeline: View {
-    let forecast: HourlyForecast
+    let forecast: GridForecast
     let onHours: Set<Int>
     var currentHour = Calendar.current.component(.hour, from: Date())
 
     private var range: ClosedRange<Double> {
-        let low = forecast.intensities.min() ?? 0
-        let high = forecast.intensities.max() ?? 1
+        let low = forecast.hourly.min() ?? 0
+        let high = forecast.hourly.max() ?? 1
         return low...max(high, low + 1)
     }
 
@@ -70,7 +70,7 @@ struct GreenHoursTimeline: View {
 }
 
 #Preview {
-    GreenHoursTimeline(forecast: HourlyForecast(intensities: (0..<24).map { 200 + 80 * sin(Double($0) / 3.8) }, isEstimated: true),
+    GreenHoursTimeline(forecast: GridForecast(hourly: (0..<24).map { 200 + 80 * sin(Double($0) / 3.8) }, isFallback: true),
                        onHours: [1, 2, 3, 13])
         .padding()
 }
