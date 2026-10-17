@@ -11,6 +11,14 @@ struct ScanTab: View {
     @State private var path: [ScanResult] = []
     /// The last capture sent to the pipeline, so a failed scan can be retried without retaking it.
     @State private var lastCapture: Capture?
+    /// The running scan's coordinator, kept to refine the result with detail answers.
+    @State private var coordinator: ScanCoordinator?
+    /// Detail questions the running scan raised for items still on a T4 estimate.
+    @State private var specQuestions: [SpecQuestion] = []
+    /// The finished scan waiting on the detail questions sheet.
+    @State private var specPrompt: SpecPrompt?
+    /// What to open once the sheet is gone (the estimate, or the refined result), so the push follows the dismissal.
+    @State private var resultAfterPrompt: ScanResult?
     @Namespace private var glass
 
     struct Capture {
@@ -18,6 +26,12 @@ struct ScanTab: View {
         var hints: OCRHints
         var scene: DemoScene?
         var mode: ScanMode
+    }
+
+    struct SpecPrompt: Identifiable {
+        var result: ScanResult
+        var questions: [SpecQuestion]
+        var id: UUID { result.id }
     }
 
     enum Phase: Equatable {
@@ -40,7 +54,8 @@ struct ScanTab: View {
                             modePicker
                         case .analyzing:
                             if let events {
-                                AnalyzingCard(events: events, onComplete: finish, onFailure: fail)
+                                AnalyzingCard(events: events, onSpecQuestions: { specQuestions = $0 },
+                                              onComplete: finish, onFailure: fail)
                                     .id(runID)
                                     .glassEffectID("status", in: glass)
                             }
@@ -56,6 +71,11 @@ struct ScanTab: View {
             .toolbarTitleDisplayMode(.inline)
             .settingsToolbarButton()
             .navigationDestination(for: ScanResult.self) { ScanResultView(result: $0) }
+            .sheet(item: $specPrompt, onDismiss: openResultAfterPrompt) { prompt in
+                SpecQuestionsSheet(questions: prompt.questions,
+                                   onApply: { refine(prompt.result, with: $0) },
+                                   onSkip: { specPrompt = nil })
+            }
             .animation(.smooth, value: phase)
         }
     }
@@ -114,18 +134,45 @@ struct ScanTab: View {
     private func start(image: Data, hints: OCRHints, scene: DemoScene? = nil) {
         lastCapture = Capture(image: image, hints: hints, scene: scene, mode: model.flags.scanMode)
         let coordinator = model.makeScanCoordinator(scene: scene)
+        self.coordinator = coordinator
+        specQuestions = []
         events = coordinator.scan(image: image, hints: hints)
         runID = UUID()
         phase = .analyzing
     }
 
+    /// Items still on a T4 estimate get the detail questions sheet first; everything else opens straight away.
+    private func finish(_ result: ScanResult) {
+        guard !specQuestions.isEmpty else { return show(result) }
+        resultAfterPrompt = result
+        specPrompt = SpecPrompt(result: result, questions: specQuestions)
+        specQuestions = []
+    }
+
+    /// Re-resolves the answered items on-device, then closes the sheet; the dismissal opens the refined result.
+    private func refine(_ result: ScanResult, with answers: [SpecAnswer]) {
+        Task {
+            let refined = await coordinator?.refining(result, specAnswers: answers) ?? result
+            guard specPrompt?.id == result.id else { return }
+            resultAfterPrompt = refined
+            specPrompt = nil
+        }
+    }
+
+    private func openResultAfterPrompt() {
+        guard let result = resultAfterPrompt else { return }
+        resultAfterPrompt = nil
+        show(result)
+    }
+
     /// AR captures stay on the AR view, whose anchored labels are the result surface (spec §5.1); every
     /// other scan opens the results screen.
-    private func finish(_ result: ScanResult) {
+    private func show(_ result: ScanResult) {
         model.save(result)
         let anchorsInAR = lastCapture?.mode == .ar && lastCapture?.scene == nil && model.flags.scanMode == .ar
         if !anchorsInAR { path.append(result) }
         lastCapture = nil
+        coordinator = nil
         events = nil
         phase = .capture
     }

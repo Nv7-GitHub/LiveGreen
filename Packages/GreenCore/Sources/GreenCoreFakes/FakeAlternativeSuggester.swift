@@ -56,6 +56,9 @@ public struct FakeAlternativeSuggester: AlternativeSuggester {
         case .food:
             ("Plant-based \(inline(withoutMeat(component.name)))",
              "Plant proteins need far less land and emit less methane.", Practicality(cost: .similar, effort: .easy))
+        case .packaging where component.name.lowercased().contains("box"):
+            ("Reusable food container", "Bring your own container; one replaces hundreds of takeout boxes.",
+             Practicality(cost: .higher, effort: .moderate))
         case .packaging:
             ("Reusable steel cup", "One cup replaces hundreds of disposables.", Practicality(cost: .higher, effort: .easy))
         case .clothing:

@@ -51,6 +51,13 @@ final class ScanCoordinator: ScanCoordinating {
         return updated
     }
 
+    /// Re-resolves items whose detail questions were answered before the results (T4 → factor model), on-device.
+    func refining(_ result: ScanResult, specAnswers: [SpecAnswer]) async -> ScanResult {
+        let refined = await pipeline.refining(result, specAnswers: specAnswers)
+        latestResult = refined
+        return refined
+    }
+
     /// Re-runs the engine locally with question answers (spec §5.5).
     func applying(_ answers: [QuestionAnswer], to result: ScanResult) -> ScanResult {
         pipeline.applying(answers.map { ($0.question.componentID, $0.option) }, to: result)
