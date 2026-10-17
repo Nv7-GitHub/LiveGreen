@@ -1,81 +1,131 @@
 import SwiftUI
 import GreenCore
 
-/// Keys, scan mode, model choice, plug on/off and mock toggles (spec §3, §11).
+/// Keys, scan mode, model choice, plug and demo toggles, profile editing and About (spec §3, §8.1, §11).
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var keyDrafts: [SecretKey: String] = [:]
+    @State private var keyRevision = 0
+    @State private var isEditingProfile = false
+    @State private var saveError: String?
 
     var body: some View {
         @Bindable var model = model
         Form {
-            if !model.secrets.missingRequiredKeys.isEmpty && !model.flags.demoMode {
-                Section {
-                    Label("Missing: " + model.secrets.missingRequiredKeys.map(\.rawValue).joined(separator: ", "),
-                          systemImage: "key.slash")
-                        .foregroundStyle(Theme.warning)
-                }
+            Section {
+                MissingKeysBanner(revision: keyRevision)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
             }
-            Section("Scanning") {
+            .listSectionSpacing(0)
+
+            Section("Your profile") {
+                Button { isEditingProfile = true } label: {
+                    ProfileSummaryRow(profile: model.profile)
+                }
+                .foregroundStyle(.primary)
+                .accessibilityIdentifier("settings.editProfile")
+            }
+
+            Section {
                 Picker("Scan mode", selection: $model.flags.scanMode) {
                     ForEach(ScanMode.allCases, id: \.self) { Text($0.displayName).tag($0) }
                 }
-                Picker("Model", selection: $model.flags.modelChoice) {
+                Picker("Claude model", selection: $model.flags.modelChoice) {
                     ForEach(ClaudeModel.allCases, id: \.self) { Text($0.displayName).tag($0) }
                 }
-                Toggle("Demo mode (offline fixtures)", isOn: $model.flags.demoMode)
+                Toggle("Demo mode", isOn: $model.flags.demoMode)
+            } header: {
+                Text("Scanning")
+            } footer: {
+                Text("Demo mode replays bundled scenes (desk setup, meal, e-bike corner) with no network calls.")
             }
+
             Section {
                 Toggle("Smart plug features", isOn: $model.flags.plugFeaturesEnabled)
                 Toggle("Use mock plug", isOn: $model.flags.useMockPlug)
                     .disabled(!model.flags.plugFeaturesEnabled)
             } header: {
                 Text("Smart plug")
-            }
-            Section {
-                ForEach(SecretKey.allCases) { key in
-                    SecureField(key.displayName, text: binding(for: key))
-                        .textContentType(.password)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                        .onSubmit { saveKey(key) }
-                }
-            } header: {
-                Text("API keys")
             } footer: {
-                Text("Keys entered here are stored in the Keychain and override Secrets.xcconfig.")
+                Text(model.flags.plugFeaturesEnabled
+                     ? "The mock plug simulates a Shelly plug's power draw for demos."
+                     : "Plug recommendations and the Plugs tab are hidden.")
             }
-            Section("About") {
+
+            APIKeysSection(drafts: $keyDrafts, revision: $keyRevision)
+
+            Section {
+                NavigationLink {
+                    AboutView()
+                } label: {
+                    Label("About & data sources", systemImage: "info.circle")
+                }
                 LabeledContent("Peer network", value: "Simulated")
-                Text("Friends on the leaderboard are a simulated network sampled from your modeled peer cohort.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                if let error = model.storageError {
+                if let error = model.storageError ?? saveError {
                     Label(error, systemImage: "externaldrive.badge.exclamationmark").foregroundStyle(Theme.danger)
                 }
+            } footer: {
+                Text("Compare-tab friends are a simulated network sampled from your modeled peer cohort.")
             }
         }
         .navigationTitle("Settings")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button("Done", systemImage: "checkmark") {
-                    SecretKey.allCases.forEach(saveKey)
-                    dismiss()
-                }
+                Button("Done", systemImage: "checkmark") { finish() }
             }
+        }
+        .sheet(isPresented: $isEditingProfile) {
+            OnboardingFlow(initialProfile: model.profile,
+                           onComplete: { profile in
+                               var edited = profile
+                               edited.onboardingCompleted = true
+                               model.updateProfile(edited)
+                               isEditingProfile = false
+                           },
+                           onCancel: { isEditingProfile = false })
         }
     }
 
-    private func binding(for key: SecretKey) -> Binding<String> {
-        Binding(get: { keyDrafts[key] ?? "" }, set: { keyDrafts[key] = $0 })
+    private func finish() {
+        do {
+            try KeyDrafts.saveAll(&keyDrafts, model: model)
+            dismiss()
+        } catch {
+            saveError = "Couldn't save keys: \(error.localizedDescription)"
+            keyRevision += 1
+        }
+    }
+}
+
+/// Compact summary of the onboarding answers.
+private struct ProfileSummaryRow: View {
+    let profile: UserProfile
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "person.crop.circle.fill")
+                .font(.largeTitle)
+                .foregroundStyle(Theme.leaf)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(location).font(.headline)
+                Text("\(profile.householdSize) in household · \(profile.diet.profileLabel) · \(profile.commuteMode.profileLabel)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text("\(profile.homeType.profileLabel) · \(profile.heating.profileLabel)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Text("Edit").font(.subheadline).foregroundStyle(Theme.accent)
+        }
+        .padding(.vertical, 2)
     }
 
-    private func saveKey(_ key: SecretKey) {
-        guard let draft = keyDrafts[key], !draft.isEmpty else { return }
-        try? model.secrets.setOverride(draft, for: key)
-        keyDrafts[key] = nil
-        model.refreshServices()
+    private var location: String {
+        let country = Locale.current.localizedString(forRegionCode: profile.region.countryCode) ?? profile.region.countryCode
+        return [profile.region.usState, country].compactMap { $0 }.joined(separator: ", ")
     }
 }
 
