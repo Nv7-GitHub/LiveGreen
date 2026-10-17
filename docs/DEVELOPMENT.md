@@ -121,11 +121,22 @@ docs/                             this file, the spec, screenshots
    - T2 researched spec: AI web search; a value is kept only if it cites a page the search returned
    - T3 factor model: bundled tables × quantities
    - T4 estimate: the AI's fallback, widened to at least ±50%
-   Results are cached by GTIN or `brand|model`, so a rescan gives identical numbers.
+   Results are cached by GTIN or `brand|model`, so a rescan gives identical numbers. Unbranded clothing,
+   household, packaging and personal-care items are cached by their generic kind (`Identifiers.genericKey`:
+   the name without colour words, singular, so "Blue backpack" and "Beige backpack" are both `backpack`), and
+   items of one kind in a scan share the best-informed one's guesses. A kind's cached T4 estimate is only used
+   when the new item cannot do better itself. Brand and model are set only when legible in the photo or the
+   OCR text, and a model name the labels do not back up is dropped (`droppingUnreadModel`).
 4. **Computing**: `ImpactEngine` derives yearly electricity, use-phase carbon from the local grid, yearly
    totals, lifecycle stage splits, with a seeded 2,000-sample Monte Carlo for ranges.
 5. **Questions**: shown only if the AI asked and the metric's range is wide (high/low > 1.6) and it is a
    top-two carbon contributor (`QuestionGate`). Answers re-run the engine locally.
+6. **Quick details** (before the results): items whose carbon is still T4 get at most one plain multiple-choice
+   question each, three per scan, one per kind (`SpecQuestionCatalog`, generated locally). Only answers that
+   really move the item to the factor model are offered; `ScanPipeline.refining` applies them. Skip keeps the
+   estimates.
+7. **Swaps** are prefetched in the background as soon as a scan is saved (`SwapPrefetcher`), along with the
+   greener image for scenes with more than two items, so the swaps screen opens instantly.
 
 ## 6. AI providers and models (measured)
 
@@ -241,7 +252,13 @@ Measured on the desk photo (Sonnet 5.5, Oct 2026):
 - Carbon is shown per year (purchase amortized over lifespan plus use) with the lifetime total beside it.
   Electricity is per year. Water, land, plastic and water pollution are shown as what it took to make what
   is pictured; only consumables (food, cups, packaging) also get a per-year figure. Swap savings are split
-  into "per year" and "once" (`SwapMath.recursYearly`, `SavingSplit`).
+  into "per year" and "once" (`SwapMath.recursYearly`, `SavingSplit`). Land is shown as plain area (m²/ft²).
+- One visibility rule (`Component.displayable`): a metric is shown only if it applies, has a value and is not
+  effectively zero (0% recyclable and 0/10 repairability still show). Missing metrics are left off, never
+  shown as "not resolved". Swaps also hide metrics whose change rounds to 0%.
+- Swaps are ranked by `GreenScore`: the equal-weight mean of per-metric log improvements (clamped to ±ln 4,
+  compared per year of the same job). A swap is rejected if any metric gets more than 40% worse or the score
+  is under ~2%, so no swap trades one metric for another.
 - The metric picker only offers metrics that apply to at least one item in the scan, and the list drops
   items without the selected metric.
 - Coffee's factor is per kg of beans; a brewed drink counts only ~6% of its mass as grounds
@@ -267,8 +284,10 @@ Measured on the desk photo (Sonnet 5.5, Oct 2026):
   remaining share minus an average-travel share of 20%. Flights are not asked about.
 - Leaderboard tab (code still lives in `Features/Compare`): you plus nine friends (Saahil Shah, Yuti
   Purohit, Nishant Vikramaditya, Vishnu Mangipudi, Sebastian Bagley, Daniel Hoang, Albert Wu, Shuji Hokosawa,
-  Louis Liu). Names are dealt in a seeded shuffle; footprints are sampled from the cohort distribution
-  (`CohortModel.simulatedFriends`), ranked greenest first, with initials avatars.
+  Louis Liu). Names are dealt in a seeded shuffle; friends are stratified draws from the region's whole-footprint
+  distribution (`CohortModel.simulatedFriends`, `regionalDistribution`), and you are your onboarding estimate
+  with each category raised to what you scanned in it if larger (`CohortModel.estimate(for:scanned:)`), so both
+  sides are whole yearly footprints. Only carbon and home electricity are ranked (`leaderboardMetrics`).
 
 ## 11. Results screen design
 
