@@ -39,14 +39,14 @@ struct ARCaptureSnapshot {
 
     private static let context = CIContext()
 
-    /// Converts `frame.capturedImage` (landscape sensor buffer) into an upright JPEG for `orientation`.
+    /// Converts `frame.capturedImage` (landscape sensor buffer) into an upright JPEG for `orientation`, with
+    /// the long edge capped like photo mode (spec §5.3). Boxes are normalized, so anchoring is unaffected.
     static func make(from frame: ARFrame, orientation: UIInterfaceOrientation) -> ARCaptureSnapshot? {
         let resolution = frame.camera.imageResolution
         let imageOrientation = orientation.capturedImageOrientation
         let upright = CIImage(cvPixelBuffer: frame.capturedImage).oriented(imageOrientation)
         guard let cgImage = context.createCGImage(upright, from: upright.extent),
-              let jpeg = context.jpegRepresentation(of: upright, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
-                                                    options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.82])
+              let jpeg = CapturedImage.normalizedJPEG(from: UIImage(cgImage: cgImage), quality: 0.82)
         else { return nil }
 
         // With a viewport of the photo's own aspect, displayTransform is a pure rotation sensor → upright.

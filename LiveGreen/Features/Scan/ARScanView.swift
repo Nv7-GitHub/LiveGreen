@@ -3,12 +3,16 @@ import GreenCore
 import GreenCoreFakes
 
 /// AR capture mode (spec §5.1): world-tracked camera, capture a frame, anchor glass labels per component.
+/// The anchored labels are the result surface; a label opens the component detail, and "Results" opens the
+/// full results screen.
 struct ARScanView: View {
     let onCapture: (Data, OCRHints) -> Void
     /// Result whose components should be anchored as labels. When nil, the saved scan for the last capture is used.
     var result: ScanResult?
     /// Called when a label is tapped. When nil, the view presents its own component detail sheet.
     var onSelectComponent: ((Component) -> Void)?
+    /// Opens the full results screen for the anchored scan.
+    var onOpenResult: ((ScanResult) -> Void)?
 
     @Environment(AppModel.self) private var model
     @State private var session = ARSessionController()
@@ -17,10 +21,11 @@ struct ARScanView: View {
     @State private var selected: Component?
 
     init(onCapture: @escaping (Data, OCRHints) -> Void, result: ScanResult? = nil,
-         onSelectComponent: ((Component) -> Void)? = nil) {
+         onSelectComponent: ((Component) -> Void)? = nil, onOpenResult: ((ScanResult) -> Void)? = nil) {
         self.onCapture = onCapture
         self.result = result
         self.onSelectComponent = onSelectComponent
+        self.onOpenResult = onOpenResult
     }
 
     var body: some View {
@@ -47,7 +52,7 @@ struct ARScanView: View {
         .onChange(of: anchoredResult?.id, initial: true) { anchorIfNeeded() }
         .sheet(item: $selected) { component in
             if let anchored = anchoredResult {
-                ARComponentDetailSheet(component: component, result: anchored)
+                ARComponentDetailSheet(component: component, result: anchored, onOpenResult: onOpenResult)
             }
         }
     }
@@ -70,6 +75,11 @@ struct ARScanView: View {
                     }
                     .buttonStyle(.glassProminent)
                     .disabled(isCapturing || !session.tracking.isReady)
+                    if let anchored = anchoredResult, let onOpenResult {
+                        Button("Results", systemImage: "list.bullet.rectangle") { onOpenResult(anchored) }
+                            .buttonStyle(.glass)
+                            .accessibilityIdentifier("arFullResults")
+                    }
                     if session.anchoredResultID != nil {
                         Button("Clear labels", systemImage: "xmark") { clearLabels() }
                             .labelStyle(.iconOnly)

@@ -2,14 +2,15 @@ import AVFoundation
 import SwiftUI
 import UIKit
 
-/// Full-bleed live preview of a capture session.
+/// Full-bleed live preview of the camera's session, kept horizon-level by the controller's rotation tracking.
 struct CameraPreview: UIViewRepresentable {
-    let session: AVCaptureSession
+    let camera: CameraController
 
     func makeUIView(context: Context) -> PreviewView {
         let view = PreviewView()
-        view.previewLayer.session = session
+        view.previewLayer.session = camera.session
         view.previewLayer.videoGravity = .resizeAspectFill
+        camera.attachPreview(view.previewLayer)
         return view
     }
 

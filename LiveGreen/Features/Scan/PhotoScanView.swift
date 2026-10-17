@@ -75,7 +75,7 @@ struct PhotoScanView: View {
         } else {
             switch availability {
             case .ready:
-                CameraPreview(session: camera.session).ignoresSafeArea()
+                CameraPreview(camera: camera).ignoresSafeArea()
             case .checking:
                 Color.black.ignoresSafeArea()
             case .noCamera, .denied, .failed:

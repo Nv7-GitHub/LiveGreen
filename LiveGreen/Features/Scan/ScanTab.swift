@@ -9,7 +9,16 @@ struct ScanTab: View {
     @State private var events: AsyncThrowingStream<PipelineEvent, Error>?
     @State private var runID = UUID()
     @State private var path: [ScanResult] = []
+    /// The last capture sent to the pipeline, so a failed scan can be retried without retaking it.
+    @State private var lastCapture: Capture?
     @Namespace private var glass
+
+    struct Capture {
+        var image: Data
+        var hints: OCRHints
+        var scene: DemoScene?
+        var mode: ScanMode
+    }
 
     enum Phase: Equatable {
         case capture
@@ -54,7 +63,9 @@ struct ScanTab: View {
     @ViewBuilder private var captureView: some View {
         switch model.flags.scanMode {
         case .photo: PhotoScanView { image, hints in start(image: image, hints: hints) }
-        case .ar: ARScanView { image, hints in start(image: image, hints: hints) }
+        case .ar:
+            ARScanView(onCapture: { image, hints in start(image: image, hints: hints) },
+                       onOpenResult: { path.append($0) })
         case .barcode: BarcodeLabelScanner { hints in start(image: Data(), hints: hints) }
         }
     }
@@ -85,21 +96,36 @@ struct ScanTab: View {
             VStack(alignment: .leading, spacing: 8) {
                 Label("Scan failed", systemImage: "exclamationmark.triangle").font(.headline)
                 Text(message).font(.footnote).foregroundStyle(.secondary)
-                Button("Try again") { phase = .capture }.buttonStyle(.glassProminent)
+                HStack {
+                    if let lastCapture {
+                        Button("Retry", systemImage: "arrow.clockwise") {
+                            start(image: lastCapture.image, hints: lastCapture.hints, scene: lastCapture.scene)
+                        }
+                        .buttonStyle(.glassProminent)
+                        .accessibilityIdentifier("retryScan")
+                    }
+                    Button("New scan", systemImage: "camera") { phase = .capture }
+                        .buttonStyle(.glass)
+                }
             }
         }
     }
 
     private func start(image: Data, hints: OCRHints, scene: DemoScene? = nil) {
+        lastCapture = Capture(image: image, hints: hints, scene: scene, mode: model.flags.scanMode)
         let coordinator = model.makeScanCoordinator(scene: scene)
         events = coordinator.scan(image: image, hints: hints)
         runID = UUID()
         phase = .analyzing
     }
 
+    /// AR captures stay on the AR view, whose anchored labels are the result surface (spec §5.1); every
+    /// other scan opens the results screen.
     private func finish(_ result: ScanResult) {
         model.save(result)
-        path.append(result)
+        let anchorsInAR = lastCapture?.mode == .ar && lastCapture?.scene == nil && model.flags.scanMode == .ar
+        if !anchorsInAR { path.append(result) }
+        lastCapture = nil
         events = nil
         phase = .capture
     }

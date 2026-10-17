@@ -32,6 +32,11 @@ nonisolated final class CameraController: NSObject, @unchecked Sendable {
     private let lock = NSLock()
     private var isConfigured = false
     private var pending: CheckedContinuation<Data, Error>?
+    /// Keeps preview and photos horizon-level as the phone rotates (the app supports landscape).
+    private var rotation: AVCaptureDevice.RotationCoordinator?
+    private var rotationObservations: [NSKeyValueObservation] = []
+    /// Latest capture angle from the coordinator, which reports on the main queue; read on the session queue.
+    private var captureAngle: CGFloat?
 
     /// Asks for permission if needed, configures the session once and starts it.
     func start() async -> CameraAvailability {
@@ -64,7 +69,33 @@ nonisolated final class CameraController: NSObject, @unchecked Sendable {
         }
     }
 
-    /// Takes one still and returns its JPEG data.
+    /// Starts rotation tracking for `layer`. Call on the main thread once the configured session is attached
+    /// to the layer; the coordinator delivers its updates on the main queue.
+    @MainActor func attachPreview(_ layer: AVCaptureVideoPreviewLayer) {
+        guard rotation == nil,
+              let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else { return }
+        let coordinator = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: layer)
+        rotation = coordinator
+        Self.apply(coordinator.videoRotationAngleForHorizonLevelPreview, to: layer.connection)
+        lock.withLock { captureAngle = coordinator.videoRotationAngleForHorizonLevelCapture }
+        rotationObservations = [
+            coordinator.observe(\.videoRotationAngleForHorizonLevelPreview, options: [.new]) { coordinator, _ in
+                let layer = coordinator.previewLayer as? AVCaptureVideoPreviewLayer
+                Self.apply(coordinator.videoRotationAngleForHorizonLevelPreview, to: layer?.connection)
+            },
+            coordinator.observe(\.videoRotationAngleForHorizonLevelCapture, options: [.new]) { [weak self] coordinator, _ in
+                let angle = coordinator.videoRotationAngleForHorizonLevelCapture
+                self?.lock.withLock { self?.captureAngle = angle }
+            },
+        ]
+    }
+
+    private static func apply(_ angle: CGFloat, to connection: AVCaptureConnection?) {
+        guard let connection, connection.isVideoRotationAngleSupported(angle) else { return }
+        connection.videoRotationAngle = angle
+    }
+
+    /// Takes one still, rotated to how the phone is held, and returns its JPEG data.
     func capturePhoto() async throws -> Data {
         try await withCheckedThrowingContinuation { continuation in
             queue.async { [self] in
@@ -72,7 +103,11 @@ nonisolated final class CameraController: NSObject, @unchecked Sendable {
                     continuation.resume(throwing: CameraError.notRunning)
                     return
                 }
-                lock.withLock { pending = continuation }
+                let angle = lock.withLock {
+                    pending = continuation
+                    return captureAngle
+                }
+                if let angle { Self.apply(angle, to: output.connection(with: .video)) }
                 let settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
                 settings.photoQualityPrioritization = .balanced
                 output.capturePhoto(with: settings, delegate: self)

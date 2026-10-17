@@ -2,48 +2,48 @@ import SwiftUI
 import GreenCore
 import GreenCoreFakes
 
-/// Detail for a tapped AR label: the component's applicable metrics, with a route into the full scan results.
+/// Detail for a tapped AR label (spec §5.1): the same component detail the Results screen shows (flow,
+/// inspector with sources, plug card), with a route into the full scan results.
 struct ARComponentDetailSheet: View {
     let component: Component
     let result: ScanResult
+    /// Opens the full results screen; nil hides the button.
+    var onOpenResult: ((ScanResult) -> Void)?
+
+    @Environment(AppModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    ForEach(component.category.applicableMetrics, id: \.self) { metric in
-                        row(for: metric)
-                    }
-                } header: {
-                    Label(component.category.displayName, systemImage: component.category.systemImage)
-                }
-                Section {
-                    NavigationLink {
-                        ScanResultView(result: result)
-                    } label: {
-                        Label("Full scan results", systemImage: "list.bullet.rectangle")
-                    }
-                }
+            ScrollView {
+                ComponentDetailView(component: component, preferredMetric: .carbon, plugAction: plugAction)
+                    .padding()
             }
             .navigationTitle(component.name)
-            .toolbarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if let onOpenResult {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Full results", systemImage: "list.bullet.rectangle") {
+                            dismiss()
+                            onOpenResult(result)
+                        }
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done", systemImage: "checkmark") { dismiss() }
+                }
+            }
         }
         .presentationDetents([.medium, .large])
+        .presentationBackgroundInteraction(.enabled(upThrough: .medium))
     }
 
-    @ViewBuilder private func row(for metric: MetricKey) -> some View {
-        HStack {
-            Label(metric.displayName, systemImage: metric.systemImage)
-            Spacer()
-            if let measured = component.metrics[metric] {
-                VStack(alignment: .trailing) {
-                    Text(measured.formatted).monospacedDigit()
-                    Text(measured.formattedRange).font(.caption2).foregroundStyle(.secondary)
-                }
-                TierBadge(tier: measured.tier)
-            } else {
-                Text("Not resolved").font(.footnote).foregroundStyle(.secondary)
-            }
+    private var plugAction: (() -> Void)? {
+        guard model.flags.plugFeaturesEnabled else { return nil }
+        return {
+            dismiss()
+            model.selectedTab = .plugs
         }
     }
 }
