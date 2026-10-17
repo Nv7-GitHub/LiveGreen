@@ -201,6 +201,15 @@ Identify is tuned for latency the same way as the Grok setup (`ClaudeClient+Iden
 - An Anthropic key that is not scoped to a workspace gets a 400 unless `anthropic-workspace-id` is sent
   (`ANTHROPIC_WORKSPACE_ID`).
 
+Measured on the desk photo (Sonnet 5.5, Oct 2026):
+
+| Call | Time | Notes |
+|---|---|---|
+| identify, streamed | first item 1.4–2.3 s, done 10–13 s | 6–7 items, no invented model numbers, boxes tighter than Grok's |
+| swaps (2 items, effort `low`) | ~10 s | Grok `grok-4.3` took 15–30 s |
+| research, brand + model (effort `medium`) | 11–13 s, one outlier at 36 s | cited power, standby and PCF carbon; `low` was no faster |
+| research, brand only | ~4 s | returns nothing, as intended |
+
 ## 7. Grid data and the smart plug
 
 - Default grid source: **EIA Hourly Electric Grid Monitor** backend,
@@ -295,7 +304,8 @@ tab bar never covers it. The detail sheet shows the flow (Sankey), usage card, p
   end-of-life rows, grid hourly shapes, cohort sigmas and modifiers, home/heating modifiers, travel factors).
 - Onboarding's "everything else" is about half the estimate; flights are not covered.
 - The leaderboard's friends are generated from the cohort model, not real accounts.
-- Grok research (`grok-4.3`) and swaps take 15–30 s; they could move to the fast model if quality holds.
+- Research is on the scan's critical path for branded items; a slow web search (one 36 s run seen) delays the
+  result. It could move behind a preliminary result.
 
 ## 14. History
 
