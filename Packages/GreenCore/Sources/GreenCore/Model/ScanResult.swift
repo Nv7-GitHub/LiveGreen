@@ -24,14 +24,18 @@ public struct ScanResult: Codable, Sendable, Hashable, Identifiable {
     /// JPEG of the captured frame.
     public var photo: Data?
     public var components: [Component]
+    /// Per-unit totals of what is pictured: one serving or unit of consumables, whole-life for durables.
     public var totals: [MetricKey: Measured]
+    /// The same items over one year (spec §5.6): consumables at their usage, durables ÷ lifespan.
+    public var yearlyTotals: [MetricKey: Measured]
     /// Generated greener-setup JPEG/PNG.
     public var greenerImage: Data?
     /// Chosen alternative per component (component id → alternative id).
     public var selectedAlternatives: [UUID: UUID]
 
     public init(id: UUID = UUID(), date: Date = Date(), title: String, mode: ScanMode = .photo, photo: Data? = nil,
-                components: [Component] = [], totals: [MetricKey: Measured] = [:], greenerImage: Data? = nil,
+                components: [Component] = [], totals: [MetricKey: Measured] = [:],
+                yearlyTotals: [MetricKey: Measured] = [:], greenerImage: Data? = nil,
                 selectedAlternatives: [UUID: UUID] = [:]) {
         self.id = id
         self.date = date
@@ -40,8 +44,33 @@ public struct ScanResult: Codable, Sendable, Hashable, Identifiable {
         self.photo = photo
         self.components = components
         self.totals = totals
+        self.yearlyTotals = yearlyTotals
         self.greenerImage = greenerImage
         self.selectedAlternatives = selectedAlternatives
+    }
+
+    /// Scans saved before a field existed decode with its empty default.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        date = try container.decode(Date.self, forKey: .date)
+        title = try container.decode(String.self, forKey: .title)
+        mode = try container.decode(ScanMode.self, forKey: .mode)
+        photo = try container.decodeIfPresent(Data.self, forKey: .photo)
+        components = try container.decode([Component].self, forKey: .components)
+        totals = try container.decode([MetricKey: Measured].self, forKey: .totals)
+        yearlyTotals = try container.decodeIfPresent([MetricKey: Measured].self, forKey: .yearlyTotals) ?? [:]
+        greenerImage = try container.decodeIfPresent(Data.self, forKey: .greenerImage)
+        selectedAlternatives = try container.decode([UUID: UUID].self, forKey: .selectedAlternatives)
+    }
+
+    /// Seed for the scan totals: from what was scanned, so a rescan of the same items gives the same ranges.
+    public var totalsSeed: UInt64 { StableHash.seed(components) }
+
+    /// Recomputes both totals from the components.
+    public mutating func updateTotals(engine: ImpactEngine) {
+        totals = engine.itemTotals(components, seed: totalsSeed)
+        yearlyTotals = engine.yearlyTotals(components, seed: totalsSeed)
     }
 
     /// Monte Carlo seed derived from the scan id so results are reproducible (spec §5.6).

@@ -47,8 +47,11 @@ struct PerCapitaBuilder {
             categoryShares: shares,
             clothingModifiers: Self.keyed(file.clothingModifiers.resolved ?? [:], ClothingHabit.init(rawValue:)),
             commuteModifiers: Self.keyed(file.commuteModifiers.resolved ?? [:], CommuteMode.init(rawValue:)),
+            homeTypeModifiers: Self.keyed(file.homeTypeModifiers.resolved ?? [:], HomeType.init(rawValue:)),
+            heatingModifiers: Self.keyed(file.heatingModifiers.resolved ?? [:], HeatingSource.init(rawValue:)),
             citations: [file.categoryShares.citation, file.dietModifiers.citation, file.clothingModifiers.citation,
-                        file.commuteModifiers.citation, file.householdSizeExponent.citation, file.sigmas.citation])
+                        file.commuteModifiers.citation, file.householdSizeExponent.citation,
+                        file.homeTypeModifiers.citation, file.heatingModifiers.citation, file.sigmas.citation])
 
         let cited: [(String, Bool, Source)] = [
             ("sigmas", file.sigmas.verified, file.sigmas.citation),
@@ -56,6 +59,8 @@ struct PerCapitaBuilder {
             ("clothingModifiers", file.clothingModifiers.verified, file.clothingModifiers.citation),
             ("commuteModifiers", file.commuteModifiers.verified, file.commuteModifiers.citation),
             ("householdSizeExponent", file.householdSizeExponent.verified, file.householdSizeExponent.citation),
+            ("homeTypeModifiers", file.homeTypeModifiers.verified, file.homeTypeModifiers.citation),
+            ("heatingModifiers", file.heatingModifiers.verified, file.heatingModifiers.citation),
             ("categoryShares", file.categoryShares.verified, file.categoryShares.citation),
         ]
         info += cited.map { ReferenceRecordInfo(table: "per_capita", key: $0.0, verified: $0.1, citation: $0.2) }

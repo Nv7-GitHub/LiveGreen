@@ -65,7 +65,7 @@ public struct ScanPipeline: Sendable {
 
         var result = ScanResult(id: id, date: date, title: response.sceneTitle ?? components.first?.name ?? "Scan",
                                 mode: mode, photo: image.isEmpty ? nil : image, components: components)
-        result.totals = engine.itemTotals(components, seed: result.seed)
+        result.updateTotals(engine: engine)
         return result
     }
 
@@ -104,7 +104,7 @@ public struct ScanPipeline: Sendable {
             }
             updated.components[index] = component
         }
-        updated.totals = engine.itemTotals(updated.components, seed: updated.seed)
+        updated.updateTotals(engine: engine)
         return updated
     }
 

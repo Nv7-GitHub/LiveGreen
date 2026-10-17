@@ -21,18 +21,21 @@ public struct ScannedFootprint: Sendable, Hashable {
         Set(byCategory.filter { $0.value[metric] != nil }.keys)
     }
 
-    /// Sums yearly impacts of every scanned component. The same item scanned twice (same GTIN or
-    /// brand|model, else same category and name) counts once, using the latest scan.
+    /// Sums yearly impacts of every scanned component. An item scanned again in a later scan (same GTIN or
+    /// brand|model, else same category and name) replaces the earlier scan's count of it, so repeat scans
+    /// count once while several units in one scan (two monitors on a desk) all count.
     public static func from(scans: [ScanResult], engine: ImpactEngine = ImpactEngine()) -> ScannedFootprint {
-        var latest: [String: (component: Component, seed: UInt64)] = [:]
+        var latest: [String: [(component: Component, seed: UInt64)]] = [:]
         for scan in scans.sorted(by: { $0.date < $1.date }) {
+            var units: [String: [(component: Component, seed: UInt64)]] = [:]
             for component in scan.components {
                 let key = component.identifiers.cacheKey ?? "\(component.category.rawValue)|\(component.name.lowercased())"
-                latest[key] = (component, scan.seed)
+                units[key, default: []].append((component, scan.seed))
             }
+            latest.merge(units) { _, newer in newer }
         }
         var byCategory: [Category: [MetricKey: Double]] = [:]
-        for (component, seed) in latest.values {
+        for (component, seed) in latest.values.joined() {
             for (metric, yearly) in engine.annualized(component, seed: seed) where CohortModel.comparedMetrics.contains(metric) {
                 byCategory[component.category, default: [:]][metric, default: 0] += yearly.value
             }

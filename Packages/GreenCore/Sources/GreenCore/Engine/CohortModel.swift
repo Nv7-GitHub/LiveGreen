@@ -2,7 +2,7 @@ import Foundation
 
 /// Lognormal peer distributions built from the profile and per-capita baselines (spec §9).
 /// Comparisons are of category sub-footprints: the peer median for a set of categories is the per-capita
-/// median × those categories' shares, adjusted by diet, clothing habit and household size.
+/// median × those categories' shares, adjusted by diet, clothing habit, household size, home type and heating.
 public struct CohortModel: Sendable {
     public static let comparedMetrics: [MetricKey] = [.carbon, .water, .land, .yearlyElectricity]
 
@@ -22,25 +22,33 @@ public struct CohortModel: Sendable {
         self.init(profile: profile, baseline: baseline, reference: store.cohort)
     }
 
-    /// Profile multiplier on one category's share of the per-capita total.
-    public func modifier(for category: Category) -> Double {
+    /// Profile multiplier on one category's share of the per-capita total for `metric`.
+    public func modifier(for category: Category, metric: MetricKey = .carbon) -> Double {
         switch category {
         case .food:
-            baseline.dietModifiers[profile.diet] ?? 1
+            return baseline.dietModifiers[profile.diet] ?? 1
         case .clothing:
-            reference.clothingModifiers[profile.clothingHabit] ?? 1
+            return reference.clothingModifiers[profile.clothingHabit] ?? 1
         case .electronic, .household:
             // Shared appliances spread across the household: per-person use scales with size^(exponent − 1).
-            pow(Double(max(profile.householdSize, 1)), baseline.householdSizeExponent - 1)
+            var value = pow(Double(max(profile.householdSize, 1)), baseline.householdSizeExponent - 1)
+            // Bigger homes run more appliances; electric heating adds to the electricity bill only.
+            if metric == .carbon || metric == .yearlyElectricity {
+                value *= reference.homeTypeModifiers[profile.homeType] ?? 1
+            }
+            if metric == .yearlyElectricity {
+                value *= reference.heatingModifiers[profile.heating] ?? 1
+            }
+            return value
         case .packaging, .personalCare:
-            1
+            return 1
         }
     }
 
     /// Peer median of the per-person yearly sub-footprint for `categories`.
     public func median(for metric: MetricKey, categories: Set<Category>) -> Double {
         guard let total = baseline.medians[metric] else { return 0 }
-        let share = categories.reduce(0) { $0 + reference.share(of: $1, for: metric) * modifier(for: $1) }
+        let share = categories.reduce(0) { $0 + reference.share(of: $1, for: metric) * modifier(for: $1, metric: metric) }
         return total * share
     }
 

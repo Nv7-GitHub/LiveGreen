@@ -1572,6 +1572,40 @@
    "url": "https://doi.org/10.1016/j.ecolecon.2015.04.028"
   }
  },
+ "homeTypeModifiers": {
+  "values": {
+   "apartment": 0.66,
+   "townhouse": 0.88,
+   "detachedHouse": 1.12,
+   "dorm": 0.5
+  },
+  "appliesTo": "electronic, household (electricity and carbon)",
+  "note": "Household electricity use by housing type relative to the U.S. household average; dorms are taken as below apartments (shared, small, no major appliances).",
+  "verified": false,
+  "citation": {
+   "title": "U.S. EIA, Residential Energy Consumption Survey (RECS) 2020: household electricity consumption by housing type",
+   "tier": 3,
+   "url": "https://www.eia.gov/consumption/residential/data/2020/"
+  }
+ },
+ "heatingModifiers": {
+  "values": {
+   "naturalGas": 0.85,
+   "electricResistance": 1.35,
+   "heatPump": 1.2,
+   "oil": 0.85,
+   "districtHeating": 0.85,
+   "none": 0.9
+  },
+  "appliesTo": "electronic, household (electricity)",
+  "note": "Household electricity use by main space-heating fuel relative to the U.S. household average: electrically heated homes draw more, fuel-heated homes less.",
+  "verified": false,
+  "citation": {
+   "title": "U.S. EIA, Residential Energy Consumption Survey (RECS) 2020: household electricity consumption by main space-heating fuel",
+   "tier": 3,
+   "url": "https://www.eia.gov/consumption/residential/data/2020/"
+  }
+ },
  "categoryShares": {
   "verified": false,
   "citation": {

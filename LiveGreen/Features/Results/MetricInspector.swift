@@ -24,7 +24,11 @@ struct MetricInspector: View {
     }
 
     private func breakdown(for metric: MetricKey) -> [MeasuredBreakdown] {
-        metric == .plasticMass ? MeasuredBreakdown.plastic(of: component) : []
+        switch metric {
+        case .carbon: MeasuredBreakdown.carbon(of: component, engine: ImpactEngine())
+        case .plasticMass: MeasuredBreakdown.plastic(of: component)
+        default: []
+        }
     }
 }
 

@@ -43,7 +43,22 @@ public struct CohortReference: Sendable, Hashable {
     public var categoryShares: [MetricKey: [Category: Double]]
     public var clothingModifiers: [ClothingHabit: Double]
     public var commuteModifiers: [CommuteMode: Double]
+    /// Household electricity (and appliance carbon) by housing type, relative to the average home.
+    public var homeTypeModifiers: [HomeType: Double]
+    /// Household electricity by main heating source, relative to the average home.
+    public var heatingModifiers: [HeatingSource: Double]
     public var citations: [Source]
+
+    public init(categoryShares: [MetricKey: [Category: Double]], clothingModifiers: [ClothingHabit: Double],
+                commuteModifiers: [CommuteMode: Double], homeTypeModifiers: [HomeType: Double] = [:],
+                heatingModifiers: [HeatingSource: Double] = [:], citations: [Source]) {
+        self.categoryShares = categoryShares
+        self.clothingModifiers = clothingModifiers
+        self.commuteModifiers = commuteModifiers
+        self.homeTypeModifiers = homeTypeModifiers
+        self.heatingModifiers = heatingModifiers
+        self.citations = citations
+    }
 
     public func share(of category: Category, for metric: MetricKey) -> Double {
         categoryShares[metric]?[category] ?? 0
