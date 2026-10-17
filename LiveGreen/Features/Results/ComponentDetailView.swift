@@ -64,7 +64,8 @@ struct ComponentDetailView: View {
         if let model = ids.model { parts.append(model) }
         if let gtin = ids.gtin { parts.append("GTIN \(gtin)") }
         if !ids.materials.isEmpty {
-            parts.append(ids.materials.map { "\(Int($0.percent))% \($0.material)" }.joined(separator: ", "))
+            parts.append(ids.materials.map { "\(Int($0.percent))% \($0.material.replacingOccurrences(of: "_", with: " "))" }
+                .joined(separator: ", "))
         }
         return parts.joined(separator: " · ")
     }

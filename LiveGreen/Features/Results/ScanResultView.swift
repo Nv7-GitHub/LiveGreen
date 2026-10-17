@@ -66,7 +66,7 @@ struct ScanResultView: View {
                 ScrollView {
                     detail(for: component).padding()
                 }
-                .navigationTitle(component.name)
+                // The detail header already names the item.
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -90,18 +90,22 @@ struct ScanResultView: View {
 
     private var overview: some View {
         ScrollView {
-            VStack(spacing: 16) {
-                SummaryHeader(result: current, filter: filter)
+            VStack(spacing: 14) {
                 photo
                 MetricPicker(selection: $filter)
+                SummaryHeader(result: current, filter: filter)
                 if !pendingQuestions.isEmpty { questionsBanner }
                 componentList
                 alternativesButton
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.top, 4)
             .animation(.smooth, value: current)
+            .animation(.smooth, value: filter)
         }
         .scrollIndicators(.hidden)
+        // Room for the floating tab bar so the last rows and the swaps button are never covered.
+        .contentMargins(.bottom, 96, for: .scrollContent)
     }
 
     private var photo: some View {
@@ -113,21 +117,31 @@ struct ScanResultView: View {
                                   selectedID: selectedID, onSelect: select)
             }
             .clipShape(.rect(cornerRadius: Theme.cardCornerRadius))
+            .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
     }
 
     private var componentList: some View {
         let ranked = ResultInsights.ranked(current.components, by: filter.shareMetric)
-        return VStack(spacing: 10) {
-            ForEach(ranked) { component in
-                Button { select(component) } label: {
-                    ComponentRow(component: component, filter: filter,
-                                 share: ResultInsights.share(of: component, metric: filter.shareMetric,
-                                                             in: current.components),
-                                 isSelected: component.id == selectedID)
+        return VStack(alignment: .leading, spacing: 6) {
+            Text(filter == .all ? "Items" : "Items by \(filter.title.lowercased())")
+                .font(.headline)
+                .padding(.horizontal, 6)
+            VStack(spacing: 0) {
+                ForEach(Array(ranked.enumerated()), id: \.element.id) { index, component in
+                    if index > 0 { Divider().padding(.leading, 54) }
+                    Button { select(component) } label: {
+                        ComponentRow(component: component, number: index + 1, filter: filter,
+                                     share: ResultInsights.share(of: component, metric: filter.shareMetric,
+                                                                 in: current.components),
+                                     isSelected: component.id == selectedID)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
+            .padding(4)
+            .glassEffect(.regular, in: .rect(cornerRadius: Theme.cardCornerRadius))
         }
+        .padding(.top, 4)
     }
 
     private var questionsBanner: some View {
@@ -157,8 +171,9 @@ struct ScanResultView: View {
             AlternativesView(result: current)
         } label: {
             Label("See greener swaps", systemImage: "leaf.arrow.triangle.circlepath")
+                .font(.headline)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
+                .padding(.vertical, 8)
         }
         .buttonStyle(.glassProminent)
         .accessibilityIdentifier("openAlternatives")
