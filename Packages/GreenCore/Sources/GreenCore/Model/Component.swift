@@ -48,3 +48,11 @@ public struct Component: Codable, Sendable, Hashable, Identifiable {
         category.applicableMetrics.filter { metrics[$0] == nil }
     }
 }
+
+extension Component {
+    /// Monte Carlo seed for this component's derived values: its identifier key when it has one, so a
+    /// rescan of the same GTIN or brand|model gives identical ranges, else its id.
+    public var stableSeed: UInt64 {
+        identifiers.cacheKey.map(StableHash.fnv1a) ?? StableHash.seed(id)
+    }
+}

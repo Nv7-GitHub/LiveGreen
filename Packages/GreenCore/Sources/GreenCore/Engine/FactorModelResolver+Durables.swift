@@ -40,7 +40,7 @@ extension FactorModelResolver {
         let lifespan = engine.lifespan(of: working)
         let grid = engine.gridMeasured(for: profile)
         let yearlyKWh = kWh ?? Measured.exact(0, unit: .kilowattHoursPerYear, tier: .factorModel)
-        let mc = MonteCarlo(seed: StableHash.seed(component.id))
+        let mc = MonteCarlo(seed: component.stableSeed)
         let carbon = mc.propagate([embodied, yearlyKWh, grid, lifespan], unit: .kgCO2e, salt: "factor.carbon") {
             ImpactEngine.lifetimeCarbon(embodiedKg: $0[0], lifespanYears: $0[3],
                                         annualUseKg: ImpactEngine.useCarbon(kWh: $0[1], gramsPerKWh: $0[2]))

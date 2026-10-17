@@ -37,9 +37,10 @@ public struct ScanPipeline: Sendable {
 
         emit(.stepStarted(.identifying))
         let response = try await identify(image: image, hints: hints, emit: emit)
+        let identified = prepared(response.components, hints: hints)
         // Component ids derive from the scan id, so a scan's seeded Monte Carlo ranges are reproducible.
-        var components = response.components.enumerated().map { $1.makeComponent(id: Self.componentID(scan: id, index: $0)) }
-        let deferrable = Dictionary(uniqueKeysWithValues: zip(components.map(\.id), response.components.map(\.deferrableLoad)))
+        var components = identified.enumerated().map { $1.makeComponent(id: Self.componentID(scan: id, index: $0)) }
+        let deferrable = Dictionary(uniqueKeysWithValues: zip(components.map(\.id), identified.map(\.deferrableLoad)))
         emit(.componentsIdentified(components))
         emit(.stepFinished(.identifying))
 
@@ -109,7 +110,7 @@ public struct ScanPipeline: Sendable {
 
     // MARK: - Steps
 
-    /// Below this a schedule saves too little to recommend a plug (e.g. a charger's idle draw).
+    /// Below this an inferred load saves too little to recommend a plug (e.g. a charger's idle draw).
     static let minimumPlugKWhPerYear = 15.0
 
     static func componentID(scan: UUID, index: Int) -> UUID {
@@ -201,14 +202,15 @@ public struct ScanPipeline: Sendable {
 
     // MARK: - Engine
 
-    /// Derived values the ladder does not produce: yearly electricity from power × hours and the smart-plug
-    /// candidate for deferrable loads.
+    /// Derived values the ladder does not produce: yearly electricity from power × hours, the use phase of
+    /// researched or estimated electronics carbon, and the smart-plug candidate for deferrable loads.
     func completed(_ component: Component, deferrable: DeferrableLoadType?) -> Component {
         var result = component
         if result.metrics[.yearlyElectricity] == nil, result.category.applicableMetrics.contains(.yearlyElectricity),
            let kWh = engine.derivedYearlyElectricity(for: result) {
             result.metrics[.yearlyElectricity] = kWh
         }
+        result = addingUsePhase(to: result)
         if result.plugCandidate == nil, let candidate = plugCandidate(for: result, deferrable: deferrable) {
             result.plugCandidate = candidate
         }
@@ -217,8 +219,10 @@ public struct ScanPipeline: Sendable {
 
     private func plugCandidate(for component: Component, deferrable: DeferrableLoadType?) -> PlugCandidate? {
         let device = engine.store?.deviceProfile(deviceType: component.quantities.deviceType ?? component.name)
-        guard let load = deferrable ?? device?.deferrableLoad,
-              let kWh = component.metrics[.yearlyElectricity]?.value, kWh >= Self.minimumPlugKWhPerYear else { return nil }
+        // An explicit deferrable load from identify (a power bank, a phone charger) always qualifies; loads
+        // inferred from device defaults must use enough electricity for scheduling to matter.
+        guard let load = deferrable ?? device?.deferrableLoad, let kWh = component.metrics[.yearlyElectricity]?.value,
+              kWh > 0, deferrable != nil || kWh >= Self.minimumPlugKWhPerYear else { return nil }
         let watts = component.quantities.ratedPowerW ?? device?.chargerWatts ?? component.metrics[.powerOn]?.value ?? 100
         var candidate = PlugCandidate(loadType: load, chargerWatts: watts, dailyKWh: kWh / ImpactEngine.daysPerYear)
         candidate.estimatedSavings = plugSavings(for: candidate)

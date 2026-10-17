@@ -71,3 +71,12 @@ public enum StableHash {
         }
     }
 }
+
+extension StableHash {
+    /// Seed for scan totals derived from what was scanned rather than the scan id, so rescanning the same
+    /// items gives the same total ranges (spec §1). Items are keyed by identifier, else category and name.
+    public static func seed(_ components: [Component]) -> UInt64 {
+        let keys = components.map { $0.identifiers.cacheKey ?? "\($0.category.rawValue)|\($0.name.lowercased())" }
+        return fnv1a(keys.sorted().joined(separator: "\n"))
+    }
+}

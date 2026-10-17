@@ -32,6 +32,8 @@ extension ClaudeClient: VisionIdentifier {
         - A meal is split into its foods and drinks (e.g. burger, fries, cola can), not reported as one plate.
         - Choose the category from the table below; it fixes which metrics apply:
         \(PromptParts.categoryTable)
+        - Anything that plugs in or charges, including kitchen and laundry appliances (dishwasher, washer, \
+        kettle), is `electronic`. `household` is for unpowered goods such as furniture, cookware and cleaning supplies.
 
         Bounding boxes
         - Normalized to the image: x and y are the box's top-left corner as fractions of width and height \

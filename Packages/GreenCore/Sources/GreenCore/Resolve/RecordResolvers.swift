@@ -23,7 +23,8 @@ public struct OpenFoodFactsResolver: MetricResolver {
     }
 }
 
-/// T1: ENERGY STAR certified records by brand + model number (spec §5.4) for electronics and appliances.
+/// T1: ENERGY STAR certified records by brand + model number (spec §5.4) for electronics, which include
+/// plugged-in appliances (household goods are unpowered).
 public struct EnergyStarResolver: MetricResolver {
     public let tier = Tier.exactRecord
     public let name = "ENERGY STAR"
@@ -35,7 +36,7 @@ public struct EnergyStarResolver: MetricResolver {
 
     public func resolve(_ request: ResolutionRequest) async throws -> ResolverOutput {
         let component = request.component
-        guard component.category == .electronic || component.category == .household,
+        guard component.category == .electronic,
               let brand = component.identifiers.brand, !brand.isEmpty,
               let model = component.identifiers.model, !model.isEmpty else { return .empty }
         let record: ApplianceRecord? = if let client = appliances as? EnergyStarClient {

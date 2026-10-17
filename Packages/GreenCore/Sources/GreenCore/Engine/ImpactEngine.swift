@@ -91,7 +91,7 @@ public struct ImpactEngine: Sendable {
     public func derivedYearlyElectricity(for component: Component) -> Measured? {
         let profile = store?.deviceProfile(deviceType: component.quantities.deviceType ?? component.name)
         let usage = component.usage
-        let mc = MonteCarlo(seed: StableHash.seed(component.id))
+        let mc = MonteCarlo(seed: component.stableSeed)
         if let battery = profile?.batteryKWh, let charges = usage?.chargesPerWeek {
             let kWh = Self.chargingElectricity(batteryKWh: battery, chargesPerWeek: charges)
             let source = profile.map { [$0.defaults.citation] } ?? []
