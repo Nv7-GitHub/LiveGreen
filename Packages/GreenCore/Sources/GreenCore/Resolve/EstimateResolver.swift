@@ -9,7 +9,7 @@ public struct EstimateResolver: MetricResolver {
         var metrics: [MetricKey: Measured] = [:]
         for (metric, estimate) in request.component.fallbackEstimates where request.metrics.contains(metric) {
             let minDelta = abs(estimate.value) * 0.5
-            let source = Source(title: "Claude estimate (no record found)", tier: .estimate)
+            let source = Source(title: "AI estimate from the photo (no record found)", tier: .estimate)
             var low = min(estimate.low, estimate.value - minDelta)
             var high = max(estimate.high, estimate.value + minDelta)
             var value = estimate.value

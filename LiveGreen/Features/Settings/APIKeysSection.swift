@@ -49,7 +49,7 @@ struct APIKeysSection: View {
             Label("Keychain", systemImage: "lock.fill").statusStyle(Theme.leaf)
         } else if model.secrets.infoPlistValue(for: key) != nil {
             Label("Config", systemImage: "doc.text").statusStyle(Theme.leaf)
-        } else if key.isRequired {
+        } else if key.isRequired(for: model.flags.aiProvider) {
             Label("Missing", systemImage: "exclamationmark.circle").statusStyle(Theme.warning)
         } else {
             Label("Optional", systemImage: "minus.circle").statusStyle(.secondary)

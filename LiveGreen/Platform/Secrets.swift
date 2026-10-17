@@ -18,8 +18,11 @@ nonisolated enum SecretKey: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// ENERGY STAR works without a token (rate-limited); without Electricity Maps the grid uses free EIA data.
-    var isRequired: Bool { [.anthropic, .xai].contains(self) }
+    /// xAI is always needed (greener image), Anthropic only when Claude is the analysis provider. ENERGY STAR
+    /// works without a token (rate-limited); without Electricity Maps the grid uses free EIA data.
+    func isRequired(for provider: AIProvider) -> Bool {
+        self == .xai || self == provider.key
+    }
 }
 
 /// Reads keys: a Keychain override set in Settings wins over the Info.plist value from Secrets.xcconfig.
@@ -52,7 +55,7 @@ nonisolated struct Secrets: Sendable {
     }
 
     /// Required keys with no value; shown as a Settings banner.
-    var missingRequiredKeys: [SecretKey] {
-        SecretKey.allCases.filter { $0.isRequired && value(for: $0) == nil }
+    func missingRequiredKeys(for provider: AIProvider) -> [SecretKey] {
+        SecretKey.allCases.filter { $0.isRequired(for: provider) && value(for: $0) == nil }
     }
 }

@@ -9,7 +9,7 @@ struct MissingKeysBanner: View {
 
     private var missing: [SecretKey] {
         _ = revision
-        return model.flags.demoMode ? [] : model.secrets.missingRequiredKeys
+        return model.flags.demoMode ? [] : model.secrets.missingRequiredKeys(for: model.flags.aiProvider)
     }
 
     var body: some View {

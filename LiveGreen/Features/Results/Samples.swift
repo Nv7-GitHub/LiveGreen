@@ -28,7 +28,7 @@ enum ResultSamples {
         title: "Paper and paperboard: material-specific data (US EPA)",
         url: URL(string: "https://www.epa.gov/facts-and-figures-about-materials-waste-and-recycling/paper-and-paperboard-material-specific-data"),
         tier: .factorModel)
-    private static let estimate = Source(title: "Claude estimate from the photo", tier: .estimate)
+    private static let estimate = Source(title: "AI estimate from the photo", tier: .estimate)
 
     private static func makeDesk() -> ScanResult {
         var components = DemoScene.deskSetup.identifyResponse.components.map { $0.makeComponent() }

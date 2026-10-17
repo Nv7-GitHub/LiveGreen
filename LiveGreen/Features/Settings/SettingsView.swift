@@ -32,14 +32,20 @@ struct SettingsView: View {
                 Picker("Scan mode", selection: $model.flags.scanMode) {
                     ForEach(ScanMode.allCases, id: \.self) { Text($0.displayName).tag($0) }
                 }
-                Picker("Claude model", selection: $model.flags.modelChoice) {
-                    ForEach(ClaudeModel.allCases, id: \.self) { Text($0.displayName).tag($0) }
+                Picker("AI provider", selection: $model.flags.aiProvider) {
+                    ForEach(AIProvider.allCases, id: \.self) { Text($0.displayName).tag($0) }
+                }
+                .accessibilityIdentifier("settings.aiProvider")
+                if model.flags.aiProvider == .claude {
+                    Picker("Claude model", selection: $model.flags.modelChoice) {
+                        ForEach(ClaudeModel.allCases, id: \.self) { Text($0.displayName).tag($0) }
+                    }
                 }
                 Toggle("Demo mode", isOn: $model.flags.demoMode)
             } header: {
                 Text("Scanning")
             } footer: {
-                Text("Demo mode replays bundled scenes (desk setup, meal, e-bike corner) with no network calls.")
+                Text("The AI provider identifies items, suggests swaps and researches spec sheets. Demo mode replays bundled scenes (desk setup, meal, e-bike corner) with no network calls.")
             }
 
             Section {

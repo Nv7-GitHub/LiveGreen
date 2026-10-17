@@ -52,29 +52,40 @@ nonisolated struct ServiceContainer: Sendable {
     }
 
     /// Live services. Keyless clients (Open Food Facts, ENERGY STAR, EIA grid data) always run; an Electricity
-    /// Maps key switches the grid to Electricity Maps. Claude and Grok calls without a key throw
+    /// Maps key switches the grid to Electricity Maps. Analysis and image calls without a key throw
     /// `missingAPIKey`, which the ladder skips and the scan and image screens report (Settings names the key).
     static func live(flags: FeatureFlags, secrets: Secrets) -> ServiceContainer {
         let reference = ReferenceStore.bundled
-        let claude = ClaudeClient(configuration: .init(apiKey: secrets.value(for: .anthropic), model: flags.modelChoice,
-                                                       vocabulary: reference.vocabulary))
+        let analysis = analysisClient(flags: flags, secrets: secrets, vocabulary: reference.vocabulary)
         let products = OpenFoodFactsClient()
         let appliances = EnergyStarClient(appToken: secrets.value(for: .energyStar))
         let grid: any GridSignal = secrets.value(for: .electricityMaps).map { ElectricityMapsClient(apiKey: $0) }
             ?? EIAGridClient()
         return ServiceContainer(
-            vision: claude,
-            alternatives: claude,
-            researcher: claude,
+            vision: analysis,
+            alternatives: analysis,
+            researcher: analysis,
             imageEditor: GrokImageClient(apiKey: secrets.value(for: .xai)),
             products: products,
             appliances: appliances,
             grid: grid,
             reference: reference,
             plug: flags.useMockPlug ? PlugConnector.live.mock : nil,
-            resolvers: resolvers(products: products, appliances: appliances, researcher: claude, reference: reference),
+            resolvers: resolvers(products: products, appliances: appliances, researcher: analysis, reference: reference),
             modelChoice: flags.modelChoice,
             isDemo: false)
+    }
+
+    /// Identify, alternatives and spec research from the provider picked in Settings.
+    static func analysisClient(flags: FeatureFlags, secrets: Secrets,
+                               vocabulary: ReferenceVocabulary) -> any VisionIdentifier & AlternativeSuggester & SpecResearcher {
+        switch flags.aiProvider {
+        case .grok:
+            GrokAnalysisClient(configuration: .init(apiKey: secrets.value(for: .xai), vocabulary: vocabulary))
+        case .claude:
+            ClaudeClient(configuration: .init(apiKey: secrets.value(for: .anthropic), model: flags.modelChoice,
+                                              vocabulary: vocabulary))
+        }
     }
 
     /// The container for the current settings.

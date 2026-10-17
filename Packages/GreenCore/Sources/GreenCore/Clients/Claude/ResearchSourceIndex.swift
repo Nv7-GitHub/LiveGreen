@@ -13,6 +13,11 @@ struct ResearchSourceIndex: Sendable {
         }
     }
 
+    /// Pages known only by URL (Grok's web search returns no page text, so quotes are not checked).
+    init(retrievedURLs: [URL]) {
+        urls = Set(retrievedURLs.map(Self.key(for:)))
+    }
+
     /// True when `url` was retrieved and, if its text is known, the quote appears in it.
     func supports(quote: String, from url: URL) -> Bool {
         let key = Self.key(for: url)

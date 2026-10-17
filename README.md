@@ -17,8 +17,8 @@ open LiveGreen.xcodeproj
 
 | Key (in `Secrets.xcconfig`) | Used for | Required |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | Claude identify, alternatives, spec research | yes (except demo mode) |
-| `XAI_API_KEY` | Grok greener-image edit | yes (except demo mode) |
+| `XAI_API_KEY` | Grok identify, alternatives and spec research (default AI provider) and the greener-image edit | yes (except demo mode) |
+| `ANTHROPIC_API_KEY` | Claude identify, alternatives and spec research, when Settings → AI provider is Claude | only for the Claude provider |
 | `ELECTRICITYMAPS_API_KEY` | Live grid carbon intensity (paid beyond 24 h of history) | optional (without it, US grid data comes from EIA's Hourly Electric Grid Monitor, no key needed) |
 | `ENERGYSTAR_APP_TOKEN` | ENERGY STAR Socrata queries | optional |
 
@@ -83,7 +83,8 @@ The flags are set in Settings and persisted in UserDefaults. Launch arguments ov
 | Scan mode (`photo` / `ar` / `barcode`) | `photo` | `-ScanMode ar` |
 | Demo mode (offline fixture scans) | off | `-DemoMode YES` |
 | Smart plug features (Plugs tab, cards) | on | `-PlugFeatures NO` |
-| Claude model (`opus` = claude-opus-5-5, `sonnet` = claude-sonnet-5-5) | opus | `-ModelChoice sonnet` |
+| AI provider for identify, alternatives and research (`grok` = grok-4.3, `claude`) | grok | `-AIProvider claude` |
+| Claude model (`opus` = claude-opus-5-5, `sonnet` = claude-sonnet-5-5), Claude provider only | opus | `-ModelChoice sonnet` |
 | Mock plug | off | `-MockPlug YES` |
 
 Launch-only arguments: `-SkipOnboarding YES` and `-InMemoryStore YES` (a throwaway SwiftData store, used by UI tests).

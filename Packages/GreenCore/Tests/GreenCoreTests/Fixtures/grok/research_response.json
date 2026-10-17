@@ -1,0 +1,18 @@
+{
+ "id": "resp_test",
+ "object": "response",
+ "status": "completed",
+ "model": "grok-4.3",
+ "output": [
+  {"id": "rs_1", "type": "reasoning", "status": "completed", "summary": []},
+  {"id": "ws_1", "type": "web_search_call", "status": "completed",
+   "action": {"type": "search", "query": "Dell U2723QE power consumption",
+    "sources": [{"type": "url", "url": "https://wcctv.co.za/wp-content/uploads/2024/01/Dell-U2723QE.pdf"},
+                {"type": "url", "url": "https://www.dell.com/en-us/shop/dell-ultrasharp-27-4k-usb-c-hub-monitor-u2723qe/apd/210-bdpf"}]}},
+  {"id": "msg_1", "type": "message", "role": "assistant", "status": "completed",
+   "content": [{"type": "output_text",
+     "text": "{\"values\":[{\"metric\":\"powerOn\",\"value\":25.9,\"low\":null,\"high\":null,\"source_url\":\"https://wcctv.co.za/wp-content/uploads/2024/01/Dell-U2723QE.pdf\",\"source_title\":\"Dell U2723QE datasheet\",\"quote\":\"Power consumption (typical) * 25.9 W\"},{\"metric\":\"standbyPower\",\"value\":0.3,\"low\":null,\"high\":null,\"source_url\":\"https://www.delltechnologies.com/pcf.pdf\",\"source_title\":\"PCF\",\"quote\":\"Standby 0.3 W\"}],\"not_found\":[\"carbon\"]}",
+     "annotations": [{"type": "url_citation", "url": "https://device.report/dell/u2723qe", "start_index": 0, "end_index": 0, "title": "device.report"}]}]}
+ ],
+ "usage": {"input_tokens": 1000, "output_tokens": 100}
+}
