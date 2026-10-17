@@ -1,6 +1,6 @@
 /// Runs resolvers in tier order per component, stopping per metric at the first value (spec §5.4).
 /// Values from different tiers are kept per metric, so one component can mix tiers. With a cache, a
-/// component whose GTIN or brand|model was resolved before skips the resolvers entirely.
+/// component whose GTIN, brand|model or generic item kind was resolved before skips the resolvers entirely.
 public struct EvidenceLadder: Sendable {
     public let resolvers: [any MetricResolver]
     public let cache: (any ResolutionCache)?
@@ -58,11 +58,13 @@ public struct EvidenceLadder: Sendable {
         return result
     }
 
-    /// The component with its cached metrics and stage split, or nil on a miss.
+    /// The component with its cached metrics and stage split, or nil on a miss. The cached category wins, so a
+    /// backpack once called clothing and once household still gets one set of numbers.
     public func cached(_ component: Component) async -> Component? {
-        guard let cache, let key = component.identifiers.cacheKey,
+        guard let cache, let key = component.identifiers.resolutionKey,
               let hit = await cache.cachedResolution(forKey: key), hit.metrics[.carbon] != nil else { return nil }
         var result = component
+        if let category = hit.category { result.category = category }
         result.metrics.merge(hit.metrics) { _, cached in cached }
         if !hit.stageShares.isEmpty { result.stageShares = hit.stageShares }
         if let share = hit.plasticPackagingShare { result.plasticPackagingShare = share }
@@ -72,8 +74,9 @@ public struct EvidenceLadder: Sendable {
     /// Stores a resolved component under its identifier key. A resolution without carbon is incomplete (the
     /// item was not recognized well enough), so it is not kept; a rescan gets another chance.
     public func remember(_ component: Component) async {
-        guard let cache, let key = component.identifiers.cacheKey, component.metrics[.carbon] != nil else { return }
+        guard let cache, let key = component.identifiers.resolutionKey, component.metrics[.carbon] != nil else { return }
         await cache.store(CachedResolution(metrics: component.metrics, stageShares: component.stageShares,
-                                           plasticPackagingShare: component.plasticPackagingShare), forKey: key)
+                                           plasticPackagingShare: component.plasticPackagingShare,
+                                           category: component.category), forKey: key)
     }
 }

@@ -40,12 +40,12 @@ extension ImpactEngine {
 
     /// Yearly value of one metric for one component, or nil when the metric is missing or not additive.
     public func yearly(_ metric: MetricKey, of component: Component, seed: UInt64? = nil) -> Measured? {
-        yearlyTotal(metric, of: [component], seed: seed ?? StableHash.seed(component.id))
+        yearlyTotal(metric, of: [component], seed: seed ?? component.stableSeed)
     }
 
     /// Yearly impacts of one component for every additive metric it has.
     public func annualized(_ component: Component, seed: UInt64? = nil) -> [MetricKey: Measured] {
-        let seed = seed ?? StableHash.seed(component.id)
+        let seed = seed ?? component.stableSeed
         return Self.annualMetrics.reduce(into: [:]) { result, metric in
             result[metric] = yearlyTotal(metric, of: [component], seed: seed)
         }
