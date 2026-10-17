@@ -159,8 +159,8 @@ struct QuestionsSheet: View {
     }
 }
 
-/// Wraps chips onto as many rows as needed.
-private struct ChipLayout: Layout {
+/// Wraps chips onto as many rows as needed (also used by `SpecQuestionsSheet`).
+struct ChipLayout: Layout {
     var spacing: CGFloat
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {

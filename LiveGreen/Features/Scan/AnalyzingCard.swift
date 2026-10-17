@@ -7,6 +7,8 @@ import GreenCoreFakes
 struct AnalyzingCard: View {
     let events: AsyncThrowingStream<PipelineEvent, Error>
     var onQuestions: ([PendingQuestion]) -> Void = { _ in }
+    /// Detail questions for T4 items, delivered before `onComplete`.
+    var onSpecQuestions: ([SpecQuestion]) -> Void = { _ in }
     let onComplete: (ScanResult) -> Void
     let onFailure: (Error) -> Void
 
@@ -154,6 +156,7 @@ struct AnalyzingCard: View {
                 withAnimation(.smooth) { apply(event) }
                 switch event {
                 case let .questionsNeeded(questions): onQuestions(questions)
+                case let .specQuestionsNeeded(questions): onSpecQuestions(questions)
                 case let .completed(result): onComplete(result)
                 default: break
                 }

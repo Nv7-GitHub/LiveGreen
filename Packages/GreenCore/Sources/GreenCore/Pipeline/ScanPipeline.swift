@@ -1,7 +1,7 @@
 import Foundation
 
 /// The scan pipeline of spec §5: identify → evidence ladder (cache first, then one phase per tier) →
-/// impact engine → questions. Pure GreenCore so it runs the same in the app, demo mode and tests.
+/// impact engine → questions (usage questions, plus detail questions for T4 items). Pure GreenCore so it runs the same in the app, demo mode and tests.
 public struct ScanPipeline: Sendable {
     public var vision: any VisionIdentifier
     public var alternatives: any AlternativeSuggester
@@ -64,6 +64,9 @@ public struct ScanPipeline: Sendable {
         components = components.map { completed($0, deferrable: deferrable[$0.id] ?? nil) }
         let pending = QuestionGate.pendingQuestions(for: components)
         if !pending.isEmpty { emit(.questionsNeeded(pending)) }
+        // Items still on a T4 estimate get a few plain detail questions before the results (`refining`).
+        let details = await specQuestions(for: components)
+        if !details.isEmpty { emit(.specQuestionsNeeded(details)) }
 
         var result = ScanResult(id: id, date: date, title: response.sceneTitle ?? components.first?.name ?? "Scan",
                                 mode: mode, photo: image.isEmpty ? await productPhoto : image, components: components)

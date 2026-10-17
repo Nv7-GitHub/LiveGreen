@@ -31,6 +31,9 @@ public enum PipelineEvent: Sendable, Hashable {
     case metricResolved(componentID: UUID, metric: MetricKey, tier: Tier)
     /// Questions that pass the §5.5 gate; the UI shows them in one sheet.
     case questionsNeeded([PendingQuestion])
+    /// Detail questions for items still on a T4 estimate; the scan screen asks them before showing results and
+    /// re-resolves with `ScanPipeline.refining`.
+    case specQuestionsNeeded([SpecQuestion])
     /// A non-fatal problem, e.g. a resolver failed and the ladder fell through.
     case warning(String)
     /// The final result. Always the last event of a successful stream.

@@ -14,7 +14,7 @@ struct PipelineProgress: Equatable {
         case let .stepFinished(step): finished.insert(step)
         case let .componentsIdentified(components): componentCount = components.count
         case .metricResolved: resolvedMetrics += 1
-        case .identifyProgress, .questionsNeeded, .warning, .completed: break
+        case .identifyProgress, .questionsNeeded, .specQuestionsNeeded, .warning, .completed: break
         }
     }
 }
