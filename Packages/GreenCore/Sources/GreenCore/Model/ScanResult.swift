@@ -32,11 +32,13 @@ public struct ScanResult: Codable, Sendable, Hashable, Identifiable {
     public var greenerImage: Data?
     /// Chosen alternative per component (component id → alternative id).
     public var selectedAlternatives: [UUID: UUID]
+    /// Components the user chose to keep as they are, so the default pick is not re-applied (spec §7).
+    public var keptOriginals: Set<UUID>
 
     public init(id: UUID = UUID(), date: Date = Date(), title: String, mode: ScanMode = .photo, photo: Data? = nil,
                 components: [Component] = [], totals: [MetricKey: Measured] = [:],
                 yearlyTotals: [MetricKey: Measured] = [:], greenerImage: Data? = nil,
-                selectedAlternatives: [UUID: UUID] = [:]) {
+                selectedAlternatives: [UUID: UUID] = [:], keptOriginals: Set<UUID> = []) {
         self.id = id
         self.date = date
         self.title = title
@@ -47,6 +49,7 @@ public struct ScanResult: Codable, Sendable, Hashable, Identifiable {
         self.yearlyTotals = yearlyTotals
         self.greenerImage = greenerImage
         self.selectedAlternatives = selectedAlternatives
+        self.keptOriginals = keptOriginals
     }
 
     /// Scans saved before a field existed decode with its empty default.
@@ -62,6 +65,7 @@ public struct ScanResult: Codable, Sendable, Hashable, Identifiable {
         yearlyTotals = try container.decodeIfPresent([MetricKey: Measured].self, forKey: .yearlyTotals) ?? [:]
         greenerImage = try container.decodeIfPresent(Data.self, forKey: .greenerImage)
         selectedAlternatives = try container.decode([UUID: UUID].self, forKey: .selectedAlternatives)
+        keptOriginals = try container.decodeIfPresent(Set<UUID>.self, forKey: .keptOriginals) ?? []
     }
 
     /// Seed for the scan totals: from what was scanned, so a rescan of the same items gives the same ranges.

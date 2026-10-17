@@ -81,6 +81,8 @@ struct ScanResultView: View {
             QuestionsSheet(questions: pendingQuestions, onApply: applyAnswers, onUseEstimate: useEstimates)
         }
         .onChange(of: result) { _, newValue in current = newValue }
+        // Greener swaps save picks and the image to the stored scan; pick them up when returning here.
+        .onAppear { if let saved = savedCopy, saved != current { current = saved } }
         .task { await offerQuestionsOnce() }
     }
 
@@ -220,12 +222,16 @@ struct ScanResultView: View {
         showsQuestions = false
     }
 
+    /// The stored scan, which carries alternatives, picks and the greener image saved by the swaps screen.
+    private var savedCopy: ScanResult? { model.scans.first { $0.id == current.id } }
+
     private func applyAnswers(_ answers: [QuestionAnswer]) {
         handledQuestions.formUnion(pendingQuestions.map(\.id))
         showsQuestions = false
         isRerunning = true
         Task {
-            let updated = await (rerun ?? localRerun)(current, answers)
+            let base = savedCopy ?? current
+            let updated = await (rerun ?? localRerun)(base, answers)
             withAnimation(.smooth) { current = updated }
             model.save(updated)
             isRerunning = false

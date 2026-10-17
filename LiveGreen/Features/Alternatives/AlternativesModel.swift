@@ -23,6 +23,8 @@ final class AlternativesModel {
     private(set) var imageState: ImageState
     /// Component id → chosen alternative id.
     private(set) var selection: [UUID: UUID]
+    /// Components the user deliberately kept; default picks skip them.
+    private(set) var keptOriginals: Set<UUID>
     /// Component id → yearly charging carbon with and without green-hours scheduling.
     private(set) var charging: [UUID: SmartPlugAlternative.ChargingCarbon] = [:]
 
@@ -32,6 +34,7 @@ final class AlternativesModel {
     init(result: ScanResult) {
         self.result = result
         self.selection = result.selectedAlternatives
+        self.keptOriginals = result.keptOriginals
         self.imageState = result.greenerImage.map { .ready($0) } ?? .idle
         self.phase = result.components.contains { !$0.alternatives.isEmpty } ? .ready : .loading
     }
@@ -64,10 +67,12 @@ final class AlternativesModel {
            saved.components.contains(where: { !$0.alternatives.isEmpty }) {
             result = saved
             selection = saved.selectedAlternatives
+            keptOriginals = saved.keptOriginals
             imageState = saved.greenerImage.map { .ready($0) } ?? .idle
         }
         let before = result
         let beforeSelection = selection
+        let beforeKept = keptOriginals
         var working = result
         if !working.components.contains(where: { !$0.alternatives.isEmpty }) {
             phase = .loading
@@ -84,12 +89,12 @@ final class AlternativesModel {
         result = withPlugs
         applyDefaultPicks(plugFeatures: app.flags.plugFeaturesEnabled)
         phase = .ready
-        if result != before || selection != beforeSelection { persist(app) }
+        if result != before || selection != beforeSelection || keptOriginals != beforeKept { persist(app) }
     }
 
-    /// Spec §7: each component defaults to its biggest carbon saving.
+    /// Spec §7: each component defaults to its biggest carbon saving, unless the user kept the original.
     private func applyDefaultPicks(plugFeatures: Bool) {
-        for component in result.components where selection[component.id] == nil {
+        for component in result.components where selection[component.id] == nil && !keptOriginals.contains(component.id) {
             let options = alternatives(for: component, plugFeatures: plugFeatures)
             if let best = SwapMath.defaultPick(for: component, among: options) { selection[component.id] = best.id }
         }
@@ -99,7 +104,13 @@ final class AlternativesModel {
 
     /// Picks an alternative; tapping the current pick keeps the original instead.
     func toggle(_ alternative: Alternative, for component: Component, app: AppModel) {
-        selection[component.id] = selection[component.id] == alternative.id ? nil : alternative.id
+        if selection[component.id] == alternative.id {
+            selection[component.id] = nil
+            keptOriginals.insert(component.id)
+        } else {
+            selection[component.id] = alternative.id
+            keptOriginals.remove(component.id)
+        }
         if case .ready = imageState { imageState = .idle }
         result.greenerImage = nil
         persist(app)
@@ -129,6 +140,7 @@ final class AlternativesModel {
 
     private func persist(_ app: AppModel) {
         result.selectedAlternatives = selection
+        result.keptOriginals = keptOriginals
         app.save(result)
     }
 

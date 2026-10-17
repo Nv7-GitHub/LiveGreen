@@ -23,22 +23,24 @@ nonisolated enum SwapMath {
         return metric.higherIsBetter ? change : -change
     }
 
-    /// Converts a per-item, per-serving or lifecycle value of `metric` into a yearly amount.
-    static func yearlyFactor(_ metric: MetricKey, usage: UsageProfile?, lifespanYears: Double?) -> Double {
-        if metric == .yearlyElectricity { return 1 }
-        if let servings = usage?.servingsPerWeek, servings > 0 { return servings * 52 }
-        if let uses = usage?.usesPerWeek, uses > 0 { return uses * 52 }
-        if let lifespan = lifespanYears, lifespan > 0 { return 1 / lifespan }
-        return 1
-    }
+    static let engine = ImpactEngine()
 
+    /// Per-unit → yearly multiplier with the impact engine's conventions (`ImpactEngine.annualBasis`):
+    /// consumables × units per year, durables ÷ lifespan; yearly electricity is already yearly.
     static func yearlyFactor(_ metric: MetricKey, for component: Component) -> Double {
-        yearlyFactor(metric, usage: component.usage, lifespanYears: component.metrics[.lifespan]?.value)
+        if metric == .yearlyElectricity { return 1 }
+        switch engine.annualBasis(for: component) {
+        case .unitsPerYear(let units): return units
+        case .lifetime(let lifespan): return lifespan.value > 0 ? 1 / lifespan.value : 1
+        }
     }
 
-    static func yearlyFactor(_ metric: MetricKey, for alternative: Alternative, fallback component: Component) -> Double {
-        yearlyFactor(metric, usage: alternative.usage ?? component.usage,
-                     lifespanYears: alternative.metrics[.lifespan]?.value ?? component.metrics[.lifespan]?.value)
+    /// The alternative as a component, so it annualizes by its own category and lifespan; usage it does not
+    /// state is the original's.
+    static func component(for alternative: Alternative, replacing component: Component) -> Component {
+        Component(id: alternative.id, name: alternative.name, category: alternative.category,
+                  identifiers: alternative.identifiers, quantities: alternative.quantities,
+                  metrics: alternative.metrics, usage: alternative.usage ?? component.usage)
     }
 
     /// Yearly saving of an additive metric (positive = less impact), with a range assuming correlated errors.
@@ -50,7 +52,7 @@ nonisolated enum SwapMath {
         }
         guard let current = component.metrics[metric], let swapped = alternative.metrics[metric] else { return nil }
         let before = yearlyFactor(metric, for: component)
-        let after = yearlyFactor(metric, for: alternative, fallback: component)
+        let after = yearlyFactor(metric, for: Self.component(for: alternative, replacing: component))
         let value = current.value * before - swapped.value * after
         let a = current.low * before - swapped.low * after
         let b = current.high * before - swapped.high * after

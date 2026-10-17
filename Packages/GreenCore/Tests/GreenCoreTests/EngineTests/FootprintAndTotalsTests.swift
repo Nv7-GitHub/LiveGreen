@@ -62,8 +62,10 @@ struct FootprintAndTotalsTests {
         // A scan saved before yearly totals existed still decodes.
         var json = try #require(try JSONSerialization.jsonObject(with: JSONEncoder().encode(scan)) as? [String: Any])
         json.removeValue(forKey: "yearlyTotals")
+        json.removeValue(forKey: "keptOriginals")
         let legacy = try JSONDecoder().decode(ScanResult.self, from: JSONSerialization.data(withJSONObject: json))
         #expect(legacy.yearlyTotals.isEmpty)
+        #expect(legacy.keptOriginals.isEmpty)
         #expect(legacy.totals == scan.totals)
     }
 }

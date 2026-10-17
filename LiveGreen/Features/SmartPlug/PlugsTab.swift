@@ -4,7 +4,6 @@ import GreenCore
 /// Smart plug home (spec §8): paired plugs, pairing entry point and plug recommendations from scans.
 struct PlugsTab: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.scenePhase) private var scenePhase
     @State private var path: [UUID] = []
     @State private var showsPairing = false
     private let center = PlugCenter.shared
@@ -61,20 +60,6 @@ struct PlugsTab: View {
         }
         .task(id: model.flags.useMockPlug) {
             await center.ensureMockPlug(enabled: model.flags.useMockPlug)
-        }
-        .task {
-            await center.replanAll(services: model.services, profile: model.profile)
-            BackgroundRefresh.schedule()
-        }
-        .onChange(of: scenePhase) { _, phase in
-            switch phase {
-            case .active:
-                Task { await center.replanAll(services: model.services, profile: model.profile) }
-            case .background:
-                BackgroundRefresh.schedule()
-            default:
-                break
-            }
         }
     }
 
