@@ -36,8 +36,9 @@ enum DisplayUnits {
         case .kgCO2e: return poundsPerKilogram
         case .liters: return gallonsPerLiter
         case .squareMeterYears: return squareFeetPerSquareMeter
-        case .grams, .gramsPO4e: return ouncesPerGram
-        case .watts, .kilowattHoursPerYear, .years, .score10, .percent: return 1
+        case .grams: return ouncesPerGram
+        // Nutrient pollution is a few grams at most; in ounces it would read 0.07 oz.
+        case .gramsPO4e, .watts, .kilowattHoursPerYear, .years, .score10, .percent: return 1
         }
     }
 
@@ -45,14 +46,16 @@ enum DisplayUnits {
         metricValue * factor(for: unit, in: system)
     }
 
+    /// Land is stored as land occupation (m²·yr, area held for a year), which reads as "per year" to most
+    /// people, so it is shown as plain area: the land it took to make the item.
     static func symbol(_ unit: MetricUnit, in system: UnitSystem = system) -> String {
-        guard system == .imperial else { return unit.symbol }
-        switch unit {
-        case .kgCO2e: return "lb CO₂e"
-        case .liters: return "gal"
-        case .squareMeterYears: return "ft²·yr"
-        case .grams: return "oz"
-        case .gramsPO4e: return "oz PO₄e"
+        switch (unit, system) {
+        case (.squareMeterYears, .metric): return "m²"
+        case (_, .metric): return unit.symbol
+        case (.kgCO2e, .imperial): return "lb CO₂e"
+        case (.liters, .imperial): return "gal"
+        case (.squareMeterYears, .imperial): return "ft²"
+        case (.grams, .imperial): return "oz"
         default: return unit.symbol
         }
     }

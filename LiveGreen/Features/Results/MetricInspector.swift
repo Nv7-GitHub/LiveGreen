@@ -1,12 +1,13 @@
 import SwiftUI
 import GreenCore
 
-/// Glass inspector (spec §6, feature 2): every metric applicable to the component's category as a
-/// `Measured` row, so mixed tiers are visible side by side.
+/// Glass inspector (spec §6, feature 2): every metric the component shows (`Component.displayable`: it
+/// applies, has a value and is not ≈ 0) as a `Measured` row, so mixed tiers are visible side by side.
 struct MetricInspector: View {
     let component: Component
 
     var body: some View {
+        let metrics = component.displayableMetrics
         GlassCard {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
@@ -14,9 +15,11 @@ struct MetricInspector: View {
                     Spacer()
                     TierLegend()
                 }
-                ForEach(component.category.applicableMetrics, id: \.self) { metric in
-                    MeasuredRow(metric: metric, measured: component.metrics[metric], breakdown: breakdown(for: metric))
-                    if metric != component.category.applicableMetrics.last { Divider() }
+                ForEach(metrics, id: \.self) { metric in
+                    if let measured = component.displayable(metric) {
+                        MeasuredRow(metric: metric, measured: measured, breakdown: breakdown(for: metric))
+                    }
+                    if metric != metrics.last { Divider() }
                 }
             }
         }
