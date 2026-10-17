@@ -53,6 +53,11 @@ final class AppModel {
         updateProfile(completed)
     }
 
+    /// Clears the onboarding answers so RootView shows onboarding again. Scan history is kept.
+    func resetOnboarding() {
+        updateProfile(.default)
+    }
+
     func updateProfile(_ profile: UserProfile) {
         self.profile = profile
         perform { try store.saveProfile(profile) }

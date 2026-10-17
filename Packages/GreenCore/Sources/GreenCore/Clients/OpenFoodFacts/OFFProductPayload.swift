@@ -20,7 +20,23 @@ struct OFFProductPayload: Decodable {
             carbonKgPerKg: agribalyse?["co2_total"]?.double,
             stageShares: agribalyse.map(Self.stageShares) ?? [:],
             packaging: (product["packagings"]?.array ?? []).compactMap(Self.packagingPart),
-            sourceURL: sourceURL)
+            sourceURL: sourceURL,
+            foodGroup: Self.foodGroup(categories: (product["categories_tags"]?.array ?? []).compactMap(\.string)),
+            imageURL: (product["image_front_url"]?.string ?? product["image_url"]?.string).flatMap(URL.init(string:)))
+    }
+
+    /// OFF category tags → reference food group, for the drinks the factor table covers directly. Waters are
+    /// checked first because carbonated waters are also tagged as carbonated drinks.
+    static func foodGroup(categories: [String]) -> String? {
+        let tags = Set(categories.map { $0.lowercased() })
+        if !tags.isDisjoint(with: ["en:waters", "en:carbonated-waters", "en:mineral-waters", "en:spring-waters",
+                                   "en:flavored-waters", "en:unsweetened-waters"]) {
+            return "bottled_water"
+        }
+        if !tags.isDisjoint(with: ["en:sodas", "en:colas", "en:carbonated-soft-drinks", "en:soft-drinks"]) {
+            return "soft_drinks"
+        }
+        return nil
     }
 
     /// Converts `product_quantity` + unit to kg (liquids at ~1 kg/L).

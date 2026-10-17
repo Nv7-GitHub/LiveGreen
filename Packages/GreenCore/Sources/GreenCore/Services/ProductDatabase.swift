@@ -4,6 +4,12 @@ import Foundation
 public protocol ProductDatabase: Sendable {
     /// Returns nil when the GTIN is unknown.
     func product(gtin: String) async throws -> ProductRecord?
+    /// The record's front-of-pack photo, or nil when it has none or the download fails.
+    func productImage(for record: ProductRecord) async -> Data?
+}
+
+extension ProductDatabase {
+    public func productImage(for record: ProductRecord) async -> Data? { nil }
 }
 
 /// The fields LiveGreen uses from an Open Food Facts product.
@@ -22,10 +28,14 @@ public struct ProductRecord: Codable, Sendable, Hashable {
     public var stageShares: [LifecycleStage: Double]
     public var packaging: [PackagingPart]
     public var sourceURL: URL
+    /// Reference food-group key inferred from the record's categories (e.g. "bottled_water").
+    public var foodGroup: String?
+    /// Front-of-pack photo.
+    public var imageURL: URL?
 
     public init(gtin: String, name: String, brand: String? = nil, category: Category, netMassKg: Double? = nil,
                 servingKg: Double? = nil, carbonKgPerKg: Double? = nil, stageShares: [LifecycleStage: Double] = [:],
-                packaging: [PackagingPart] = [], sourceURL: URL) {
+                packaging: [PackagingPart] = [], sourceURL: URL, foodGroup: String? = nil, imageURL: URL? = nil) {
         self.gtin = gtin
         self.name = name
         self.brand = brand
@@ -36,6 +46,14 @@ public struct ProductRecord: Codable, Sendable, Hashable {
         self.stageShares = stageShares
         self.packaging = packaging
         self.sourceURL = sourceURL
+        self.foodGroup = foodGroup
+        self.imageURL = imageURL
+    }
+
+    /// True when the record carries footprint data of its own. A bare name-only record (common for
+    /// US products) needs identification to fill in what the item is made of and how big it is.
+    public var hasFootprintData: Bool {
+        carbonKgPerKg != nil || !packaging.isEmpty
     }
 }
 

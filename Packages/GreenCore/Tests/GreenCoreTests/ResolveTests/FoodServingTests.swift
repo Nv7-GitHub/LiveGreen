@@ -40,6 +40,17 @@ struct FoodServingTests {
         #expect(abs(try #require(try await resolveOFF(stated, record: record).metrics[.carbon]).value - 0.1) < 1e-9)
     }
 
+    @Test func packagedDrinkDefaultsToOneCan() throws {
+        let twelvePack = Component(name: "Seltzer 12-pack", category: .food, identifiers: Identifiers(gtin: "0071537003673"),
+                                   quantities: Quantities(massKg: 4.3, foodGroup: "bottled_water"))
+        #expect(FoodServing.servingKg(twelvePack) == FoodServing.drinkReferenceKg)
+        let can = Component(name: "Seltzer", category: .food, identifiers: Identifiers(gtin: "0071537003673"),
+                            quantities: Quantities(volumeLiters: 0.355))
+        #expect(FoodServing.servingKg(can) == 0.355)
+        let water = try #require(FactorModelResolver(store: .bundled).food(can).metrics[.water])
+        #expect(abs(water.value - 0.355 * 3) < 1e-9)
+    }
+
     @Test func unpackagedPortionIsOneServing() {
         let burger = Component(name: "Burger", category: .food, quantities: Quantities(massKg: 0.25, foodGroup: "beef"))
         #expect(FoodServing.servingKg(burger) == 0.25)

@@ -10,6 +10,7 @@ struct BarcodeLabelScanner: View {
 
     @State private var payloads: [String] = []
     @State private var lines: [String] = []
+    @State private var tracked: [TrackedBarcode] = []
     @State private var manualCode = ""
     @State private var isLive = DataScannerRepresentable.isReady
 
@@ -27,7 +28,8 @@ struct BarcodeLabelScanner: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             if isLive {
-                DataScannerRepresentable(onBarcode: addPayload, onText: addText)
+                DataScannerRepresentable(onBarcode: addPayload, onText: addText, onTrackedBarcodes: { tracked = $0 })
+                    .overlay { BarcodeHighlights(barcodes: tracked, accepted: Set(hints.gtins)) }
                     .ignoresSafeArea()
             } else {
                 LinearGradient(colors: [Theme.moss, .black], startPoint: .top, endPoint: .bottom)
@@ -38,6 +40,8 @@ struct BarcodeLabelScanner: View {
                 .padding(.bottom, bottomClearance)
         }
         .animation(.smooth, value: hints)
+        // A tap of feedback each time a new product code is captured.
+        .sensoryFeedback(trigger: hints.gtins) { old, new in new.count > old.count ? .success : nil }
         .task { isLive = await DataScannerRepresentable.requestAccessIfNeeded() }
     }
 

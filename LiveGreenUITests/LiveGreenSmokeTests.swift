@@ -76,4 +76,19 @@ final class LiveGreenSmokeTests: XCTestCase {
         // The mock plug is paired automatically, so the list offers pairing another one.
         XCTAssertTrue(app.buttons["Pair another plug"].waitForExistence(timeout: 10))
     }
+
+    @MainActor
+    func testRedoOnboardingFromSettings() {
+        let app = launch()
+        let settings = app.navigationBars.buttons["Settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        settings.tap()
+        let redo = app.buttons["settings.resetOnboarding"]
+        XCTAssertTrue(redo.waitForExistence(timeout: 5))
+        redo.tap()
+        let confirm = app.buttons["Reset and start over"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        confirm.tap()
+        XCTAssertTrue(app.buttons["onboarding.next"].waitForExistence(timeout: 10), "Onboarding shows again")
+    }
 }

@@ -61,7 +61,7 @@ public struct EvidenceLadder: Sendable {
     /// The component with its cached metrics and stage split, or nil on a miss.
     public func cached(_ component: Component) async -> Component? {
         guard let cache, let key = component.identifiers.cacheKey,
-              let hit = await cache.cachedResolution(forKey: key) else { return nil }
+              let hit = await cache.cachedResolution(forKey: key), hit.metrics[.carbon] != nil else { return nil }
         var result = component
         result.metrics.merge(hit.metrics) { _, cached in cached }
         if !hit.stageShares.isEmpty { result.stageShares = hit.stageShares }
@@ -69,9 +69,10 @@ public struct EvidenceLadder: Sendable {
         return result
     }
 
-    /// Stores a resolved component under its identifier key (no-op without a key or metrics).
+    /// Stores a resolved component under its identifier key. A resolution without carbon is incomplete (the
+    /// item was not recognized well enough), so it is not kept; a rescan gets another chance.
     public func remember(_ component: Component) async {
-        guard let cache, let key = component.identifiers.cacheKey, !component.metrics.isEmpty else { return }
+        guard let cache, let key = component.identifiers.cacheKey, component.metrics[.carbon] != nil else { return }
         await cache.store(CachedResolution(metrics: component.metrics, stageShares: component.stageShares,
                                            plasticPackagingShare: component.plasticPackagingShare), forKey: key)
     }

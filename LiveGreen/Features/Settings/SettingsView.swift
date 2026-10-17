@@ -9,6 +9,7 @@ struct SettingsView: View {
     @State private var keyRevision = 0
     @State private var isEditingProfile = false
     @State private var saveError: String?
+    @State private var confirmsOnboardingReset = false
     @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
 
     var body: some View {
@@ -31,6 +32,8 @@ struct SettingsView: View {
                     ForEach(UnitSystem.allCases, id: \.self) { Text($0.displayName).tag($0) }
                 }
                 .accessibilityIdentifier("settings.units")
+                Button("Redo onboarding", systemImage: "arrow.counterclockwise") { confirmsOnboardingReset = true }
+                    .accessibilityIdentifier("settings.resetOnboarding")
             }
 
             Section {
@@ -84,6 +87,11 @@ struct SettingsView: View {
                 Button("Done", systemImage: "checkmark") { finish() }
             }
         }
+        .confirmationDialog("Redo onboarding?", isPresented: $confirmsOnboardingReset, titleVisibility: .visible) {
+            Button("Reset and start over", role: .destructive) { resetOnboarding() }
+        } message: {
+            Text("Your profile answers are cleared and onboarding starts again. Your scan history is kept.")
+        }
         .sheet(isPresented: $isEditingProfile) {
             OnboardingFlow(initialProfile: model.profile,
                            onComplete: { profile in
@@ -93,6 +101,17 @@ struct SettingsView: View {
                                isEditingProfile = false
                            },
                            onCancel: { isEditingProfile = false })
+        }
+    }
+
+    /// Settings is a sheet and onboarding is a full-screen cover on the root, so each presentation has to
+    /// finish closing before the next one starts: the dialog, then this sheet, then onboarding opens.
+    private func resetOnboarding() {
+        Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            dismiss()
+            try? await Task.sleep(for: .milliseconds(500))
+            model.resetOnboarding()
         }
     }
 

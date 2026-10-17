@@ -98,4 +98,11 @@ struct OpenFoodFactsClientTests {
         #expect(OFFProductPayload.massKg(quantity: .string("33"), unit: "cl") == 0.33)
         #expect(OFFTags.repairingMojibake("PlÃ¡stico") == "Plástico")
     }
+
+    @Test func categoriesGiveTheDrinkFoodGroup() {
+        #expect(OFFProductPayload.foodGroup(categories: ["en:beverages", "en:carbonated-drinks", "en:carbonated-waters"])
+            == "bottled_water")
+        #expect(OFFProductPayload.foodGroup(categories: ["en:beverages", "en:sodas"]) == "soft_drinks")
+        #expect(OFFProductPayload.foodGroup(categories: ["en:snacks"]) == nil)
+    }
 }

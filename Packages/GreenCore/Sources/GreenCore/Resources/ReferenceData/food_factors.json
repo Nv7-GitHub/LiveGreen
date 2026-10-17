@@ -1053,6 +1053,35 @@
     "tier": 3,
     "url": "https://www.carbontrust.com/our-work-and-impact/impact-stories/coca-cola-enterprises"
    }
+  },
+  {
+   "group": "bottled_water",
+   "name": "Bottled or canned water, still or sparkling (per kg / L)",
+   "aliases": [
+    "water",
+    "seltzer",
+    "sparkling_water",
+    "mineral_water",
+    "spring_water",
+    "club_soda"
+   ],
+   "kgCO2ePerKg": 0.2,
+   "litersPerKg": 3.0,
+   "landM2YearPerKg": 0.02,
+   "gPO4ePerKg": 0.05,
+   "stageShares": {
+    "materials": 0.05,
+    "manufacturing": 0.6,
+    "transport": 0.3,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "note": "Water: ~3 L of freshwater per L of bottled water, the litre in the container plus bottling and container manufacture (Pacific Institute, Bottled Water and Energy fact sheet, 2007). Carbon: order-of-magnitude figure dominated by the container, filling and distribution, from the 5.6-10.2 MJ/L energy range in Gleick & Cooley (2009) for locally sourced water. Land and eutrophication are small placeholders; the contents are only water.",
+   "citation": {
+    "title": "Gleick & Cooley (2009), Energy implications of bottled water, Environ. Res. Lett. 4:014009",
+    "tier": 3,
+    "url": "https://iopscience.iop.org/article/10.1088/1748-9326/4/1/014009"
+   }
   }
  ]
 }

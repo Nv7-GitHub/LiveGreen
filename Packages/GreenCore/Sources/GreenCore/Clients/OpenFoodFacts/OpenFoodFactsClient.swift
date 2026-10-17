@@ -5,7 +5,8 @@ import Foundation
 public struct OpenFoodFactsClient: ProductDatabase {
     public static let userAgent = "LiveGreen/1.0 (HackHarvard)"
     static let fields = ["code", "product_name", "product_name_en", "brands", "product_quantity",
-                         "product_quantity_unit", "quantity", "serving_quantity", "serving_quantity_unit", "categories_tags", "ecoscore_data", "packagings"]
+                         "product_quantity_unit", "quantity", "serving_quantity", "serving_quantity_unit", "categories_tags", "ecoscore_data", "packagings",
+                         "image_front_url", "image_url"]
 
     public var baseURL: URL
     public var timeout: Double
@@ -32,6 +33,15 @@ public struct OpenFoodFactsClient: ProductDatabase {
             throw GreenCoreError.decoding("Open Food Facts product \(code): \(error)")
         }
         return payload.record(gtin: code, sourceURL: Self.productPage(for: code))
+    }
+
+    public func productImage(for record: ProductRecord) async -> Data? {
+        guard let url = record.imageURL else { return nil }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = timeout
+        request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
+        guard let (data, response) = try? await transport.send(request), response.isSuccess, !data.isEmpty else { return nil }
+        return data
     }
 
     func request(for code: String) -> URLRequest {

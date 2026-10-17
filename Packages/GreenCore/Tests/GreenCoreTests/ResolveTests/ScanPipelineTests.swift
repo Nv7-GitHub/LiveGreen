@@ -6,15 +6,16 @@ import GreenCoreFakes
 @Suite("Scan pipeline")
 struct ScanPipelineTests {
     private func pipeline(scene: DemoScene = .deskSetup, vision: (any VisionIdentifier)? = nil,
-                          cache: (any ResolutionCache)? = nil) -> ScanPipeline {
+                          cache: (any ResolutionCache)? = nil,
+                          products: any ProductDatabase = FakeProductDatabase()) -> ScanPipeline {
         let store = ReferenceStore.bundled
         let resolvers: [any MetricResolver] = [
-            OpenFoodFactsResolver(products: FakeProductDatabase()), EnergyStarResolver(appliances: FakeApplianceDatabase()),
+            OpenFoodFactsResolver(products: products), EnergyStarResolver(appliances: FakeApplianceDatabase()),
             ASUSPCFResolver(store: store), SpecResearchResolver(researcher: FakeSpecResearcher()),
             FactorModelResolver(store: store), EstimateResolver(),
         ]
         return ScanPipeline(vision: vision ?? FakeVisionIdentifier(scene: scene), alternatives: FakeAlternativeSuggester(),
-                            products: FakeProductDatabase(), ladder: EvidenceLadder(resolvers: resolvers, cache: cache),
+                            products: products, ladder: EvidenceLadder(resolvers: resolvers, cache: cache),
                             engine: ImpactEngine(reference: store), profile: .default)
     }
 
@@ -94,6 +95,35 @@ struct ScanPipelineTests {
         #expect(result.photo == nil)
     }
 
+    /// A name-only record like most US drinks on Open Food Facts: no size, packaging or footprint data.
+    private static let seltzer = ProductRecord(
+        gtin: "0071537003673", name: "Polar Seltzer", brand: "Polar", category: .food,
+        sourceURL: URL(string: "https://world.openfoodfacts.org/product/0071537003673")!,
+        foodGroup: "bottled_water", imageURL: URL(string: "https://images.openfoodfacts.org/front.jpg")!)
+
+    @Test func nameOnlyBarcodeRecordIsIdentifiedByName() async throws {
+        let vision = RecordingVision()
+        let products = PhotoProductDatabase(records: [Self.seltzer.gtin: Self.seltzer], photo: Data([7, 7]))
+        let result = try await pipeline(vision: vision, products: products)
+            .run(image: Data(), hints: OCRHints(gtins: [Self.seltzer.gtin]), mode: .barcode)
+        #expect(vision.hints.first?.textLines.first?.contains("Polar Seltzer") == true)
+        #expect(result.photo == Data([7, 7]))
+        #expect(result.components.count == 1)
+    }
+
+    @Test func nameOnlyRecordFallbackStillGetsWaterAndNoFalsePlasticZero() async throws {
+        let failing = FailingVision()
+        let products = PhotoProductDatabase(records: [Self.seltzer.gtin: Self.seltzer], photo: nil)
+        let result = try await pipeline(vision: failing, products: products)
+            .run(image: Data(), hints: OCRHints(gtins: [Self.seltzer.gtin]), mode: .barcode)
+        #expect(failing.attempts == 2)
+        let seltzer = try #require(result.components.first)
+        #expect((seltzer.metrics[.water]?.value ?? 0) > 0)
+        #expect(seltzer.metrics[.carbon] != nil)
+        #expect(seltzer.metrics[.plasticMass] == nil)
+        #expect(result.photo == nil)
+    }
+
     @Test func alternativesGoThroughTheLadderAndAddThePlugOption() async throws {
         let pipeline = pipeline(scene: .eBikeCorner)
         let result = try await pipeline.run(image: Data([1]), hints: .none, mode: .photo)
@@ -135,4 +165,27 @@ final class FailingVision: VisionIdentifier, @unchecked Sendable {
         lock.withLock { count += 1 }
         throw GreenCoreError.timeout
     }
+}
+
+final class RecordingVision: VisionIdentifier, @unchecked Sendable {
+    private let lock = NSLock()
+    private var received: [OCRHints] = []
+    var hints: [OCRHints] { lock.withLock { received } }
+
+    func identify(image: Data, hints: OCRHints, profile: UserProfile) async throws -> IdentifyResponse {
+        lock.withLock { received.append(hints) }
+        let gtin = hints.gtins.first
+        return IdentifyResponse(components: [IdentifiedComponent(
+            name: "Polar Seltzer, 12 fl oz can", category: .food, boundingBox: .full,
+            identifiers: Identifiers(gtin: gtin, brand: "Polar", materials: [MaterialShare(material: "aluminium", percent: 100)]),
+            quantities: Quantities(packagingMassG: 13, volumeLiters: 0.355, foodGroup: "bottled_water"))])
+    }
+}
+
+struct PhotoProductDatabase: ProductDatabase {
+    var records: [String: ProductRecord]
+    var photo: Data?
+
+    func product(gtin: String) async throws -> ProductRecord? { records[gtin] }
+    func productImage(for record: ProductRecord) async -> Data? { photo }
 }

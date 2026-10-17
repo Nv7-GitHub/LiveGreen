@@ -2,11 +2,22 @@ import AVFoundation
 import SwiftUI
 import VisionKit
 
+/// A barcode currently in view, with its corners in the scanner view's coordinates.
+struct TrackedBarcode: Identifiable, Equatable {
+    let id: UUID
+    var payload: String?
+    /// Top-left, top-right, bottom-right, bottom-left.
+    var corners: [CGPoint]
+}
+
 /// SwiftUI wrapper for VisionKit's live `DataScannerViewController`, recognizing barcodes and text.
-/// Every barcode payload and text transcript seen is reported, so a label can be read by panning.
+/// Every barcode payload and text transcript seen is reported, so a label can be read by panning. VisionKit's
+/// own highlighting boxes every text block too, so it is off; barcodes in view are reported through
+/// `onTrackedBarcodes` for a custom overlay instead.
 struct DataScannerRepresentable: UIViewControllerRepresentable {
     var onBarcode: (String) -> Void
     var onText: (String) -> Void
+    var onTrackedBarcodes: ([TrackedBarcode]) -> Void = { _ in }
 
     /// True when the device has the hardware and the user has granted camera access.
     static var isReady: Bool { DataScannerViewController.isSupported && DataScannerViewController.isAvailable }
@@ -25,8 +36,8 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
             recognizedDataTypes: [.barcode(), .text()],
             qualityLevel: .accurate,
             recognizesMultipleItems: true,
-            isHighFrameRateTrackingEnabled: false,
-            isHighlightingEnabled: true)
+            isHighFrameRateTrackingEnabled: true,
+            isHighlightingEnabled: false)
         scanner.delegate = context.coordinator
         return scanner
     }
@@ -50,11 +61,28 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
         func dataScanner(_ dataScanner: DataScannerViewController, didAdd addedItems: [RecognizedItem],
                          allItems: [RecognizedItem]) {
             addedItems.forEach(report)
+            track(allItems)
         }
 
         func dataScanner(_ dataScanner: DataScannerViewController, didUpdate updatedItems: [RecognizedItem],
                          allItems: [RecognizedItem]) {
             updatedItems.forEach(report)
+            track(allItems)
+        }
+
+        func dataScanner(_ dataScanner: DataScannerViewController, didRemove removedItems: [RecognizedItem],
+                         allItems: [RecognizedItem]) {
+            track(allItems)
+        }
+
+        private func track(_ items: [RecognizedItem]) {
+            let barcodes: [TrackedBarcode] = items.compactMap { item in
+                guard case let .barcode(barcode) = item else { return nil }
+                let b = barcode.bounds
+                return TrackedBarcode(id: barcode.id, payload: barcode.payloadStringValue,
+                                      corners: [b.topLeft, b.topRight, b.bottomRight, b.bottomLeft])
+            }
+            parent.onTrackedBarcodes(barcodes)
         }
 
         func dataScanner(_ dataScanner: DataScannerViewController, didTapOn item: RecognizedItem) {

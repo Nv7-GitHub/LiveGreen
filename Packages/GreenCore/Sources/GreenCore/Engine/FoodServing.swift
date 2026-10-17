@@ -5,6 +5,17 @@ public enum FoodServing {
     /// amount, or the whole pack when it is smaller.
     public static let referenceKg = 0.1
 
+    /// The drink equivalent: 12 fl oz (355 mL), the US label reference amount for beverages and one can.
+    public static let drinkReferenceKg = 0.355
+
+    /// Food groups that are drinks even when identify gives a mass instead of a volume.
+    static let drinkGroups: Set<String> = ["bottled_water", "soft_drinks"]
+
+    /// A drink is given as a volume or belongs to a drink food group.
+    public static func isDrink(_ component: Component) -> Bool {
+        component.quantities.volumeLiters != nil || component.quantities.foodGroup.map(drinkGroups.contains) == true
+    }
+
     /// A packaged product has a barcode or stated packaging; an unpackaged portion (a plated burger) is
     /// itself one serving.
     public static func isPackaged(_ component: Component) -> Bool {
@@ -22,7 +33,10 @@ public enum FoodServing {
         if let stated = component.quantities.servingKg, stated > 0 { return stated }
         if let record = recordServingKg, record > 0 { return record }
         let pack = packageKg(component, recordNetKg: recordNetKg)
-        if isPackaged(component) { return min(pack ?? referenceKg, referenceKg) }
+        if isPackaged(component) {
+            let reference = isDrink(component) ? drinkReferenceKg : referenceKg
+            return min(pack ?? reference, reference)
+        }
         return pack
     }
 

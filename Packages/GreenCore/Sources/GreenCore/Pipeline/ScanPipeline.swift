@@ -36,7 +36,9 @@ public struct ScanPipeline: Sendable {
         emit(.stepFinished(.readingLabels))
 
         emit(.stepStarted(.identifying))
-        let response = try await identify(image: image, hints: hints, emit: emit)
+        let (response, records) = try await identify(image: image, hints: hints, emit: emit)
+        // A barcode scan has no frame; the record's front-of-pack photo stands in for one.
+        async let productPhoto: Data? = image.isEmpty ? productPhoto(records) : nil
         let identified = prepared(response.components, hints: hints)
         // Component ids derive from the scan id, so a scan's seeded Monte Carlo ranges are reproducible.
         var components = identified.enumerated().map { $1.makeComponent(id: Self.componentID(scan: id, index: $0)) }
@@ -64,7 +66,7 @@ public struct ScanPipeline: Sendable {
         if !pending.isEmpty { emit(.questionsNeeded(pending)) }
 
         var result = ScanResult(id: id, date: date, title: response.sceneTitle ?? components.first?.name ?? "Scan",
-                                mode: mode, photo: image.isEmpty ? nil : image, components: components)
+                                mode: mode, photo: image.isEmpty ? await productPhoto : image, components: components)
         result.updateTotals(engine: engine)
         return result
     }
@@ -122,23 +124,54 @@ public struct ScanPipeline: Sendable {
     }
 
     /// Identify with one retry (spec §11). If both attempts fail and the frame had barcodes, the items are
-    /// built from their Open Food Facts records instead.
-    func identify(image: Data, hints: OCRHints, emit: @escaping @Sendable (PipelineEvent) -> Void) async throws -> IdentifyResponse {
-        // A barcode scan without a frame goes straight to the product records when they know the item.
-        if image.isEmpty, !hints.gtins.isEmpty, let records = try? await barcodeComponents(hints.gtins), !records.isEmpty {
-            return IdentifyResponse(components: records, sceneTitle: records.count == 1 ? records[0].name : "Scanned products")
+    /// built from their Open Food Facts records instead. Also returns the records found for the barcodes.
+    func identify(image: Data, hints: OCRHints, emit: @escaping @Sendable (PipelineEvent) -> Void)
+        async throws -> (IdentifyResponse, [ProductRecord]) {
+        var hints = hints
+        var records: [ProductRecord] = []
+        if image.isEmpty, !hints.gtins.isEmpty {
+            records = (try? await barcodeRecords(hints.gtins)) ?? []
+            // A barcode scan without a frame goes straight to the product records when they carry footprint
+            // data. Name-only records still go through identify, which knows what the item is made of.
+            if !records.isEmpty, records.allSatisfy(\.hasFootprintData) {
+                return (Self.response(from: records), records)
+            }
+            hints.textLines = records.map(Self.hintLine) + hints.textLines
         }
         do {
-            return try await identifyWithRetry(image: image, hints: hints) { emit(.identifyProgress($0)) }
+            return (try await identifyWithRetry(image: image, hints: hints) { emit(.identifyProgress($0)) }, records)
         } catch is CancellationError {
             throw CancellationError()
         } catch {
-            guard !hints.gtins.isEmpty, let fallback = try? await barcodeComponents(hints.gtins), !fallback.isEmpty else {
-                throw error
-            }
+            if records.isEmpty, !hints.gtins.isEmpty { records = (try? await barcodeRecords(hints.gtins)) ?? [] }
+            guard !records.isEmpty else { throw error }
             emit(.warning("Identification failed; using barcode records only."))
-            return IdentifyResponse(components: fallback, sceneTitle: fallback.count == 1 ? fallback[0].name : "Scanned products")
+            return (Self.response(from: records), records)
         }
+    }
+
+    /// Product-database facts for the identify prompt when there is no photo.
+    static func hintLine(_ record: ProductRecord) -> String {
+        "Product database record for \(record.gtin): \(record.name)" + (record.brand.map { " by \($0)" } ?? "")
+    }
+
+    static func response(from records: [ProductRecord]) -> IdentifyResponse {
+        IdentifyResponse(components: records.map(component(from:)),
+                         sceneTitle: records.count == 1 ? records[0].name : "Scanned products")
+    }
+
+    static func component(from record: ProductRecord) -> IdentifiedComponent {
+        IdentifiedComponent(
+            name: record.name, category: record.category, boundingBox: .full,
+            identifiers: Identifiers(gtin: record.gtin, brand: record.brand),
+            quantities: Quantities(massKg: record.netMassKg, servingKg: record.servingKg, foodGroup: record.foodGroup))
+    }
+
+    private func productPhoto(_ records: [ProductRecord]) async -> Data? {
+        for record in records where record.imageURL != nil {
+            if let data = await products.productImage(for: record) { return data }
+        }
+        return nil
     }
 
     private func identifyWithRetry(image: Data, hints: OCRHints,
@@ -154,16 +187,12 @@ public struct ScanPipeline: Sendable {
         }
     }
 
-    private func barcodeComponents(_ gtins: [String]) async throws -> [IdentifiedComponent] {
-        var components: [IdentifiedComponent] = []
+    private func barcodeRecords(_ gtins: [String]) async throws -> [ProductRecord] {
+        var records: [ProductRecord] = []
         for gtin in gtins {
-            guard let record = try await products.product(gtin: gtin) else { continue }
-            components.append(IdentifiedComponent(
-                name: record.name, category: record.category, boundingBox: .full,
-                identifiers: Identifiers(gtin: gtin, brand: record.brand),
-                quantities: Quantities(massKg: record.netMassKg, servingKg: record.servingKg)))
+            if let record = try await products.product(gtin: gtin) { records.append(record) }
         }
-        return components
+        return records
     }
 
     private func resolveAll(_ components: [Component], tiers: ClosedRange<Tier>, skipping: Set<UUID>,

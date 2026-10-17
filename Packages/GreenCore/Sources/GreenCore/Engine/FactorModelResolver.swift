@@ -52,9 +52,10 @@ public struct FactorModelResolver: MetricResolver {
             endOfLife[.plasticMass] = endOfLife[.plasticMass]?.scaled(by: share)
             metrics.merge(endOfLife) { current, _ in current }
             packagingShare = 1
-        } else if component.identifiers.materials.isEmpty, (q.packagingMassG ?? 0) == 0,
+        } else if component.identifiers.materials.isEmpty, !FoodServing.isPackaged(component),
                   let organic = store.materialFactor(material: "food_organic") {
-            // Unpackaged food: only the food itself is left at end of life.
+            // Unpackaged food: only the food itself is left at end of life. A barcoded item whose packaging
+            // is unknown is not unpackaged, so it gets no plastic figure here rather than a false zero.
             let sources = [organic.citation]
             metrics[.plasticMass] = Measured.exact(0, unit: .grams, tier: .factorModel, sources: sources)
             metrics[.recyclablePercent] = FactorRanges.percent(organic.endOfLife.recyclablePercent, spread: 5, sources: sources)

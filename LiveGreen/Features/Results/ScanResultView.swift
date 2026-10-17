@@ -120,12 +120,16 @@ struct ScanResultView: View {
     }
 
     private var photo: some View {
-        ResultPhoto(data: current.photo)
+        ResultPhoto(data: current.photo, mode: current.mode)
             // On the photo itself: on the container it would replace every hotspot's identifier.
             .accessibilityIdentifier("resultPhoto")
             .overlay {
-                ComponentHotspots(components: shownComponents, filter: filter,
-                                  selectedID: selectedID, onSelect: select)
+                // A barcode scan's photo is the product's own pack shot, not the scene, so there is
+                // nothing to point at.
+                if current.mode != .barcode {
+                    ComponentHotspots(components: shownComponents, filter: filter,
+                                      selectedID: selectedID, onSelect: select)
+                }
             }
             .clipShape(.rect(cornerRadius: Theme.cardCornerRadius))
             .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
