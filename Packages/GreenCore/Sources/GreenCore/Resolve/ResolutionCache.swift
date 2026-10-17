@@ -2,10 +2,13 @@
 public struct CachedResolution: Codable, Sendable, Hashable {
     public var metrics: [MetricKey: Measured]
     public var stageShares: [LifecycleStage: Double]
+    public var plasticPackagingShare: Double?
 
-    public init(metrics: [MetricKey: Measured], stageShares: [LifecycleStage: Double] = [:]) {
+    public init(metrics: [MetricKey: Measured], stageShares: [LifecycleStage: Double] = [:],
+                plasticPackagingShare: Double? = nil) {
         self.metrics = metrics
         self.stageShares = stageShares
+        self.plasticPackagingShare = plasticPackagingShare
     }
 }
 

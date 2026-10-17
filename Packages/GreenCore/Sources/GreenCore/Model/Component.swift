@@ -21,13 +21,15 @@ public struct Component: Codable, Sendable, Hashable, Identifiable {
     public var questions: [ComponentQuestion]
     /// T4 estimates from the identify call, used only as a last resort.
     public var fallbackEstimates: [MetricKey: EstimateRange]
+    /// Share (0–1) of `plasticMass` that is packaging rather than the item itself; nil when unknown.
+    public var plasticPackagingShare: Double?
 
     public init(id: UUID = UUID(), name: String, category: Category, boundingBox: NormalizedRect = .full,
                 identifiers: Identifiers = Identifiers(), quantities: Quantities = Quantities(),
                 metrics: [MetricKey: Measured] = [:], usage: UsageProfile? = nil,
                 alternatives: [Alternative] = [], plugCandidate: PlugCandidate? = nil,
                 stageShares: [LifecycleStage: Double] = [:], questions: [ComponentQuestion] = [],
-                fallbackEstimates: [MetricKey: EstimateRange] = [:]) {
+                fallbackEstimates: [MetricKey: EstimateRange] = [:], plasticPackagingShare: Double? = nil) {
         self.id = id
         self.name = name
         self.category = category
@@ -41,6 +43,7 @@ public struct Component: Codable, Sendable, Hashable, Identifiable {
         self.stageShares = stageShares
         self.questions = questions
         self.fallbackEstimates = fallbackEstimates
+        self.plasticPackagingShare = plasticPackagingShare
     }
 
     /// Applicable metrics that have not been resolved yet.
@@ -54,5 +57,14 @@ extension Component {
     /// rescan of the same GTIN or brand|model gives identical ranges, else its id.
     public var stableSeed: UInt64 {
         identifiers.cacheKey.map(StableHash.fnv1a) ?? StableHash.seed(id)
+    }
+}
+
+extension Component {
+    /// Plastic split into the item's own and its packaging's (spec §4), when the split is known.
+    public var plasticSplit: (item: Measured, packaging: Measured)? {
+        guard let plastic = metrics[.plasticMass], let share = plasticPackagingShare else { return nil }
+        let packaging = min(max(share, 0), 1)
+        return (plastic.scaled(by: 1 - packaging), plastic.scaled(by: packaging))
     }
 }

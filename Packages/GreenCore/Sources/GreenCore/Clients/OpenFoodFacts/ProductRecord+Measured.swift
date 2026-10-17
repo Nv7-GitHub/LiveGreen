@@ -8,9 +8,10 @@ extension ProductRecord {
         Source(title: "Open Food Facts: \(name)", url: sourceURL, tier: .exactRecord)
     }
 
-    /// T1 metrics for one item of `massKg` (defaults to the product's net quantity).
+    /// T1 metrics for one item of `massKg` (defaults to the product's net quantity). Packaging plastic is
+    /// for the whole pack, so it is scaled by `packageShare` (one serving's share of the pack).
     /// Only metrics the record actually supports are returned.
-    public func measuredMetrics(massKg: Double? = nil) -> [MetricKey: Measured] {
+    public func measuredMetrics(massKg: Double? = nil, packageShare: Double = 1) -> [MetricKey: Measured] {
         var metrics: [MetricKey: Measured] = [:]
         if let perKg = carbonKgPerKg, let mass = massKg ?? netMassKg, mass > 0 {
             let source = Source(title: "Open Food Facts / Agribalyse: \(name)", url: sourceURL, tier: .exactRecord,
@@ -19,7 +20,7 @@ extension ProductRecord {
                                         unit: .kgCO2e, tier: .exactRecord, sources: [source])
         }
         if let plastic = plasticMassG {
-            metrics[.plasticMass] = .exact(plastic, unit: .grams, tier: .exactRecord, sources: [packagingSource])
+            metrics[.plasticMass] = .exact(plastic * packageShare, unit: .grams, tier: .exactRecord, sources: [packagingSource])
         }
         if let recyclable = recyclablePackagingPercent {
             metrics[.recyclablePercent] = .exact(recyclable, unit: .percent, tier: .exactRecord, sources: [packagingSource])

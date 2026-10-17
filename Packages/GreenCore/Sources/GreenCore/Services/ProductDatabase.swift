@@ -14,6 +14,8 @@ public struct ProductRecord: Codable, Sendable, Hashable {
     public var category: Category
     /// Net quantity of the product, kg.
     public var netMassKg: Double?
+    /// The label's serving size, kg, when the record has one.
+    public var servingKg: Double?
     /// `ecoscore_data.agribalyse.co2_total`, kg CO2e per kg of product.
     public var carbonKgPerKg: Double?
     /// Agribalyse per-stage split as fractions of the total.
@@ -22,13 +24,14 @@ public struct ProductRecord: Codable, Sendable, Hashable {
     public var sourceURL: URL
 
     public init(gtin: String, name: String, brand: String? = nil, category: Category, netMassKg: Double? = nil,
-                carbonKgPerKg: Double? = nil, stageShares: [LifecycleStage: Double] = [:],
+                servingKg: Double? = nil, carbonKgPerKg: Double? = nil, stageShares: [LifecycleStage: Double] = [:],
                 packaging: [PackagingPart] = [], sourceURL: URL) {
         self.gtin = gtin
         self.name = name
         self.brand = brand
         self.category = category
         self.netMassKg = netMassKg
+        self.servingKg = servingKg
         self.carbonKgPerKg = carbonKgPerKg
         self.stageShares = stageShares
         self.packaging = packaging

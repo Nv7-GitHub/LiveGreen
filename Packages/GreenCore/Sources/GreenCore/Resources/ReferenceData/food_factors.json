@@ -1037,7 +1037,7 @@
     "pop"
    ],
    "kgCO2ePerKg": 0.4,
-   "litersPerKg": 3.0,
+   "litersPerKg": 44.0,
    "landM2YearPerKg": 0.15,
    "gPO4ePerKg": 0.6,
    "stageShares": {
@@ -1047,7 +1047,7 @@
     "endOfLife": 0.05
    },
    "verified": false,
-   "note": "Order-of-magnitude figure for sugared soft drinks incl. container; not from Poore & Nemecek.",
+   "note": "Carbon: order-of-magnitude figure for sugared soft drinks incl. container (Carbon Trust/CCE 2012, carbon only). Water is derived from sugar content: 0.10 kg sugar/L x the mean of this table's beet_sugar (217.7 L/kg) and cane_sugar (620.1 L/kg) water, plus ~2 L/L bottling process water, = ~44 L/kg; not from Poore & Nemecek.",
    "citation": {
     "title": "Carbon Trust certified soft-drink footprints (Coca-Cola Enterprises, 2012)",
     "tier": 3,

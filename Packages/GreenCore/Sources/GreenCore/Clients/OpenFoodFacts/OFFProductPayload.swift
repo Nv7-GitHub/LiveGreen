@@ -16,6 +16,7 @@ struct OFFProductPayload: Decodable {
         return ProductRecord(
             gtin: gtin, name: name, brand: brand?.trimmedNonEmpty, category: .food,
             netMassKg: Self.massKg(quantity: product["product_quantity"], unit: product["product_quantity_unit"]?.string),
+            servingKg: Self.massKg(quantity: product["serving_quantity"], unit: product["serving_quantity_unit"]?.string),
             carbonKgPerKg: agribalyse?["co2_total"]?.double,
             stageShares: agribalyse.map(Self.stageShares) ?? [:],
             packaging: (product["packagings"]?.array ?? []).compactMap(Self.packagingPart),

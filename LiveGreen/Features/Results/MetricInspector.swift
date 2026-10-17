@@ -15,12 +15,16 @@ struct MetricInspector: View {
                     TierLegend()
                 }
                 ForEach(component.category.applicableMetrics, id: \.self) { metric in
-                    MeasuredRow(metric: metric, measured: component.metrics[metric])
+                    MeasuredRow(metric: metric, measured: component.metrics[metric], breakdown: breakdown(for: metric))
                     if metric != component.category.applicableMetrics.last { Divider() }
                 }
             }
         }
         .accessibilityIdentifier("metricInspector")
+    }
+
+    private func breakdown(for metric: MetricKey) -> [MeasuredBreakdown] {
+        metric == .plasticMass ? MeasuredBreakdown.plastic(of: component) : []
     }
 }
 

@@ -45,6 +45,9 @@ public struct EvidenceLadder: Sendable {
                     result.metrics[metric] = measured
                     progress(.resolved(metric, measured.tier))
                 }
+                if missing.contains(.plasticMass), output.metrics[.plasticMass] != nil {
+                    result.plasticPackagingShare = output.plasticPackagingShare
+                }
                 if result.stageShares.isEmpty, !output.stageShares.isEmpty {
                     result.stageShares = output.stageShares
                 }
@@ -62,12 +65,14 @@ public struct EvidenceLadder: Sendable {
         var result = component
         result.metrics.merge(hit.metrics) { _, cached in cached }
         if !hit.stageShares.isEmpty { result.stageShares = hit.stageShares }
+        if let share = hit.plasticPackagingShare { result.plasticPackagingShare = share }
         return result
     }
 
     /// Stores a resolved component under its identifier key (no-op without a key or metrics).
     public func remember(_ component: Component) async {
         guard let cache, let key = component.identifiers.cacheKey, !component.metrics.isEmpty else { return }
-        await cache.store(CachedResolution(metrics: component.metrics, stageShares: component.stageShares), forKey: key)
+        await cache.store(CachedResolution(metrics: component.metrics, stageShares: component.stageShares,
+                                           plasticPackagingShare: component.plasticPackagingShare), forKey: key)
     }
 }

@@ -21,14 +21,18 @@ public struct ResolutionRequest: Sendable, Hashable {
     }
 }
 
-/// Resolver result: metric values plus optional lifecycle-stage split for the flow view.
+/// Resolver result: metric values plus optional lifecycle-stage split for the flow view and, with a
+/// plastic value, the share of it that is packaging (spec §4 item + packaging split).
 public struct ResolverOutput: Sendable, Hashable {
     public var metrics: [MetricKey: Measured]
     public var stageShares: [LifecycleStage: Double]
+    public var plasticPackagingShare: Double?
 
-    public init(metrics: [MetricKey: Measured] = [:], stageShares: [LifecycleStage: Double] = [:]) {
+    public init(metrics: [MetricKey: Measured] = [:], stageShares: [LifecycleStage: Double] = [:],
+                plasticPackagingShare: Double? = nil) {
         self.metrics = metrics
         self.stageShares = stageShares
+        self.plasticPackagingShare = plasticPackagingShare
     }
 
     public static let empty = ResolverOutput()

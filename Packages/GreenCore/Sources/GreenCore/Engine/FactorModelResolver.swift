@@ -21,7 +21,7 @@ public struct FactorModelResolver: MetricResolver {
         case .personalCare: personalCare(request.component)
         }
         return ResolverOutput(metrics: output.metrics.filter { request.metrics.contains($0.key) },
-                              stageShares: output.stageShares)
+                              stageShares: output.stageShares, plasticPackagingShare: output.plasticPackagingShare)
     }
 
     // MARK: Food (per serving)
@@ -30,8 +30,8 @@ public struct FactorModelResolver: MetricResolver {
         let q = component.quantities
         var metrics: [MetricKey: Measured] = [:]
         var stages: [LifecycleStage: Double] = [:]
-        if let factor = store.foodFactor(group: q.foodGroup ?? component.name),
-           let servingKg = q.servingKg ?? q.massKg ?? q.volumeLiters, servingKg > 0 {
+        let servingKg = FoodServing.servingKg(component)
+        if let factor = store.foodFactor(group: q.foodGroup ?? component.name), let servingKg, servingKg > 0 {
             let sources = [factor.citation]
             func perServing(_ perKg: Double, _ unit: MetricUnit) -> Measured {
                 FactorRanges.multiplicative(perKg * servingKg, factor: 1.6, unit: unit, sources: sources)
@@ -42,8 +42,14 @@ public struct FactorModelResolver: MetricResolver {
             metrics[.waterPollution] = perServing(factor.gPO4ePerKg, .gramsPO4e)
             stages = factor.stageShares
         }
+        var packagingShare: Double?
         if let blend = packagingBlend(component) {
-            metrics.merge(blend.endOfLifeMetrics()) { current, _ in current }
+            // The packaging is the whole pack's; one serving carries its share of the plastic.
+            var endOfLife = blend.endOfLifeMetrics()
+            let share = servingKg.map { FoodServing.packageShare(servingKg: $0, packageKg: FoodServing.packageKg(component)) } ?? 1
+            endOfLife[.plasticMass] = endOfLife[.plasticMass]?.scaled(by: share)
+            metrics.merge(endOfLife) { current, _ in current }
+            packagingShare = 1
         } else if component.identifiers.materials.isEmpty, (q.packagingMassG ?? 0) == 0,
                   let organic = store.materialFactor(material: "food_organic") {
             // Unpackaged food: only the food itself is left at end of life.
@@ -53,7 +59,7 @@ public struct FactorModelResolver: MetricResolver {
             metrics[.decompositionTime] = FactorRanges.multiplicative(organic.endOfLife.decompositionYears, factor: 2,
                                                                       unit: .years, sources: sources)
         }
-        return ResolverOutput(metrics: metrics, stageShares: stages)
+        return ResolverOutput(metrics: metrics, stageShares: stages, plasticPackagingShare: packagingShare)
     }
 
     // MARK: Packaging and personal care (per unit)
@@ -63,13 +69,14 @@ public struct FactorModelResolver: MetricResolver {
         var metrics = blend.endOfLifeMetrics()
         metrics[.carbon] = FactorRanges.relative(blend.kgCO2e, 0.35, unit: .kgCO2e, sources: blend.sources)
         metrics[.water] = FactorRanges.relative(blend.liters, 0.5, unit: .liters, sources: blend.sources)
-        return ResolverOutput(metrics: metrics, stageShares: StageModel.defaultCarbonShares(for: .packaging))
+        return ResolverOutput(metrics: metrics, stageShares: StageModel.defaultCarbonShares(for: .packaging),
+                              plasticPackagingShare: 1)
     }
 
     /// Only the container is modeled; the product's own footprint is left to records or estimates.
     func personalCare(_ component: Component) -> ResolverOutput {
         guard let blend = packagingBlend(component) else { return .empty }
-        return ResolverOutput(metrics: blend.endOfLifeMetrics())
+        return ResolverOutput(metrics: blend.endOfLifeMetrics(), plasticPackagingShare: 1)
     }
 
     /// Packaging items may give either mass; for food and personal care `massKg` includes the contents,

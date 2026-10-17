@@ -52,7 +52,8 @@ extension FactorModelResolver {
         let useKg = ImpactEngine.useCarbon(kWh: yearlyKWh.value, gramsPerKWh: grid.value) * lifespan.value
         var stages = StageModel.normalized(d.stageShares).mapValues { $0 * embodied.value }
         stages[.use, default: 0] += useKg
-        return ResolverOutput(metrics: metrics, stageShares: StageModel.normalized(stages))
+        return ResolverOutput(metrics: metrics, stageShares: StageModel.normalized(stages),
+                              plasticPackagingShare: metrics[.plasticMass] == nil ? nil : 0)
     }
 
     /// Unknown device type: only a label wattage is known; typical draw is taken as half of it (±50%).
@@ -105,7 +106,8 @@ extension FactorModelResolver {
             stages[.materials] = modeled * fiberCarbon / carbonTotal
             stages[.manufacturing] = modeled * processCarbon / carbonTotal
         }
-        return ResolverOutput(metrics: metrics, stageShares: StageModel.normalized(stages))
+        // Synthetic fibers are the garment's own plastic.
+        return ResolverOutput(metrics: metrics, stageShares: StageModel.normalized(stages), plasticPackagingShare: 0)
     }
 
     // MARK: Household goods (per item lifetime)
@@ -124,6 +126,7 @@ extension FactorModelResolver {
             metrics[.water] = FactorRanges.relative(blend.liters, 0.5, unit: .liters, sources: blend.sources)
         }
         guard !metrics.isEmpty else { return .empty }
-        return ResolverOutput(metrics: metrics, stageShares: metrics[.carbon] == nil ? [:] : StageModel.defaultCarbonShares(for: .household))
+        return ResolverOutput(metrics: metrics, stageShares: metrics[.carbon] == nil ? [:] : StageModel.defaultCarbonShares(for: .household),
+                              plasticPackagingShare: metrics[.plasticMass] == nil ? nil : 0)
     }
 }

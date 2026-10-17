@@ -5,7 +5,7 @@ import Foundation
 public struct OpenFoodFactsClient: ProductDatabase {
     public static let userAgent = "LiveGreen/1.0 (HackHarvard)"
     static let fields = ["code", "product_name", "product_name_en", "brands", "product_quantity",
-                         "product_quantity_unit", "quantity", "categories_tags", "ecoscore_data", "packagings"]
+                         "product_quantity_unit", "quantity", "serving_quantity", "serving_quantity_unit", "categories_tags", "ecoscore_data", "packagings"]
 
     public var baseURL: URL
     public var timeout: Double

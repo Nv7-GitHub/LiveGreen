@@ -1,11 +1,12 @@
 import SwiftUI
 import GreenCore
 
-/// Inspector row for one metric (spec §6): value, range bar, tier badge and a Sources disclosure with
-/// tappable citations.
+/// Inspector row for one metric (spec §6): value, range bar, tier badge, an optional breakdown (item vs
+/// packaging plastic, carbon per year vs lifetime) and a Sources disclosure with tappable citations.
 struct MeasuredRow: View {
     let metric: MetricKey
     let measured: Measured?
+    var breakdown: [MeasuredBreakdown] = []
 
     @State private var showsSources = false
 
@@ -33,6 +34,7 @@ struct MeasuredRow: View {
                 }
                 .font(.caption2.monospacedDigit())
                 .foregroundStyle(.secondary)
+                if !breakdown.isEmpty { breakdownRow }
                 DisclosureGroup(isExpanded: $showsSources) {
                     SourcesList(sources: measured.sources, tier: measured.tier)
                         .padding(.top, 4)
@@ -46,6 +48,21 @@ struct MeasuredRow: View {
         .padding(.vertical, 6)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("measuredRow.\(metric.rawValue)")
+    }
+
+    private var breakdownRow: some View {
+        HStack(spacing: 12) {
+            ForEach(breakdown) { part in
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(part.label).font(.caption2).foregroundStyle(.secondary)
+                    Text(part.measured.formatted).font(.caption.weight(.medium).monospacedDigit())
+                }
+                .accessibilityElement(children: .combine)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(8)
+        .background(.quaternary.opacity(0.5), in: .rect(cornerRadius: 10))
     }
 }
 

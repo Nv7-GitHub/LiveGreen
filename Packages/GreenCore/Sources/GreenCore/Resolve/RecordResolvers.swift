@@ -1,5 +1,6 @@
-/// T1: Open Food Facts by GTIN (spec §5.4) for food, drink, packaging and personal care. Carbon is scaled to
-/// one serving for food (per-unit convention on `ImpactEngine`), else to the item's mass.
+/// T1: Open Food Facts by GTIN (spec §5.4) for food, drink, packaging and personal care. For food, carbon and
+/// packaging plastic are scaled to one serving (per-unit convention on `ImpactEngine`), else to the item.
+/// OFF counts packaging only, so all of its plastic is packaging.
 public struct OpenFoodFactsResolver: MetricResolver {
     public let tier = Tier.exactRecord
     public let name = "Open Food Facts"
@@ -16,10 +17,17 @@ public struct OpenFoodFactsResolver: MetricResolver {
         guard Self.categories.contains(component.category),
               let gtin = component.identifiers.gtin, !gtin.isEmpty,
               let record = try await products.product(gtin: gtin) else { return .empty }
-        let q = component.quantities
-        let mass = component.category == .food ? (q.servingKg ?? q.massKg) : q.massKg
-        let metrics = record.measuredMetrics(massKg: mass).filter { request.metrics.contains($0.key) }
-        return ResolverOutput(metrics: metrics, stageShares: record.stageShares)
+        var mass = component.quantities.massKg
+        var share = 1.0
+        if component.category == .food, let serving = FoodServing.servingKg(component, recordServingKg: record.servingKg,
+                                                                          recordNetKg: record.netMassKg) {
+            mass = serving
+            share = FoodServing.packageShare(servingKg: serving,
+                                             packageKg: FoodServing.packageKg(component, recordNetKg: record.netMassKg))
+        }
+        let metrics = record.measuredMetrics(massKg: mass, packageShare: share).filter { request.metrics.contains($0.key) }
+        return ResolverOutput(metrics: metrics, stageShares: record.stageShares,
+                              plasticPackagingShare: metrics[.plasticMass] == nil ? nil : 1)
     }
 }
 

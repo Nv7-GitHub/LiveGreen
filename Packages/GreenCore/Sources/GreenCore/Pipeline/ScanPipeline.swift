@@ -160,7 +160,7 @@ public struct ScanPipeline: Sendable {
             components.append(IdentifiedComponent(
                 name: record.name, category: record.category, boundingBox: .full,
                 identifiers: Identifiers(gtin: gtin, brand: record.brand),
-                quantities: Quantities(massKg: record.netMassKg)))
+                quantities: Quantities(massKg: record.netMassKg, servingKg: record.servingKg)))
         }
         return components
     }
