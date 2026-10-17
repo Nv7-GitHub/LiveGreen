@@ -3,7 +3,7 @@ import GreenCore
 import GreenCoreFakes
 
 /// Greener swaps per component (spec §7): pick one per component, compare like-for-like,
-/// see projected yearly savings and generate a picture of the greener setup.
+/// see projected yearly savings and, for scenes of more than two items, generate a picture of the greener setup.
 struct AlternativesView: View {
     /// Read in `body` so converted numbers refresh when Settings switches units.
     @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
@@ -23,6 +23,8 @@ struct AlternativesView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     switch screen.phase {
+                    case .pending:
+                        EmptyView()
                     case .loading:
                         loadingCard
                     case let .failed(message):
@@ -31,13 +33,13 @@ struct AlternativesView: View {
                         swapCards
                         ProjectedSavingsCard(savings: SwapMath.projectedSavings(screen.result, selection: selection),
                                              swapCount: selection.count)
-                        imageSection.id(Self.imageAnchor)
+                        if screen.showsGreenerImage { imageSection.id(Self.imageAnchor) }
                     }
                 }
                 .padding()
             }
             .safeAreaInset(edge: .bottom) {
-                if screen.phase == .ready { generateBar }
+                if screen.phase == .ready, screen.showsGreenerImage { generateBar }
             }
             // The image section is empty until generation starts, so scroll once it has content.
             .onChange(of: screen.imageState) { _, state in

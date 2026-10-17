@@ -23,6 +23,17 @@ extension ClaudeClient: AlternativeSuggester {
         cited spec sheets, factor tables × quantities), so comparisons are like-for-like. Your job is to name \
         alternatives precisely enough to be looked up or modeled, not to compute their impacts.
 
+        Greener means better across all of the item's metrics, weighted equally. Carbon is one metric among \
+        equals, not the goal: LiveGreen scores each swap by its average improvement over every applicable metric \
+        (carbon, water, land, water pollution, plastic, electricity, standby and on power, lifespan, \
+        repairability, recyclability, decomposition time) and discards any swap that makes one of them clearly \
+        worse (more than about 40%), however much it improves the others. So:
+        - Prefer swaps that improve several metrics, or improve one while keeping the rest about the same.
+        - Never suggest a swap with a big trade-off, e.g. less carbon but much more water, plastic, land or \
+        power, or a much shorter life. Compare per year of doing the same job: a reusable cup replaces a year of \
+        disposable ones.
+        - If no swap for a component avoids big trade-offs, give fewer alternatives rather than a bad one.
+
         For each component give 1-3 alternatives, best first:
         - Same job for the user: a monitor is replaced by a monitor (more efficient, refurbished, or kept \
         longer), a beef burger by a lower-impact burger, a disposable cup by a reusable one. Behavior swaps \

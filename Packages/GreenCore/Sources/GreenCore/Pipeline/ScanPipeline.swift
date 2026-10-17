@@ -72,7 +72,8 @@ public struct ScanPipeline: Sendable {
     }
 
     /// Asks for greener alternatives and resolves them through the same ladder and engine as the
-    /// originals (spec §7); deferrable loads also get the local smart-plug alternative.
+    /// originals (spec §7), then keeps only swaps without a big trade-off on any metric, best GreenScore
+    /// first; deferrable loads also get the local smart-plug alternative.
     public func suggestAlternatives(for result: ScanResult) async throws -> ScanResult {
         let suggestions = try await alternatives.suggestAlternatives(for: result.components, profile: profile)
         var updated = result
@@ -82,7 +83,8 @@ public struct ScanPipeline: Sendable {
             for alternative in suggestion.alternatives where alternative.kind == .product {
                 resolved.append(await resolve(alternative))
             }
-            updated.components[index].alternatives = resolved
+            updated.components[index].alternatives = GreenScore.ranked(resolved, replacing: updated.components[index],
+                                                                        engine: engine)
         }
         for index in updated.components.indices where updated.components[index].plugCandidate != nil {
             let component = updated.components[index]

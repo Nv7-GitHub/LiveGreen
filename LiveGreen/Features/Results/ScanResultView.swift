@@ -94,6 +94,7 @@ struct ScanResultView: View {
         }
         // Greener swaps save picks and the image to the stored scan; pick them up when returning here.
         .onAppear { if let saved = savedCopy, saved != current { current = saved } }
+        .onAppear { model.prefetchSwaps(for: current) }
         .task { await offerQuestionsOnce() }
     }
 
