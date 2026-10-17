@@ -59,10 +59,13 @@ public struct EvidenceLadder: Sendable {
     }
 
     /// The component with its cached metrics and stage split, or nil on a miss. The cached category wins, so a
-    /// backpack once called clothing and once household still gets one set of numbers.
-    public func cached(_ component: Component) async -> Component? {
+    /// backpack once called clothing and once household still gets one set of numbers. With `acceptingEstimates`
+    /// false, a generic kind's entry whose carbon is only a T4 estimate is skipped, so an item of that kind whose own
+    /// details reach a better tier is not held at the estimate.
+    public func cached(_ component: Component, acceptingEstimates: Bool = true) async -> Component? {
         guard let cache, let key = component.identifiers.resolutionKey,
-              let hit = await cache.cachedResolution(forKey: key), hit.metrics[.carbon] != nil else { return nil }
+              let hit = await cache.cachedResolution(forKey: key), let carbon = hit.metrics[.carbon] else { return nil }
+        if !acceptingEstimates, component.identifiers.cacheKey == nil, carbon.tier == .estimate { return nil }
         var result = component
         if let category = hit.category { result.category = category }
         result.metrics.merge(hit.metrics) { _, cached in cached }

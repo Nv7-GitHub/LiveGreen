@@ -49,7 +49,7 @@ public struct ScanPipeline: Sendable {
         // A cache hit skips the ladder, so the same identifier always gives the same numbers.
         var cachedIDs = Set<UUID>()
         for index in components.indices {
-            if let hit = await ladder.cached(components[index]) {
+            if let hit = await ladder.cached(components[index], acceptingEstimates: false) {
                 components[index] = hit
                 cachedIDs.insert(hit.id)
             }
@@ -58,6 +58,14 @@ public struct ScanPipeline: Sendable {
             emit(.stepStarted(phase.step))
             components = await resolveAll(components, tiers: phase.tiers, skipping: cachedIDs, emit: emit)
             emit(.stepFinished(phase.step))
+        }
+        // A generic item that still only has an estimate takes the one cached for its kind, so it reads the same.
+        for index in components.indices where !cachedIDs.contains(components[index].id)
+            && components[index].metrics[.carbon]?.tier == .estimate {
+            if let hit = await ladder.cached(components[index]) {
+                components[index] = hit
+                cachedIDs.insert(hit.id)
+            }
         }
         for component in components where !cachedIDs.contains(component.id) { await ladder.remember(component) }
 

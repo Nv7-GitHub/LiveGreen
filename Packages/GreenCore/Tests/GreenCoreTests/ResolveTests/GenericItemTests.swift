@@ -80,6 +80,51 @@ struct GenericItemTests {
         #expect(first.stableSeed == second.stableSeed)
     }
 
+    /// A backpack the photo says nothing about: only the fallback estimate, so it lands on T4.
+    private let bare = IdentifiedComponent(name: "Black backpack", category: .clothing, boundingBox: .full,
+                                           estimates: [.carbon: EstimateRange(value: 12, low: 8, high: 18)])
+
+    private func scan(_ components: [IdentifiedComponent], cache: (any ResolutionCache)? = nil) async throws -> ScanResult {
+        try await pipeline(components, cache: cache).run(image: Data([1]), hints: .none, mode: .photo)
+    }
+
+    @Test func theBestInformedItemOfAKindLeads() async throws {
+        let result = try await scan([bare, blue])
+        #expect(result.components.allSatisfy { $0.metrics[.carbon]?.tier == .factorModel })
+        #expect(result.components[0].metrics == result.components[1].metrics)
+    }
+
+    @Test func aCachedEstimateDoesNotHoldBackABetterInformedItem() async throws {
+        let cache = InMemoryResolutionCache()
+        let first = try await scan([bare], cache: cache).components[0]
+        #expect(first.metrics[.carbon]?.tier == .estimate)
+        let second = try await scan([blue], cache: cache).components[0]
+        #expect(second.metrics[.carbon]?.tier == .factorModel)
+        // Another bare one still reads like the first.
+        let third = try await scan([bare], cache: cache).components[0]
+        #expect(third.metrics[.carbon] == second.metrics[.carbon])
+    }
+
+    @Test func oneDetailQuestionPerKindAndTheAnswerCoversIt() async throws {
+        var other = bare
+        other.name = "Grey backpack"
+        let cache = InMemoryResolutionCache()
+        let pipeline = pipeline([bare, other], cache: cache)
+        let result = try await pipeline.run(image: Data([1]), hints: .none, mode: .photo)
+        let questions = await pipeline.specQuestions(for: result.components)
+        let question = try #require(questions.first)
+        #expect(questions.count == 1)
+        let option = try #require(question.options.first)
+        let refined = await pipeline.refining(result, specAnswers: [SpecAnswer(componentID: question.componentID,
+                                                                                option: option)])
+        #expect(refined.components.allSatisfy { $0.metrics[.carbon]?.tier == .factorModel })
+        #expect(refined.components[0].metrics == refined.components[1].metrics)
+        // The answer was about these backpacks, not every backpack: a later bare one is asked again.
+        let later = try await scan([bare], cache: cache)
+        #expect(later.components[0].metrics[.carbon]?.tier == .estimate)
+        #expect(await pipeline.specQuestions(for: later.components).count == 1)
+    }
+
     @Test func differentKindsAndIdentifiedItemsAreNotMerged() {
         let hiking = IdentifiedComponent(name: "Large hiking backpack", category: .clothing, boundingBox: .full,
                                          quantities: Quantities(massKg: 2))

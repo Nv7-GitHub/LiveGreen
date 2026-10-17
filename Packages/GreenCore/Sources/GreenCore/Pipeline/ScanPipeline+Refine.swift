@@ -14,7 +14,10 @@ extension ScanPipeline {
             .filter { $0.metrics[.carbon]?.tier == .estimate }
             .sorted { (yearly[$0.id] ?? 0) > (yearly[$1.id] ?? 0) }
         var questions: [SpecQuestion] = []
+        var askedKinds = Set<String>()
         for component in estimated where questions.count < Self.maxSpecQuestions {
+            // Items of one kind share their details, so one answer covers them all (`refining`).
+            if let key = component.identifiers.resolutionKey, !askedKinds.insert(key).inserted { continue }
             for var candidate in SpecQuestionCatalog.candidates(for: component, store: store) {
                 var working: [SpecOption] = []
                 for option in candidate.options where await resolvesCarbon(option.applied(to: Self.clearingEstimates(component))) {
@@ -30,15 +33,24 @@ extension ScanPipeline {
     }
 
     /// Applies detail answers (spec questions) and re-resolves those items locally: their T4 values are cleared,
-    /// the factor model and estimates run again on the new quantities, then derived values and totals. Items
-    /// without an answer are unchanged. The refined numbers are cached under the item's identifier, like a scan.
+    /// the factor model and estimates run again on the new quantities, then derived values and totals. An answer
+    /// also covers the other estimated items of the same kind; items without an answer are unchanged. Refined
+    /// numbers are cached under a GTIN or brand|model, like a scan, but not under a generic kind: the answer was
+    /// about this item, not every item of its kind.
     public func refining(_ result: ScanResult, specAnswers: [SpecAnswer]) async -> ScanResult {
         var updated = result
         for answer in specAnswers {
-            guard let index = updated.components.firstIndex(where: { $0.id == answer.componentID }) else { continue }
-            let refined = await refined(updated.components[index], with: answer.option)
-            updated.components[index] = refined
-            await ladder.remember(refined)
+            guard let answered = updated.components.first(where: { $0.id == answer.componentID }) else { continue }
+            let key = answered.identifiers.resolutionKey
+            for index in updated.components.indices {
+                let component = updated.components[index]
+                guard component.id == answered.id
+                    || (key != nil && component.identifiers.resolutionKey == key && component.metrics[.carbon]?.tier == .estimate)
+                else { continue }
+                let refined = await refined(component, with: answer.option)
+                updated.components[index] = refined
+                if refined.identifiers.cacheKey != nil { await ladder.remember(refined) }
+            }
         }
         updated.updateTotals(engine: engine)
         return updated

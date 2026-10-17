@@ -46,6 +46,8 @@ struct SpecQuestionsSheet: View {
         }
         .presentationDetents([.medium, .large], selection: $detent)
         .presentationDragIndicator(.visible)
+        // Dismissing mid-update would open the estimates while the refined numbers are being saved.
+        .interactiveDismissDisabled(isApplying)
     }
 
     private func questionCard(_ question: SpecQuestion) -> some View {
@@ -96,6 +98,7 @@ struct SpecQuestionsSheet: View {
             HStack(spacing: 12) {
                 Button("Skip", action: onSkip)
                     .buttonStyle(.glass)
+                    .disabled(isApplying)
                     .accessibilityIdentifier("specSkip")
                 Button("Update numbers", systemImage: "arrow.triangle.2.circlepath") {
                     isApplying = true

@@ -24,24 +24,29 @@ extension ScanPipeline {
     }
 
     /// Gives items without a GTIN or brand|model their generic kind, the key they are cached under, so a blue and
-    /// a beige backpack resolve alike. Items of one kind in the same scan also share the first one's category,
-    /// quantities, materials and fallback estimate: those are guesses that differ from call to call.
+    /// a beige backpack resolve alike. Items of one kind in the same scan also share the best-informed one's
+    /// category, quantities, materials and fallback estimate: those are guesses that differ from call to call.
     static func withGenericKeys(_ components: [IdentifiedComponent]) -> [IdentifiedComponent] {
         var result = components
         var leads: [String: Int] = [:]
         for index in result.indices where result[index].identifiers.cacheKey == nil {
             guard let key = Identifiers.genericKey(name: result[index].name, category: result[index].category) else { continue }
             result[index].identifiers.genericKey = key
-            guard let lead = leads[key] else {
-                leads[key] = index
-                continue
-            }
+            if leads[key].map({ detail(of: result[index]) > detail(of: result[$0]) }) ?? true { leads[key] = index }
+        }
+        for index in result.indices {
+            guard let key = result[index].identifiers.genericKey, let lead = leads[key], lead != index else { continue }
             result[index].category = result[lead].category
             result[index].quantities = result[lead].quantities
             result[index].identifiers.materials = result[lead].identifiers.materials
             result[index].estimates = result[lead].estimates
         }
         return result
+    }
+
+    /// How much the factor model has to go on: materials matter most, then a mass.
+    private static func detail(of component: IdentifiedComponent) -> Int {
+        (component.identifiers.materials.isEmpty ? 0 : 2) + (component.quantities.massKg == nil ? 0 : 1)
     }
 
     /// A `household` item with a known powered device type (dishwasher, kettle…) is an electronic, so it gets
