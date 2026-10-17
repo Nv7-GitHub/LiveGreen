@@ -97,7 +97,7 @@ struct AlternativesView: View {
     }
 
     private func generateBar(_ scroller: ScrollViewProxy) -> some View {
-        let swaps = GreenerImagePrompt.swaps(in: screen.result, selection: selection)
+        let swaps = GreenerImagePrompt.swaps(for: screen.result, selection: selection)
         let generating = screen.imageState == .generating
         return GlassEffectContainer {
             VStack(spacing: 6) {

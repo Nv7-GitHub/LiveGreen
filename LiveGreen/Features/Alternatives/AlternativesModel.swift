@@ -109,11 +109,10 @@ final class AlternativesModel {
 
     func generateImage(app: AppModel) async {
         guard let photo = result.photo, !photo.isEmpty else { return }
-        let swaps = GreenerImagePrompt.swaps(in: result, selection: visibleSelection(plugFeatures: app.flags.plugFeaturesEnabled))
-        guard !swaps.isEmpty else { return }
+        let swaps = GreenerImagePrompt.swaps(for: result, selection: visibleSelection(plugFeatures: app.flags.plugFeaturesEnabled))
+        guard let prompt = GreenerImagePrompt.make(swaps: swaps) else { return }
         imageState = .generating
         let editor = app.services.imageEditor
-        let prompt = GreenerImagePrompt.make(for: swaps)
         do {
             let image = try await Self.withTimeout(Self.imageTimeout) {
                 try await editor.editImage(photo, prompt: prompt)

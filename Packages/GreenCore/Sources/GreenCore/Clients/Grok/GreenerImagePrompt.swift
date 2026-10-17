@@ -18,10 +18,12 @@ public struct GreenerImageSwap: Sendable, Hashable {
 /// Builds the image-edit prompt from the chosen swaps (spec §7): replace each object where it is and
 /// keep everything else — lighting, layout, camera angle — unchanged and photorealistic.
 public enum GreenerImagePrompt {
-    /// Swaps for the alternatives selected in a scan (`selectedAlternatives`: component id → alternative id).
-    public static func swaps(for result: ScanResult) -> [GreenerImageSwap] {
-        result.components.compactMap { component in
-            guard let altID = result.selectedAlternatives[component.id],
+    /// Swaps for the alternatives selected in a scan (component id → alternative id). Defaults to the scan's
+    /// saved `selectedAlternatives`.
+    public static func swaps(for result: ScanResult, selection: [UUID: UUID]? = nil) -> [GreenerImageSwap] {
+        let selection = selection ?? result.selectedAlternatives
+        return result.components.compactMap { component in
+            guard let altID = selection[component.id],
                   let alternative = component.alternatives.first(where: { $0.id == altID }) else { return nil }
             return GreenerImageSwap(original: component.name, replacement: alternative.name, kind: alternative.kind,
                                     boundingBox: component.boundingBox)
