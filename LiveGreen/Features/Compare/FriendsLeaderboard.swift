@@ -4,26 +4,13 @@ import GreenCore
 /// Leaderboard of the seeded simulated network plus the user, greenest first (spec §9).
 struct FriendsLeaderboard: View {
     let metric: MetricKey
-    let friends: [CohortFriend]
-    let userValue: Double
-    let cohort: any CohortComparing
+    /// Greenest first, from `CohortModel.leaderboard`.
+    let entries: [LeaderboardEntry]
+    /// Avatar SF Symbol per entry id.
+    let avatarSymbols: [String: String]
 
-    private struct Entry: Identifiable {
-        let id: String
-        let name: String
-        let symbol: String
-        let value: Double
-        let isUser: Bool
-    }
-
-    private var entries: [Entry] {
-        let others = friends.compactMap { friend in
-            friend.footprints[metric].map {
-                Entry(id: "friend-\(friend.id)", name: friend.name, symbol: friend.avatarSymbol, value: $0, isUser: false)
-            }
-        }
-        let user = Entry(id: "you", name: "You", symbol: "person.crop.circle.fill", value: userValue, isUser: true)
-        return (others + [user]).sorted { $0.value < $1.value }
+    private func symbol(for entry: LeaderboardEntry) -> String {
+        entry.isUser ? "person.crop.circle.fill" : (avatarSymbols[entry.id] ?? "person.fill")
     }
 
     var body: some View {
@@ -48,20 +35,20 @@ struct FriendsLeaderboard: View {
         }
     }
 
-    private func row(rank: Int, entry: Entry) -> some View {
+    private func row(rank: Int, entry: LeaderboardEntry) -> some View {
         HStack(spacing: 12) {
             Text("\(rank)")
                 .font(.subheadline.weight(.bold).monospacedDigit())
                 .frame(width: 22)
                 .foregroundStyle(.secondary)
-            Image(systemName: entry.symbol)
+            Image(systemName: symbol(for: entry))
                 .font(.body)
                 .frame(width: 34, height: 34)
                 .foregroundStyle(entry.isUser ? .white : Theme.leaf)
                 .background(entry.isUser ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(Theme.mint.opacity(0.3)), in: .circle)
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.name).font(.subheadline.weight(entry.isUser ? .bold : .regular))
-                Text("Greener than \(SharePercent.format(cohort.greenerThan(for: metric, value: entry.value)))")
+                Text("Greener than \(SharePercent.format(entry.greenerThan))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

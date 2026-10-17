@@ -5,7 +5,7 @@ import GreenCore
 /// The lognormal peer distribution with the user's position marked (spec §9).
 struct CohortDistributionChart: View {
     let metric: MetricKey
-    let distribution: LognormalDistribution
+    let distribution: LogNormal
     let userValue: Double
 
     private var markerValue: Double { max(userValue, distribution.median * 1e-3) }
@@ -16,7 +16,7 @@ struct CohortDistributionChart: View {
         return min(max(3, z + 0.5), 6)
     }
 
-    private var curve: [LognormalDistribution.CurvePoint] { distribution.curve(points: 90, spread: spread) }
+    private var curve: [LogNormal.CurvePoint] { distribution.curve(points: 90, spread: spread) }
 
     var body: some View {
         GlassCard {
@@ -80,6 +80,6 @@ struct CohortDistributionChart: View {
 }
 
 #Preview {
-    CohortDistributionChart(metric: .carbon, distribution: LognormalDistribution(median: 600, sigma: 0.55), userValue: 420)
+    CohortDistributionChart(metric: .carbon, distribution: LogNormal(median: 600, sigma: 0.55), userValue: 420)
         .padding()
 }
