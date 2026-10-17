@@ -31,15 +31,31 @@ struct CohortModelTests {
     }
 
     @Test func percentileMatchesHandComputedCDF() throws {
-        // Food carbon peers: median 2,000, σ 0.6. A user at 2,000·e^(−0.6) sits at z = −1 → greener than 1 − Φ(−1) = 84.13%.
-        let footprint = ScannedFootprint(byCategory: [.food: [.carbon: 2_000 * exp(-0.6)]])
-        let comparison = try #require(model().compare(footprint).first)
-        #expect(comparison.metric == .carbon)
-        #expect(abs(comparison.cohortMedian - 2_000) < 1e-9)
-        #expect(abs(comparison.greenerThan - 0.841_344_746) < 1e-8)
-        #expect(comparison.greenerThanPercent == 84)
-        let atMedian = ScannedFootprint(byCategory: [.food: [.carbon: 2_000]])
-        #expect(abs(try #require(model().compare(atMedian).first).greenerThan - 0.5) < 1e-12)
+        // Median 2,000, σ 0.6. A value of 2,000·e^(−0.6) sits at z = −1 → greener than 1 − Φ(−1) = 84.13%.
+        let peers = LogNormal(median: 2_000, sigma: 0.6)
+        #expect(abs(Percentiles.greenerThan(2_000 * exp(-0.6), in: peers) - 0.841_344_746) < 1e-8)
+        #expect(abs(Percentiles.greenerThan(2_000, in: peers) - 0.5) < 1e-12)
+    }
+
+    @Test func estimateIsTheWholeFootprintWithScansWhereTheyExceedIt() throws {
+        // Food 2,000 + electronic 1,000 + transit 50 km/wk × 0.10 × 52 = 260 + the rest 10,000 × (1 − 0.3 − 0.2).
+        #expect(abs(try #require(model().estimate(for: .carbon)) - 8_260) < 1e-9)
+        // A scan below the category's typical amount leaves it alone; one above it replaces it.
+        let light = ScannedFootprint(byCategory: [.food: [.carbon: 500]])
+        #expect(abs(try #require(model().estimate(for: .carbon, scanned: light)) - 8_260) < 1e-9)
+        let heavy = ScannedFootprint(byCategory: [.food: [.carbon: 3_740]])
+        #expect(abs(try #require(model().estimate(for: .carbon, scanned: heavy)) - 10_000) < 1e-9)
+        // Peers are the whole region, unadjusted: carbon median 10,000; home electricity 30% of 5,000.
+        #expect(abs(try #require(model(UserProfile(householdSize: 1, diet: .vegan)).regionalDistribution(for: .carbon)).median - 10_000) < 1e-9)
+        #expect(abs(try #require(model().regionalDistribution(for: .yearlyElectricity)).median - 1_500) < 1e-9)
+        #expect(model().regionalDistribution(for: .water) == nil)
+
+        let comparison = try #require(model().compare(heavy).first { $0.metric == .carbon })
+        #expect(abs(comparison.userValue - 10_000) < 1e-9)
+        #expect(abs(comparison.cohortMedian - 10_000) < 1e-9)
+        #expect(abs(comparison.greenerThan - 0.5) < 1e-12)
+        let typical = try #require(model().compare(light).first { $0.metric == .carbon })
+        #expect(abs(typical.greenerThan - (1 - Normal.cdf(log(0.826) / 0.6))) < 1e-12)
     }
 
     @Test func footprintFromScansDeduplicatesAndAnnualizes() throws {
@@ -56,8 +72,8 @@ struct CohortModelTests {
     }
 
     @Test func friendsAreDeterministicAndLabeled() throws {
-        let first = model().simulatedFriends(categories: [.food, .electronic])
-        let second = model().simulatedFriends(categories: [.food, .electronic])
+        let first = model().simulatedFriends()
+        let second = model().simulatedFriends()
         #expect(first == second)
         #expect(first.count == CohortModel.friendNames.count)
         #expect(Set(first.map(\.name)) == Set(CohortModel.friendNames))
@@ -86,6 +102,78 @@ struct CohortModelTests {
         #expect(trend.count == 2)
         #expect(trend[0].date < trend[1].date)
         #expect(trend.allSatisfy { (0...1).contains($0.greenerThan) })
+    }
+}
+
+@Suite("Leaderboard against bundled baselines")
+struct LeaderboardRealismTests {
+    static let typical = UserProfile(householdSize: 2, commuteKmPerWeekByMode: [.car: 150], homeType: .detachedHouse)
+    static let green = UserProfile(householdSize: 3, diet: .vegan, commuteKmPerWeekByMode: [.bike: 40],
+                                   homeType: .apartment, clothingHabit: .mostlySecondHand)
+    static let heavy = UserProfile(householdSize: 1, commuteKmPerWeekByMode: [.car: 500], homeType: .detachedHouse,
+                                   heating: .electricResistance, clothingHabit: .mostlyNew)
+    /// A laptop, a burger twice a week and a cup: far less than any whole category.
+    let scanned = ScannedFootprint.from(scans: [SampleScansForTests.desk])
+
+    func model(_ profile: UserProfile) throws -> CohortModel { try #require(CohortModel(profile: profile, store: .bundled)) }
+
+    func rank(_ profile: UserProfile, _ metric: MetricKey = .carbon) throws -> Int {
+        let board = try model(profile).leaderboard(for: scanned, metric: metric)
+        #expect(board.count == CohortModel.friendNames.count + 1)
+        return try #require(board.firstIndex { $0.isUser }) + 1
+    }
+
+    @Test func friendsHaveRealisticWholeFootprints() throws {
+        let us = try model(UserProfile(region: Region(countryCode: "US")))
+        let usMedian = try #require(us.regionalDistribution(for: .carbon)).median
+        #expect((14_000...16_500).contains(usMedian), "US per-capita carbon median \(usMedian)")
+        let carbon = us.simulatedFriends().compactMap { $0.yearly[.carbon] }.sorted()
+        #expect(carbon.count == 9 && carbon.allSatisfy { (6_000...36_000).contains($0) }, "\(carbon)")
+        #expect((11_000...20_000).contains(carbon[4]), "middle friend \(carbon[4])")
+        let electricity = us.simulatedFriends().compactMap { $0.yearly[.yearlyElectricity] }
+        #expect(electricity.count == 9 && electricity.allSatisfy { (1_200...10_000).contains($0) }, "\(electricity)")
+
+        // Every region and state: friends sit within ~2σ of their own regional median.
+        let regions = ["US", "GB", "IN", "DE", "CN", "BR", "AU"].map { Region(countryCode: $0) }
+            + ["MA", "TX", "WY", "CA"].map { Region(countryCode: "US", usState: $0) }
+        for region in regions {
+            let model = try model(UserProfile(region: region))
+            for metric in CohortModel.leaderboardMetrics {
+                let distribution = try #require(model.regionalDistribution(for: metric))
+                for friend in model.simulatedFriends() {
+                    let z = log(try #require(friend.yearly[metric]) / distribution.median) / distribution.sigma
+                    #expect(abs(z) < 2, "\(region.countryCode) \(region.usState ?? "") \(metric) \(friend.name) z=\(z)")
+                }
+            }
+        }
+        // Production-based state figures no longer halve or sextuple a state's footprint.
+        let ratio = try model(UserProfile(region: Region(countryCode: "US", usState: "WY"))).regionalDistribution(for: .carbon)!.median / usMedian
+        #expect(abs(ratio - 1.25) < 1e-9)
+    }
+
+    @Test func rankFollowsTheProfile() throws {
+        #expect(try rank(.default) > 1, "the default profile does not win")
+        #expect((4...7).contains(try rank(Self.typical)), "typical profile lands mid-pack")
+        #expect(try rank(Self.green) <= 3, "very green profile is near the top")
+        #expect(try rank(Self.heavy) >= 8, "car-heavy profile is near the bottom")
+        #expect(try rank(Self.heavy, .yearlyElectricity) >= 8)
+        #expect(try rank(Self.green, .yearlyElectricity) <= 3)
+        let percent = { (profile: UserProfile) in try #require(self.model(profile).compare(self.scanned).first).greenerThan }
+        #expect(try percent(Self.green) > percent(Self.typical) && percent(Self.typical) > percent(Self.heavy))
+    }
+
+    @Test func estimateMatchesOnboardingAndAddsBigScans() throws {
+        for profile in [UserProfile.default, Self.typical, Self.green, Self.heavy] {
+            let estimate = try #require(try model(profile).estimate(for: .carbon))
+            #expect(abs(estimate - LifestyleEstimate(profile: profile).totalKg) < 1e-6)
+        }
+        // A daily steak habit is more than a typical diet, so it raises the footprint.
+        let typical = try model(Self.typical)
+        let base = try #require(typical.estimate(for: .carbon, scanned: scanned))
+        let steak = ScannedFootprint(byCategory: [.food: [.carbon: 4_000]])
+        #expect(try #require(typical.estimate(for: .carbon, scanned: steak)) > base)
+        #expect(try #require(typical.compare(scanned).first).metric == .carbon)
+        #expect(typical.compare(scanned).map(\.metric) == CohortModel.leaderboardMetrics)
     }
 }
 
