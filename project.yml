@@ -1,0 +1,96 @@
+name: LiveGreen
+options:
+  bundleIdPrefix: com.nv7
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+packages:
+  GreenCore:
+    path: Packages/GreenCore
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+
+targets:
+  LiveGreen:
+    type: application
+    platform: iOS
+    sources:
+      - path: LiveGreen
+    configFiles:
+      Debug: Config/LiveGreen.xcconfig
+      Release: Config/LiveGreen.xcconfig
+    dependencies:
+      - package: GreenCore
+        product: GreenCore
+      - package: GreenCore
+        product: GreenCoreFakes
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nv7.LiveGreen
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_PREVIEWS: YES
+    info:
+      path: Config/Info.plist
+      properties:
+        CFBundleDisplayName: LiveGreen
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UIRequiredDeviceCapabilities: [arm64]
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        NSCameraUsageDescription: LiveGreen uses the camera to scan items, appliances and meals and measure their environmental impact.
+        NSPhotoLibraryUsageDescription: LiveGreen can analyze photos you pick from your library.
+        NSLocalNetworkUsageDescription: LiveGreen finds and controls your Shelly smart plug on your local network.
+        NSBonjourServices:
+          - _shelly._tcp
+          - _http._tcp
+        UIBackgroundModes: [fetch]
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.nv7.LiveGreen.plugrefresh
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
+        XAI_API_KEY: $(XAI_API_KEY)
+        ELECTRICITYMAPS_API_KEY: $(ELECTRICITYMAPS_API_KEY)
+        ENERGYSTAR_APP_TOKEN: $(ENERGYSTAR_APP_TOKEN)
+
+  LiveGreenUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: LiveGreenUITests
+    dependencies:
+      - target: LiveGreen
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nv7.LiveGreenUITests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: LiveGreen
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+
+schemes:
+  LiveGreen:
+    build:
+      targets:
+        LiveGreen: all
+        LiveGreenUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - LiveGreenUITests
