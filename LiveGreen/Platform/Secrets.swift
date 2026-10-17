@@ -3,6 +3,7 @@ import Foundation
 /// API keys the app uses. Raw value is the Info.plist / xcconfig key.
 nonisolated enum SecretKey: String, CaseIterable, Identifiable, Sendable {
     case anthropic = "ANTHROPIC_API_KEY"
+    case anthropicWorkspace = "ANTHROPIC_WORKSPACE_ID"
     case xai = "XAI_API_KEY"
     case electricityMaps = "ELECTRICITYMAPS_API_KEY"
     case energyStar = "ENERGYSTAR_APP_TOKEN"
@@ -12,13 +13,15 @@ nonisolated enum SecretKey: String, CaseIterable, Identifiable, Sendable {
     var displayName: String {
         switch self {
         case .anthropic: "Anthropic (Claude)"
+        case .anthropicWorkspace: "Anthropic workspace ID (unscoped keys only)"
         case .xai: "xAI (Grok image)"
         case .electricityMaps: "Electricity Maps"
         case .energyStar: "ENERGY STAR app token"
         }
     }
 
-    /// xAI is always needed (greener image), Anthropic only when Claude is the analysis provider. ENERGY STAR
+    /// xAI is always needed (greener image), Anthropic for the analysis provider (Claude by default). The
+    /// workspace ID is only needed for an Anthropic key that is not scoped to a workspace. ENERGY STAR
     /// works without a token (rate-limited); without Electricity Maps the grid uses free EIA data.
     func isRequired(for provider: AIProvider) -> Bool {
         self == .xai || self == provider.key

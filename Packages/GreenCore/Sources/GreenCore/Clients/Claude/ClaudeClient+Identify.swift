@@ -3,14 +3,26 @@ import Foundation
 extension ClaudeClient: VisionIdentifier {
     /// Spec §5.3. `image` is a JPEG (or PNG) already resized by the caller (long edge ≤ 1568 px).
     public func identify(image: Data, hints: OCRHints, profile: UserProfile) async throws -> IdentifyResponse {
-        let spec = ToolCallSpec(system: Self.identifySystemPrompt(vocabulary: configuration.vocabulary),
-                                tools: [ReportComponentsTool.definition], toolName: ReportComponentsTool.name,
+        try await identify(image: image, hints: hints, profile: profile, progress: { _ in })
+    }
+
+    /// Streams the `report_components` input and reports item names as they appear. Tuned for latency like
+    /// the Grok identify: the slim schema (one fallback carbon estimate per item, about half the output),
+    /// no extended thinking on Sonnet 5.5 and low effort.
+    public func identify(image: Data, hints: OCRHints, profile: UserProfile,
+                         progress: @escaping @Sendable (IdentifyProgress) -> Void) async throws -> IdentifyResponse {
+        let spec = ToolCallSpec(system: Self.identifySystemPrompt(vocabulary: configuration.vocabulary,
+                                                                  carbonEstimateOnly: true),
+                                tools: [ReportComponentsTool.slimDefinition], toolName: ReportComponentsTool.name,
                                 maxTokens: 16_000, effort: configuration.identifyEffort,
-                                timeout: configuration.identifyTimeout)
+                                timeout: configuration.identifyTimeout, thinkingOff: true)
         // Barcode/label mode can send hints without a frame; the label text alone then identifies the item.
         var content: [JSONValue] = image.isEmpty ? [] : [ImageBlock.make(image)]
         content.append(["type": "text", "text": .string(Self.identifyUserText(hints: hints, profile: profile, hasPhoto: !image.isEmpty))])
-        return try await runTool(spec, userContent: content) { input, _ in try ReportComponentsTool.parse(input) }
+        let reporter = ProgressThrottle(report: progress)
+        return try await streamTool(spec, userContent: content, progress: { reporter.update($0) }) { input, _ in
+            try ReportComponentsTool.parse(input)
+        }
     }
 
     /// - Parameter carbonEstimateOnly: ask for one fallback carbon estimate instead of one per metric
@@ -44,6 +56,8 @@ extension ClaudeClient: VisionIdentifier {
         Components
         - Report up to 8 distinct items, the most environmentally significant first. Group trivial items \
         (e.g. cutlery) or omit them. Ignore people, pets, walls and floors.
+        - Write `scene_title` first, and start each component object with its `name`, so the app can show \
+        items while the answer is still arriving.
         - A meal is split into its foods and drinks (e.g. burger, fries, cola can), not reported as one plate.
         - Choose the category from the table below; it fixes which metrics apply:
         \(PromptParts.categoryTable)

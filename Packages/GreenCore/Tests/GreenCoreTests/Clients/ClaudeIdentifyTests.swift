@@ -28,10 +28,13 @@ struct ClaudeIdentifyTests {
         #expect(body["fallbacks"]?.string == "default")
         #expect(body["tool_choice"]?["type"]?.string == "auto")
         #expect(body["output_config"]?["effort"]?.string == "low")
-        // Sampling parameters and thinking budgets are rejected by these models.
+        // Sampling parameters and thinking budgets are rejected by these models; Sonnet turns thinking off
+        // with `between_tools` for latency.
         #expect(body["temperature"] == nil)
-        #expect(body["thinking"] == nil)
+        #expect(body["thinking"]?["type"]?.string == "between_tools")
         #expect(body["tools"]?.array?.first?["name"]?.string == "report_components")
+        let estimates = body["tools"]?.array?.first?["input_schema"]?["properties"]?["components"]?["items"]?["properties"]?["fallback_estimates"]
+        #expect(estimates?["items"]?["properties"]?["metric"]?["enum"] == ["carbon"], "slim identify schema")
 
         let system = try #require(body["system"]?.array?.first?["text"]?.string)
         #expect(system.contains("You do NOT calculate environmental impacts"))
@@ -46,6 +49,49 @@ struct ClaudeIdentifyTests {
         #expect(text.contains("Barcodes (GTIN): 5449000000996"))
         #expect(text.contains("Wattages: 65 W"))
         #expect(text.contains("User profile: Lives in MA, US"))
+    }
+
+    @Test func opusKeepsAdaptiveThinking() async throws {
+        let transport = MockTransport([.fixture("claude/identify_tool_use.json")])
+        _ = try await client(transport, model: .opus).identify(image: Self.jpeg, hints: .none, profile: .default)
+        #expect(try #require(transport.requests.first?.jsonBody)["thinking"] == nil)
+    }
+
+    @Test func sendsWorkspaceHeaderWhenSet() async throws {
+        let transport = MockTransport([.fixture("claude/identify_tool_use.json")])
+        let client = ClaudeClient(configuration: .init(apiKey: "sk-test", workspaceID: "wrkspc_1", retry: .instant()),
+                                  transport: transport)
+        _ = try await client.identify(image: Self.jpeg, hints: .none, profile: .default)
+        #expect(transport.requests.first?.value(forHTTPHeaderField: "anthropic-workspace-id") == "wrkspc_1")
+    }
+
+    @Test func streamsToolInputAndReportsItemNames() async throws {
+        let input = #"{"scene_title":"Desk setup","components":[{"name":"Dell 27-inch monitor","category":"electronic","bounding_box":{"x":0.1,"y":0.1,"width":0.4,"height":0.5},"fallback_estimates":[{"metric":"carbon","value":300,"low":200,"high":450}]}]}"#
+        let cut = input.index(input.startIndex, offsetBy: 70)
+        let fragments = [String(input[..<cut]), String(input[cut...])]
+        func line(_ value: JSONValue) -> String {
+            "data: " + String(decoding: try! JSONEncoder().encode(value), as: UTF8.self)
+        }
+        var lines = [
+            line(["type": "message_start", "message": ["id": "msg_1"]]),
+            line(["type": "content_block_start", "index": 0, "content_block": ["type": "thinking", "thinking": ""]]),
+            line(["type": "content_block_start", "index": 1,
+                  "content_block": ["type": "tool_use", "id": "toolu_1", "name": "report_components", "input": [:]]]),
+        ]
+        lines += fragments.map { line(["type": "content_block_delta", "index": 1,
+                                       "delta": ["type": "input_json_delta", "partial_json": .string($0)]]) }
+        lines += [line(["type": "message_delta", "delta": ["stop_reason": "tool_use"]]), line(["type": "message_stop"])]
+        let transport = StreamingMockTransport(lines: lines)
+        let updates = Recorder<IdentifyProgress>()
+        let response = try await ClaudeClient(configuration: .init(apiKey: "sk-test", retry: .instant()), transport: transport)
+            .identify(image: Self.jpeg, hints: .none, profile: .default) { updates.append($0) }
+
+        #expect(response.components.first?.name == "Dell 27-inch monitor")
+        #expect(response.components.first?.estimates[.carbon]?.value == 300)
+        #expect(updates.values.contains { $0.itemNames == ["Dell 27-inch monitor"] })
+        let body = try #require(transport.request?.jsonBody)
+        #expect(body["stream"] == true)
+        #expect(body["tools"]?.array?.first?["eager_input_streaming"] == true)
     }
 
     @Test func decodesAndSanitizesComponents() async throws {

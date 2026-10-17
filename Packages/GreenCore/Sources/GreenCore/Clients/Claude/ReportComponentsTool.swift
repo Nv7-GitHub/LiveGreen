@@ -38,6 +38,13 @@ enum ReportComponentsTool {
         return .object(root)
     }()
 
+    /// `definition` with `carbonEstimateOnlySchema`, used by the identify call.
+    static let slimDefinition: JSONValue = {
+        guard case .object(var fields) = definition else { return definition }
+        fields["input_schema"] = carbonEstimateOnlySchema
+        return .object(fields)
+    }()
+
     static let component = SchemaParts.object([
         "name": SchemaParts.string("Specific human name, e.g. 'Dell 27-inch monitor', 'Beef burger', 'Cotton T-shirt'."),
         "category": SchemaParts.enumeration(SchemaParts.categories, "Category; decides which metrics apply."),

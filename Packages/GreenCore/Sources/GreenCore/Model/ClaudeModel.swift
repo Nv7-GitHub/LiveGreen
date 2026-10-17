@@ -8,8 +8,18 @@ public enum ClaudeModel: String, Codable, Sendable, Hashable, CaseIterable {
 
     public var displayName: String {
         switch self {
-        case .opus: "Claude Opus 5.5 (best)"
-        case .sonnet: "Claude Sonnet 5.5 (faster)"
+        case .opus: "Claude Opus 5.5 (slower)"
+        case .sonnet: "Claude Sonnet 5.5 (fast)"
+        }
+    }
+
+    /// The `thinking` setting with no extended thinking, or nil when the model has none: Sonnet 5.5 rejects
+    /// `disabled` and takes `between_tools` (effort `high` or below); Opus 5.5 always thinks, so effort is its
+    /// only latency control.
+    var thinkingOff: JSONValue? {
+        switch self {
+        case .sonnet: ["type": "between_tools"]
+        case .opus: nil
         }
     }
 }
