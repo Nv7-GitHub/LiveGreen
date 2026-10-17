@@ -79,6 +79,7 @@ struct PlugsTab: View {
             }
             .buttonStyle(.glassProminent)
             .controlSize(.large)
+            .accessibilityIdentifier("plugs.pair")
         }
         .glassCard()
     }

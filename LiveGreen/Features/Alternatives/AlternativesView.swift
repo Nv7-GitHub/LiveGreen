@@ -34,7 +34,12 @@ struct AlternativesView: View {
                 .padding()
             }
             .safeAreaInset(edge: .bottom) {
-                if screen.phase == .ready { generateBar(scroller) }
+                if screen.phase == .ready { generateBar }
+            }
+            // The image section is empty until generation starts, so scroll once it has content.
+            .onChange(of: screen.imageState) { _, state in
+                guard state != .idle else { return }
+                withAnimation { scroller.scrollTo(Self.imageAnchor, anchor: .bottom) }
             }
         }
         .navigationTitle("Greener swaps")
@@ -96,14 +101,13 @@ struct AlternativesView: View {
         }
     }
 
-    private func generateBar(_ scroller: ScrollViewProxy) -> some View {
+    private var generateBar: some View {
         let swaps = GreenerImagePrompt.swaps(for: screen.result, selection: selection)
         let generating = screen.imageState == .generating
         return GlassEffectContainer {
             VStack(spacing: 6) {
                 Button {
                     generate()
-                    withAnimation { scroller.scrollTo(Self.imageAnchor, anchor: .bottom) }
                 } label: {
                     Label(generating ? "Generating…" : "Generate greener setup", systemImage: "wand.and.sparkles")
                         .frame(maxWidth: .infinity)

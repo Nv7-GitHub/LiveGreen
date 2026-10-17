@@ -32,21 +32,37 @@ public struct FakeAlternativeSuggester: AlternativeSuggester {
                            fallbackEstimates: estimates)
     }
 
+    /// Lowercases a leading common word so it reads mid-sentence, keeping brands and acronyms ("ASUS").
+    private static func inline(_ name: String) -> String {
+        let firstWord = name.prefix { !$0.isWhitespace }
+        guard let first = firstWord.first, first.isUppercase,
+              firstWord.dropFirst().allSatisfy({ !$0.isUppercase }) else { return name }
+        return first.lowercased() + name.dropFirst()
+    }
+
+    /// "Beef burger" becomes "burger", so the swap reads "Plant-based burger".
+    private static func withoutMeat(_ name: String) -> String {
+        let meats: Set<String> = ["beef", "chicken", "pork", "lamb", "turkey", "bacon"]
+        let words = name.split(separator: " ")
+        let kept = words.filter { !meats.contains($0.lowercased()) }
+        return kept.isEmpty ? name : kept.joined(separator: " ")
+    }
+
     private static func swap(for component: Component) -> (String, String, Practicality) {
         switch component.category {
         case .electronic:
-            ("Refurbished \(component.name.lowercased())",
+            ("Refurbished \(inline(component.name))",
              "Refurbished devices avoid most manufacturing emissions.", Practicality(cost: .lower, effort: .easy))
         case .food:
-            ("Plant-based \(component.name.lowercased())",
+            ("Plant-based \(inline(withoutMeat(component.name)))",
              "Plant proteins need far less land and emit less methane.", Practicality(cost: .similar, effort: .easy))
         case .packaging:
             ("Reusable steel cup", "One cup replaces hundreds of disposables.", Practicality(cost: .higher, effort: .easy))
         case .clothing:
-            ("Second-hand \(component.name.lowercased())",
+            ("Second-hand \(inline(component.name))",
              "Buying used avoids new fiber production.", Practicality(cost: .lower, effort: .moderate))
         case .household, .personalCare:
-            ("Refillable \(component.name.lowercased())",
+            ("Refillable \(inline(component.name))",
              "Refills cut packaging and transport.", Practicality(cost: .similar, effort: .moderate))
         }
     }

@@ -68,10 +68,12 @@ struct ComponentHotspots: View {
                 Text(value.formatted).font(.caption2.monospacedDigit()).lineLimit(1)
             }
         }
+        // Small boxes shrink the text rather than spilling past the glass.
+        .minimumScaleFactor(0.6)
         .foregroundStyle(.white)
         .shadow(color: .black.opacity(0.5), radius: 2)
-        .padding(6)
-        .fixedSize()
+        .padding(width < 70 ? 4 : 6)
+        .frame(width: max(width, seedSize), alignment: .leading)
     }
 
     private func accessibilityText(_ component: Component, share: Double) -> String {

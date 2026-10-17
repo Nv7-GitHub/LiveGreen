@@ -58,12 +58,10 @@ private struct MetricComparison: View {
     private struct Bar: Identifiable {
         let id: String
         let measured: Measured
-        let isAlternative: Bool
     }
 
     private var bars: [Bar] {
-        [Bar(id: "Current", measured: current, isAlternative: false),
-         Bar(id: "Swap", measured: alternative, isAlternative: true)]
+        [Bar(id: "Current", measured: current), Bar(id: "Swap", measured: alternative)]
     }
 
     var body: some View {
@@ -80,7 +78,7 @@ private struct MetricComparison: View {
                 .foregroundStyle(.secondary)
             Chart(bars) { bar in
                 BarMark(x: .value(title, bar.measured.value), y: .value("Option", bar.id), height: 18)
-                    .foregroundStyle(bar.isAlternative ? Theme.leaf.gradient : Color.gray.opacity(0.55).gradient)
+                    .foregroundStyle(by: .value("Option", bar.id))
                     .cornerRadius(6)
                 RuleMark(xStart: .value("Low", bar.measured.low), xEnd: .value("High", bar.measured.high),
                          y: .value("Option", bar.id))
@@ -100,8 +98,12 @@ private struct MetricComparison: View {
                     }
                 }
             }
+            // A color legend names the bars; inline y-axis labels would sit on top of them.
+            .chartForegroundStyleScale(["Current": Color.gray.opacity(0.55), "Swap": Theme.leaf])
+            .chartYAxis(.hidden)
+            .chartLegend(position: .bottom, alignment: .leading)
             .chartXAxisLabel(current.unit.symbol, alignment: .trailing)
-            .frame(height: 92)
+            .frame(height: 112)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(title): current \(current.formatted), swap \(alternative.formatted)")
         }

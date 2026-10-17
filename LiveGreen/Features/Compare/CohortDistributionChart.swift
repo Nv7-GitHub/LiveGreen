@@ -16,6 +16,9 @@ struct CohortDistributionChart: View {
         return min(max(3, z + 0.5), 6)
     }
 
+    /// Labels sit on the outer side of each rule so "You" and "Median" never overlap.
+    private var userBelowMedian: Bool { markerValue < distribution.median }
+
     private var curve: [LogNormal.CurvePoint] { distribution.curve(points: 90, spread: spread) }
 
     var body: some View {
@@ -39,14 +42,14 @@ struct CohortDistributionChart: View {
                     RuleMark(x: .value("Median", distribution.median))
                         .foregroundStyle(.secondary)
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                        .annotation(position: .topLeading, spacing: 4,
+                        .annotation(position: userBelowMedian ? .topTrailing : .topLeading, spacing: 4,
                                     overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
                             Text("Median").font(.caption2).foregroundStyle(.secondary)
                         }
                     RuleMark(x: .value("You", markerValue))
                         .foregroundStyle(Theme.accent)
                         .lineStyle(StrokeStyle(lineWidth: 2.5))
-                        .annotation(position: .topTrailing, spacing: 4,
+                        .annotation(position: userBelowMedian ? .topLeading : .topTrailing, spacing: 4,
                                     overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
                             Text("You")
                                 .font(.caption.weight(.bold))

@@ -106,12 +106,13 @@ struct ScanResultView: View {
 
     private var photo: some View {
         ResultPhoto(data: current.photo)
+            // On the photo itself: on the container it would replace every hotspot's identifier.
+            .accessibilityIdentifier("resultPhoto")
             .overlay {
                 ComponentHotspots(components: current.components, filter: filter,
                                   selectedID: selectedID, onSelect: select)
             }
             .clipShape(.rect(cornerRadius: Theme.cardCornerRadius))
-            .accessibilityIdentifier("resultPhoto")
     }
 
     private var componentList: some View {
@@ -218,20 +219,27 @@ struct ScanResultView: View {
     }
 
     private func useEstimates() {
-        handledQuestions.formUnion(pendingQuestions.map(\.id))
+        let declined = pendingQuestions
+        handledQuestions.formUnion(declined.map(\.id))
         showsQuestions = false
+        var updated = savedCopy ?? current
+        updated.components = QuestionGate.settling(declined, in: updated.components)
+        current = updated
+        model.save(updated)
     }
 
     /// The stored scan, which carries alternatives, picks and the greener image saved by the swaps screen.
     private var savedCopy: ScanResult? { model.scans.first { $0.id == current.id } }
 
     private func applyAnswers(_ answers: [QuestionAnswer]) {
-        handledQuestions.formUnion(pendingQuestions.map(\.id))
+        let settled = pendingQuestions
+        handledQuestions.formUnion(settled.map(\.id))
         showsQuestions = false
         isRerunning = true
         Task {
             let base = savedCopy ?? current
-            let updated = await (rerun ?? localRerun)(base, answers)
+            var updated = await (rerun ?? localRerun)(base, answers)
+            updated.components = QuestionGate.settling(settled, in: updated.components)
             withAnimation(.smooth) { current = updated }
             model.save(updated)
             isRerunning = false

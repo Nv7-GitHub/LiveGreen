@@ -38,11 +38,13 @@ xcodebuild -project LiveGreen.xcodeproj -scheme LiveGreen \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -derivedDataPath .build/DerivedData build
 
-# UI smoke test (demo mode)
+# UI tests (demo mode): smoke tests plus the full tour
 xcodebuild -project LiveGreen.xcodeproj -scheme LiveGreen \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -derivedDataPath .build/DerivedData test
 ```
+
+`LiveGreenTourTests` walks onboarding → demo scan → questions → component flow and inspector → greener swaps and image → Compare → mock plug pairing and schedule → History → Settings, attaching a screenshot at each stop. Export them with `xcrun xcresulttool export attachments --path <result bundle> --output-path <dir>`. Screenshots from a run are in [`docs/screenshots/`](docs/screenshots/).
 
 ## Architecture
 
@@ -51,16 +53,21 @@ LiveGreen/                    app target (UI and platform integrations)
   App/                        LiveGreenApp, RootView (glass TabView), AppModel, FeatureFlags, ServiceContainer
   Features/                   Onboarding, Scan (ScanCoordinator + capture modes), Results, Alternatives,
                               Compare, SmartPlug, History, Settings
-  Platform/                   Keychain, Secrets (Vision OCR and AR anchoring go here too)
+  Platform/                   Keychain, Secrets, Vision OCR, AR session and anchoring, Bonjour, background refresh
   Persistence/                SwiftData models: StoredScan, CachedMetrics, StoredProfile; ScanStore, ScanCache
   DesignSystem/               Theme (green palette, tier colors), GlassCard, TierBadge, number formatting
   Resources/                  Assets
 Packages/GreenCore/           Swift package with no UIKit/SwiftUI dependency
   Sources/GreenCore/Model     Tier, Source, Measured, MetricKey, Category, Component, ScanResult, UserProfile…
   Sources/GreenCore/Services  Protocols for every external dependency, plus their DTOs
+  Sources/GreenCore/Clients   Claude, Grok, Open Food Facts, ENERGY STAR, Electricity Maps, Shelly (URLSession)
   Sources/GreenCore/Resolve   EvidenceLadder, EstimateResolver (T4), QuestionGate
-  Sources/GreenCore/Engine    ScanTotals (the Monte Carlo ImpactEngine lands here)
+  Sources/GreenCore/Engine    ImpactEngine (Monte Carlo), factor models, CohortModel, Percentiles,
+                              GreenHoursPlanner, ShellyScheduleBuilder
+  Sources/GreenCore/Pipeline  ScanPipeline (identify → ladder → questions)
+  Sources/GreenCore/Resources ReferenceData JSON tables, each record cited
   Sources/GreenCoreFakes      Fake* implementations and demo fixtures (desk, meal, e-bike corner)
+LiveGreenUITests/             Demo-mode smoke tests and a full screen-by-screen tour
 ```
 
 **Pipeline.** `ScanCoordinator.scan(image:hints:)` returns an `AsyncThrowingStream<PipelineEvent, Error>`. It identifies components (`VisionIdentifier`), then runs the evidence ladder in tier order (T1 exact record → T2 researched spec → T3 factor model → T4 estimate), using a SwiftData cache keyed by GTIN or brand|model. It then gates follow-up questions and finishes with `.completed(ScanResult)`. Every number is a `Measured` value with a range, tier and sources.

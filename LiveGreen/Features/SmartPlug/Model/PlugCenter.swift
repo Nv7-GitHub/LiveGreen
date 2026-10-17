@@ -6,7 +6,7 @@ import GreenCore
 /// background refresh.
 @Observable
 final class PlugCenter {
-    static let shared = PlugCenter()
+    static let shared = PlugCenter(defaults: LaunchArguments().inMemoryStore ? .throwaway : .standard)
 
     private(set) var plugs: [PairedPlug] = []
     @ObservationIgnored let connector: PlugConnector
@@ -124,5 +124,15 @@ final class PlugCenter {
 
     private func persist() {
         if let data = try? JSONEncoder().encode(plugs) { defaults.set(data, forKey: Self.defaultsKey) }
+    }
+}
+
+private extension UserDefaults {
+    /// Paired plugs for a throwaway session (`-InMemoryStore YES`, used by UI tests), cleared at launch.
+    static var throwaway: UserDefaults {
+        let name = "com.nv7.LiveGreen.throwaway"
+        let defaults = UserDefaults(suiteName: name) ?? .standard
+        defaults.removePersistentDomain(forName: name)
+        return defaults
     }
 }

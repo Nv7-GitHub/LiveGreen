@@ -36,6 +36,7 @@ struct PairingInstructionsView: View {
                 .buttonStyle(.glass)
                 .controlSize(.large)
                 .disabled(pairing.isVerifying)
+                .accessibilityIdentifier("pairing.useMock")
 
                 PairingErrorText(message: pairing.errorMessage)
             }

@@ -65,4 +65,12 @@ struct QuestionGateTests {
         let pending = QuestionGate.pendingQuestions(for: [small, narrow, big])
         #expect(pending.map(\.componentName) == ["Big"])
     }
+
+    @Test func settledQuestionsStopAsking() {
+        let big = component("Big", carbon: 400, low: 200, high: 650, question: true)
+        let pending = QuestionGate.pendingQuestions(for: [big])
+        let settled = QuestionGate.settling(pending, in: [big])
+        #expect(QuestionGate.pendingQuestions(for: settled).isEmpty)
+        #expect(settled[0].metrics == big.metrics)
+    }
 }

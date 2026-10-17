@@ -18,4 +18,17 @@ public enum QuestionGate {
                 .map { PendingQuestion(componentID: component.id, componentName: component.name, question: $0) }
         }
     }
+
+    /// Drops questions the user has answered or declined ("Use estimate"), so a saved scan doesn't ask again.
+    public static func settling(_ settled: [PendingQuestion], in components: [Component]) -> [Component] {
+        let ids = Set(settled.map(\.id))
+        return components.map { component in
+            var updated = component
+            updated.questions.removeAll { question in
+                ids.contains(PendingQuestion(componentID: component.id, componentName: component.name,
+                                             question: question).id)
+            }
+            return updated
+        }
+    }
 }

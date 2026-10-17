@@ -49,6 +49,7 @@ struct PlugNamingView: View {
             Section {
                 Button("Save plug", systemImage: "checkmark", action: save)
                     .disabled(pairing.kind == nil || pairing.device == nil)
+                    .accessibilityIdentifier("pairing.save")
             }
         }
         .navigationTitle("Name your plug")
@@ -63,6 +64,9 @@ struct PlugNamingView: View {
         guard name.isEmpty else { return }
         if let preselectedComponentID, components.contains(where: { $0.id == preselectedComponentID }) {
             componentID = preselectedComponentID
+        } else if components.count == 1 {
+            // Only one scanned load could use a plug, so assign it up front.
+            componentID = components[0].id
         }
         let candidate = selectedComponent?.plugCandidate
         if let candidate { requiredHours = Self.hours(for: candidate) }

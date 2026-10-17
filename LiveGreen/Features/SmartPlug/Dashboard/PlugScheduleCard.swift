@@ -71,6 +71,7 @@ struct PlugScheduleCard: View {
             .buttonStyle(.glassProminent)
             .controlSize(.large)
             .disabled(dashboard.outlook == nil || dashboard.isApplying)
+            .accessibilityIdentifier("plug.applySchedule")
 
             if let applied = plug.scheduleAppliedAt, let schedule = plug.schedule {
                 Text("On the plug since \(applied.formatted(date: .abbreviated, time: .shortened)): \(Self.describe(schedule))")

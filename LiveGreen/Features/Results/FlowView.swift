@@ -99,7 +99,7 @@ private struct SankeyDrawing {
 
     /// Label centers next to each node, pushed apart so two-line labels never overlap.
     private func labelPositions(heights: [CGFloat], height: CGFloat) -> [CGFloat] {
-        let spacing: CGFloat = 31
+        let spacing: CGFloat = 35
         var y: CGFloat = 0
         var mids = heights.map { h -> CGFloat in
             defer { y += h + gap }
