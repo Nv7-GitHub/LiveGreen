@@ -1,0 +1,21 @@
+{
+  "id": "msg_01ResearchPause",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-opus-5-5",
+  "content": [
+    {"type": "thinking", "thinking": "", "signature": "EqQBpause"},
+    {"type": "server_tool_use", "id": "srvtoolu_01Search", "name": "web_search", "input": {"query": "Dell E2225H power consumption spec sheet"}},
+    {
+      "type": "web_search_tool_result",
+      "tool_use_id": "srvtoolu_01Search",
+      "content": [
+        {"type": "web_search_result", "url": "https://www.dell.com/en-us/shop/dell-22-monitor-e2225h/apd/210-bnhk", "title": "Dell 22 Monitor - E2225H", "encrypted_content": "EqgfCioIARgB", "page_age": "2025-01-10"},
+        {"type": "web_search_result", "url": "https://www.displayspecifications.com/en/model/e2225h", "title": "Dell E2225H specifications", "encrypted_content": "EqgfCioIARgC", "page_age": null}
+      ]
+    }
+  ],
+  "stop_reason": "pause_turn",
+  "stop_details": null,
+  "usage": {"input_tokens": 1800, "output_tokens": 120}
+}

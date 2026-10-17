@@ -1,0 +1,10 @@
+{
+  "zone": "US-NE-ISNE",
+  "carbonIntensity": 243,
+  "datetime": "2026-10-16T21:00:00.000Z",
+  "updatedAt": "2026-10-16T20:52:11.124Z",
+  "createdAt": "2026-10-13T21:03:40.117Z",
+  "emissionFactorType": "lifecycle",
+  "isEstimated": true,
+  "estimationMethod": "TIME_SLICER_AVERAGE"
+}

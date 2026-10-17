@@ -1,0 +1,24 @@
+{
+  "id": "msg_01Invalid",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-opus-5-5",
+  "content": [
+    {
+      "type": "tool_use",
+      "id": "toolu_01Bad",
+      "name": "report_components",
+      "input": {
+        "scene_title": "Desk",
+        "components": [
+          {"name": "Desk plant", "category": "plant", "bounding_box": {"x": 0.1, "y": 0.1, "width": 0.2, "height": 0.2},
+           "identifiers": {"brand": null, "model": null, "gtin": null, "materials": []}, "quantities": {"mass_kg": 1},
+           "default_usage": {}, "deferrable_load": null, "fallback_estimates": [], "needs_question": []}
+        ]
+      }
+    }
+  ],
+  "stop_reason": "tool_use",
+  "stop_details": null,
+  "usage": {"input_tokens": 3000, "output_tokens": 200}
+}

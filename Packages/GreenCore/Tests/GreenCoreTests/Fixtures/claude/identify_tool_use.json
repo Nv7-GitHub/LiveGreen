@@ -1,0 +1,72 @@
+{
+  "id": "msg_01IdentifyDesk",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-opus-5-5",
+  "content": [
+    {"type": "thinking", "thinking": "", "signature": "EqQBCkYIBxgCKkDdesk"},
+    {"type": "text", "text": "I can see a monitor, a laptop charger and a paper cup."},
+    {
+      "type": "tool_use",
+      "id": "toolu_01Report",
+      "name": "report_components",
+      "input": {
+        "scene_title": "Desk setup",
+        "components": [
+          {
+            "name": "Dell 22-inch monitor",
+            "category": "electronic",
+            "bounding_box": {"x": 0.25, "y": 0.08, "width": 0.5, "height": 0.34},
+            "identifiers": {"brand": "Dell", "model": "E2225H", "gtin": null, "materials": [{"material": "abs_plastic", "percent": 55}, {"material": "steel", "percent": 30}, {"material": "glass", "percent": 15}], "visible_text": "DELL E2225H"},
+            "quantities": {"mass_kg": 2.9, "screen_size_inches": 21.5, "rated_power_w": null, "device_type": "monitor", "serving_kg": null},
+            "default_usage": {"hours_on_per_day": 8, "standby_hours_per_day": 16},
+            "deferrable_load": null,
+            "fallback_estimates": [
+              {"metric": "carbon", "value": 300, "low": 180, "high": 500},
+              {"metric": "powerOn", "value": 15, "low": 9, "high": 25},
+              {"metric": "water", "value": 99, "low": 1, "high": 200}
+            ],
+            "needs_question": [
+              {
+                "id": "hours_on",
+                "question": "How many hours a day is the monitor on?",
+                "why_it_matters": "Use-phase electricity scales directly with screen-on time.",
+                "affected_metrics": ["carbon", "yearlyElectricity"],
+                "options": [
+                  {"label": "~2 h", "field": "hoursOnPerDay", "value": 2},
+                  {"label": "~8 h", "field": "hoursOnPerDay", "value": 8}
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Laptop charger",
+            "category": "Electronics",
+            "bounding_box": {"x": 0.8, "y": 0.7, "width": 0.4, "height": 0.4},
+            "identifiers": {"brand": null, "model": null, "gtin": "not visible", "materials": []},
+            "quantities": {"mass_kg": 0.3, "rated_power_w": 65, "device_type": "laptop_charger"},
+            "default_usage": {"hours_on_per_day": 3, "standby_hours_per_day": 21},
+            "deferrable_load": "laptop_charger",
+            "fallback_estimates": [{"metric": "carbon", "value": 5, "low": 8, "high": 2}],
+            "needs_question": [{"id": "empty", "question": "?", "why_it_matters": "", "affected_metrics": [], "options": []}]
+          },
+          {
+            "name": "Paper coffee cup",
+            "category": "packaging",
+            "bounding_box": {"x": 0.78, "y": 0.52, "width": 0.12, "height": 0.2},
+            "identifiers": {"brand": null, "model": null, "gtin": "5449-0000-00996", "materials": [{"material": "paperboard", "percent": 95}, {"material": "polyethylene", "percent": 5}]},
+            "quantities": {"mass_kg": 0.012, "packaging_mass_g": 12},
+            "default_usage": {"uses_per_week": 5},
+            "deferrable_load": null,
+            "fallback_estimates": [{"metric": "carbon", "value": 0.11, "low": 0.06, "high": 0.2}],
+            "needs_question": []
+          }
+        ]
+      }
+    }
+  ],
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "stop_details": null,
+  "usage": {"input_tokens": 3120, "output_tokens": 810}
+}

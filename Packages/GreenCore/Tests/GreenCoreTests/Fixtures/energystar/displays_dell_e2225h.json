@@ -1,0 +1,141 @@
+[
+    {
+        "pd_id": "2507847",
+        "brand_name": "DELL",
+        "model_name": "U2724DE",
+        "model_number": "U2724DEt",
+        "additional_model_information": "U2724DE Halogen-Free, U2726DER,U2726DERt",
+        "on_mode_power_watts": "18.23",
+        "sleep_mode_power_watts": "1.11",
+        "screen_size_inches": "27"
+    },
+    {
+        "pd_id": "2508204",
+        "brand_name": "DELL",
+        "model_name": "U2724D",
+        "model_number": "U2724Dt",
+        "additional_model_information": "U2724D Halogen-Free; U2724D TAA,U2724Dt",
+        "on_mode_power_watts": "16.95",
+        "sleep_mode_power_watts": "0.26",
+        "screen_size_inches": "27"
+    },
+    {
+        "pd_id": "2687099",
+        "brand_name": "DELL",
+        "model_name": "P2425HE",
+        "model_number": "P2425HEb",
+        "additional_model_information": "P2425HE WOST,P2425HE, P2425HE WOST only model name different.",
+        "on_mode_power_watts": "13.00",
+        "sleep_mode_power_watts": "0.50",
+        "screen_size_inches": "23.8"
+    },
+    {
+        "pd_id": "3417633",
+        "brand_name": "DELL",
+        "model_name": "E2225H",
+        "model_number": "E2225Ht",
+        "on_mode_power_watts": "10.94",
+        "sleep_mode_power_watts": "0.17",
+        "screen_size_inches": "21.5"
+    },
+    {
+        "pd_id": "3439043",
+        "brand_name": "DELL",
+        "model_name": "SE2225H",
+        "model_number": "SE2225Hf",
+        "on_mode_power_watts": "11.79",
+        "sleep_mode_power_watts": "0.14",
+        "screen_size_inches": "21.5"
+    },
+    {
+        "pd_id": "3439044",
+        "brand_name": "DELL",
+        "model_name": "E2225H",
+        "model_number": "E2225Hf",
+        "on_mode_power_watts": "12.18",
+        "sleep_mode_power_watts": "0.14",
+        "screen_size_inches": "21.5"
+    },
+    {
+        "pd_id": "3439045",
+        "brand_name": "DELL",
+        "model_name": "E2225HS",
+        "model_number": "E2225HSf",
+        "on_mode_power_watts": "11.36",
+        "sleep_mode_power_watts": "0.13",
+        "screen_size_inches": "21.5"
+    },
+    {
+        "pd_id": "3711990",
+        "brand_name": "DELL",
+        "model_name": "E2225HM",
+        "model_number": "E2225HMt",
+        "on_mode_power_watts": "10.14",
+        "sleep_mode_power_watts": "0.30",
+        "screen_size_inches": "21.5"
+    },
+    {
+        "pd_id": "3722021",
+        "brand_name": "DELL",
+        "model_name": "E2225HMo",
+        "model_number": "E2225HM",
+        "on_mode_power_watts": "10.13",
+        "sleep_mode_power_watts": "0.13",
+        "screen_size_inches": "21.5"
+    },
+    {
+        "pd_id": "3798857",
+        "brand_name": "DELL",
+        "model_name": "E2225HSM",
+        "model_number": "E2225HSMf",
+        "on_mode_power_watts": "11.54",
+        "sleep_mode_power_watts": "0.30",
+        "screen_size_inches": "21.5"
+    },
+    {
+        "pd_id": "4006644",
+        "brand_name": "DELL",
+        "model_name": "SE2225HMo",
+        "model_number": "SE2225HM",
+        "additional_model_information": "SE2226HXo,SE2226HX",
+        "on_mode_power_watts": "10.31",
+        "sleep_mode_power_watts": "0.08",
+        "screen_size_inches": "21.5"
+    },
+    {
+        "pd_id": "4570172",
+        "brand_name": "DELL",
+        "model_name": "E2226H",
+        "model_number": "E2226Ht",
+        "on_mode_power_watts": "9.81",
+        "sleep_mode_power_watts": "0.12",
+        "screen_size_inches": "21.5"
+    },
+    {
+        "pd_id": "4576717",
+        "brand_name": "DELL",
+        "model_name": "E2226H",
+        "model_number": "E2226Hf",
+        "on_mode_power_watts": "11.15",
+        "sleep_mode_power_watts": "0.30",
+        "screen_size_inches": "21.5"
+    },
+    {
+        "pd_id": "4576718",
+        "brand_name": "DELL",
+        "model_name": "E2226HS",
+        "model_number": "E2226HSf",
+        "on_mode_power_watts": "11.15",
+        "sleep_mode_power_watts": "0.30",
+        "screen_size_inches": "21.5"
+    },
+    {
+        "pd_id": "4586213",
+        "brand_name": "DELL",
+        "model_name": "SE2225HM",
+        "model_number": "SE2225HMf",
+        "on_mode_power_watts": "8.50",
+        "sleep_mode_power_watts": "0.11",
+        "screen_size_inches": "21.5"
+    }
+]
