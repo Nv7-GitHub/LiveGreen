@@ -92,5 +92,18 @@ schemes:
       config: Debug
     test:
       config: Debug
+      # Critical path only (~15 s): demo scan → results. Run the LiveGreenFullUITests scheme for the
+      # full tours; the core logic tests run on the Mac with `swift test` in Packages/GreenCore.
+      targets:
+        - name: LiveGreenUITests
+          selectedTests:
+            - LiveGreenSmokeTests/testDemoScanShowsResults()
+  LiveGreenFullUITests:
+    build:
+      targets:
+        LiveGreen: all
+        LiveGreenUITests: [test]
+    test:
+      config: Debug
       targets:
         - LiveGreenUITests
