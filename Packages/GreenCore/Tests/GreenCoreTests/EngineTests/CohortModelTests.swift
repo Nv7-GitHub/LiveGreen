@@ -59,16 +59,17 @@ struct CohortModelTests {
         let first = model().simulatedFriends(categories: [.food, .electronic])
         let second = model().simulatedFriends(categories: [.food, .electronic])
         #expect(first == second)
-        #expect(first.count == 8)
-        #expect(Set(first.map(\.name)).count == 8)
-        #expect(first[0].initials == "MC")
+        #expect(first.count == CohortModel.friendNames.count)
+        #expect(Set(first.map(\.name)) == Set(CohortModel.friendNames))
+        #expect(first.map(\.name) != CohortModel.friendNames, "names are dealt in shuffled order")
+        #expect(first.first { $0.name == "Yuti Purohit" }?.initials == "YP")
         let values = first.compactMap { $0.yearly[.carbon] }
-        #expect(values.count == 8 && Set(values).count == 8)
+        #expect(values.count == CohortModel.friendNames.count && Set(values).count == values.count)
         #expect(first.allSatisfy { $0.yearly[.water] == nil })
 
         let footprint = ScannedFootprint(byCategory: [.food: [.carbon: 1_500]])
         let board = model().leaderboard(for: footprint)
-        #expect(board.count == 9)
+        #expect(board.count == CohortModel.friendNames.count + 1)
         #expect(board.filter(\.isUser).count == 1)
         #expect(zip(board, board.dropFirst()).allSatisfy { $0.value <= $1.value })
     }
@@ -137,5 +138,21 @@ struct EditableUsageTests {
         let edits = engine.usageEdits(.hoursOnPerDay, 9, for: phone)
         #expect(edits.map(\.field) == [.hoursOnPerDay, .chargesPerWeek])
         #expect(edits[1].value == 9 * 7 / ImpactEngine.activeHoursPerCharge)
+    }
+}
+
+@Suite("Brewed coffee")
+struct BrewedCoffeeTests {
+    @Test func aCupCountsOnlyItsGrounds() async throws {
+        let cup = Component(name: "Coffee cup", category: .food,
+                            quantities: Quantities(massKg: 0.35, servingKg: 0.35, foodGroup: "coffee"))
+        let beans = Component(name: "Bag of coffee beans", category: .food,
+                              quantities: Quantities(massKg: 0.34, servingKg: 0.015, foodGroup: "coffee"))
+        let resolver = FactorModelResolver(store: .bundled)
+        let cupCarbon = try await resolver.resolve(ResolutionRequest(component: cup, metrics: [.carbon], profile: UserProfile())).metrics[.carbon]
+        let beansCarbon = try await resolver.resolve(ResolutionRequest(component: beans, metrics: [.carbon], profile: UserProfile())).metrics[.carbon]
+        // 0.35 kg × 6% grounds × 28.5 kg CO2e/kg ≈ 0.6 kg, not ≈ 10 kg for the whole drink.
+        #expect(try #require(cupCarbon).value < 1)
+        #expect(abs(try #require(beansCarbon).value - 0.015 * 28.53) < 0.01)
     }
 }

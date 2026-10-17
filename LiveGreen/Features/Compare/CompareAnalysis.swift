@@ -1,7 +1,7 @@
 import Foundation
 import GreenCore
 
-/// Everything the Compare tab shows, derived from saved scans, the profile and the bundled reference tables
+/// Everything the Leaderboard tab shows, derived from saved scans, the profile and the bundled reference tables
 /// through GreenCore's `CohortModel` (spec §9).
 nonisolated struct CompareAnalysis: Sendable {
     let footprint: ScannedFootprint
@@ -55,12 +55,5 @@ nonisolated struct CompareAnalysis: Sendable {
 
     func leaderboard(for metric: MetricKey) -> [LeaderboardEntry] {
         cohort?.leaderboard(for: footprint, metric: metric) ?? []
-    }
-
-    /// Avatar symbol per leaderboard entry id.
-    func avatarSymbols(for metric: MetricKey) -> [String: String] {
-        guard let cohort else { return [:] }
-        let friends = cohort.simulatedFriends(categories: footprint.categories(for: metric))
-        return Dictionary(uniqueKeysWithValues: friends.map { ("friend-\($0.id)", $0.avatarSymbol) })
     }
 }

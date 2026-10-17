@@ -8,6 +8,18 @@ public protocol VisionIdentifier: Sendable {
     ///   - hints: On-device OCR/barcode pre-pass output.
     ///   - profile: User context for default usage assumptions.
     func identify(image: Data, hints: OCRHints, profile: UserProfile) async throws -> IdentifyResponse
+
+    /// Same call, reporting partial results while the model answers. Identifiers that cannot stream
+    /// use the default, which reports nothing.
+    func identify(image: Data, hints: OCRHints, profile: UserProfile,
+                  progress: @escaping @Sendable (IdentifyProgress) -> Void) async throws -> IdentifyResponse
+}
+
+extension VisionIdentifier {
+    public func identify(image: Data, hints: OCRHints, profile: UserProfile,
+                         progress: @escaping @Sendable (IdentifyProgress) -> Void) async throws -> IdentifyResponse {
+        try await identify(image: image, hints: hints, profile: profile)
+    }
 }
 
 /// Output of `report_components`.

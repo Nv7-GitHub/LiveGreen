@@ -73,12 +73,9 @@ struct SettingsView: View {
                 } label: {
                     Label("About & data sources", systemImage: "info.circle")
                 }
-                LabeledContent("Peer network", value: "Simulated")
                 if let error = model.storageError ?? saveError {
                     Label(error, systemImage: "externaldrive.badge.exclamationmark").foregroundStyle(Theme.danger)
                 }
-            } footer: {
-                Text("Compare-tab friends are a simulated network sampled from your modeled peer cohort.")
             }
         }
         .navigationTitle("Settings")

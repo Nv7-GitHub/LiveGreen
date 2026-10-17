@@ -1,7 +1,7 @@
 import SwiftUI
 import GreenCore
 
-/// Data sources, evidence tiers and the simulated-network disclosure (spec §5.4, §9).
+/// Data sources and evidence tiers (spec §5.4).
 struct AboutView: View {
     private struct DataSource: Identifiable {
         let name: String
@@ -49,19 +49,6 @@ struct AboutView: View {
                         .foregroundStyle(.tertiary)
                 }
                 .padding(.vertical, 4)
-            }
-
-            Section {
-                Label {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Simulated network").font(.headline)
-                        Text("The friends on the Compare leaderboard are a simulated network: eight people sampled with a fixed seed from your modeled peer cohort. They are not real accounts.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                } icon: {
-                    Image(systemName: "person.3.sequence").foregroundStyle(Theme.warning)
-                }
             }
 
             Section("How sure is each number?") {

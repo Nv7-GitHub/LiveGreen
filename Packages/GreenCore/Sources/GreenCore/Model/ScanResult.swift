@@ -9,7 +9,7 @@ public enum ScanMode: String, Codable, Sendable, Hashable, CaseIterable {
     public var displayName: String {
         switch self {
         case .photo: "Photo"
-        case .ar: "AR"
+        case .ar: "Integrated view"
         case .barcode: "Barcode"
         }
     }

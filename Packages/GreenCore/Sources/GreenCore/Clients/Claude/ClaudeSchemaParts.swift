@@ -49,7 +49,7 @@ enum SchemaParts {
 
     static let identifiers = object([
         "brand": nullableString("Brand exactly as printed or recognizable; null if not visible."),
-        "model": nullableString("Model number/name as printed (e.g. 'S2721H', 'UX3405MA'); null if not visible. Never invent one."),
+        "model": nullableString("Model number/name exactly as printed on the item or in the OCR hints; null if none is legible. Never guess one."),
         "gtin": nullableString("GTIN/EAN/UPC digits if a barcode hint or printed number belongs to this item; else null."),
         "materials": materials,
         "visible_text": nullableString("Short label text read from this item (energy label, care label, nutrition panel), if any."),

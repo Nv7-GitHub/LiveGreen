@@ -34,7 +34,8 @@ struct GrokAnalysisClientTests {
         #expect(request.url?.absoluteString == "https://api.x.ai/v1/responses")
         #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer xai-key")
         let body = try JSONDecoder().decode(JSONValue.self, from: try #require(request.httpBody))
-        #expect(body["model"]?.string == "grok-4.3")
+        #expect(body["model"]?.string == "grok-4.20-0309-non-reasoning", "identify uses the fast model")
+        #expect(body["stream"] == nil, "a non-streaming transport gets a plain request")
         #expect(body["store"] == false)
         #expect(body["text"]?["format"]?["type"]?.string == "json_schema")
         #expect(body["text"]?["format"]?["name"]?.string == "report_components")
@@ -92,5 +93,54 @@ struct GrokAnalysisClientTests {
         await #expect(throws: GreenCoreError.missingAPIKey("XAI_API_KEY")) {
             _ = try await client(MockTransport([]), key: nil).identify(image: Data(), hints: OCRHints(), profile: UserProfile())
         }
+    }
+
+    @Test func identifyStreamsItemNamesThenReturnsTheCompletedResponse() async throws {
+        let text = String(decoding: try JSONEncoder().encode(Self.identifyJSON), as: UTF8.self)
+        let halves = [String(Self.identifyJSON.prefix(80)), String(Self.identifyJSON.dropFirst(80))]
+        var lines = halves.map { delta in
+            "data: " + String(decoding: try! JSONEncoder().encode(["type": "response.output_text.delta", "delta": delta]), as: UTF8.self)
+        }
+        lines.append(#"data: {"type":"response.completed","response":{"status":"completed","output":[{"type":"message","content":[{"type":"output_text","text":\#(text)}]}]}}"#)
+        let transport = StreamingMockTransport(lines: lines)
+        let updates = Recorder<IdentifyProgress>()
+        let response = try await GrokAnalysisClient(configuration: .init(apiKey: "xai-key", retry: .instant()), transport: transport)
+            .identify(image: Data(), hints: OCRHints(), profile: UserProfile()) { updates.append($0) }
+        #expect(response.components.first?.name == "Dell 27-inch monitor")
+        #expect(updates.values.last?.itemNames == ["Dell 27-inch monitor"])
+        #expect(updates.values.contains { $0.sceneTitle == "Desk setup" })
+        let body = try JSONDecoder().decode(JSONValue.self, from: try #require(transport.request?.httpBody))
+        #expect(body["stream"] == true)
+    }
+
+    @Test func progressParsingReadsOnlyCompletedNames() {
+        let partial = #"{"scene_title":"Lunch","components":[{"name":"Beef burger","category":"food"},{"name":"Fr"#
+        let progress = IdentifyProgress.parsing(partialJSON: partial)
+        #expect(progress.itemNames == ["Beef burger"])
+        #expect(progress.sceneTitle == "Lunch")
+    }
+}
+
+/// Replays server-sent-event lines for streaming tests.
+final class StreamingMockTransport: HTTPStreamingTransport, @unchecked Sendable {
+    let lines: [String]
+    var request: URLRequest?
+
+    init(lines: [String]) {
+        self.lines = lines
+    }
+
+    func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        throw GreenCoreError.unsupported("streaming only")
+    }
+
+    func lines(for request: URLRequest) async throws -> (AsyncThrowingStream<String, any Error>, HTTPURLResponse) {
+        self.request = request
+        let lines = lines
+        let stream = AsyncThrowingStream<String, any Error> { continuation in
+            for line in lines { continuation.yield(line); continuation.yield("") }
+            continuation.finish()
+        }
+        return (stream, HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
     }
 }

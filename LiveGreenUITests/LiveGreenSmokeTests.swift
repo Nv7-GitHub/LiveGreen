@@ -54,7 +54,7 @@ final class LiveGreenSmokeTests: XCTestCase {
         XCTAssertTrue(generate.waitForExistence(timeout: 20))
         XCTAssertTrue(generate.isEnabled, "Demo scans carry a photo, so the greener image can be generated")
 
-        app.tabBars.buttons["Compare"].tap()
+        app.tabBars.buttons["Leaderboard"].tap()
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] %@", "people like you"))
             .firstMatch.waitForExistence(timeout: 15))
     }

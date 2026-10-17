@@ -17,6 +17,27 @@ enum ReportComponentsTool {
         ], required: ["scene_title", "components"]),
     ]
 
+    /// The identify schema with `fallback_estimates` limited to one carbon value, which roughly halves the
+    /// output (and the latency) of a call; the other metrics resolve from records and factor tables.
+    static let carbonEstimateOnlySchema: JSONValue = {
+        guard case .object(var root) = definition["input_schema"] ?? .null,
+              case .object(var properties) = root["properties"] ?? .null,
+              case .object(var components) = properties["components"] ?? .null,
+              case .object(var item) = components["items"] ?? .null,
+              case .object(var itemProperties) = item["properties"] ?? .null else { return definition["input_schema"] ?? .null }
+        itemProperties["fallback_estimates"] = SchemaParts.array(of: SchemaParts.object([
+            "metric": SchemaParts.enumeration(["carbon"], "Always carbon."),
+            "value": SchemaParts.number("Best guess, kg CO2e for one item as pictured."),
+            "low": SchemaParts.number("Plausible lower bound."),
+            "high": SchemaParts.number("Plausible upper bound."),
+        ], required: ["metric", "value", "low", "high"]), "Exactly one rough carbon estimate, used only if no record exists.")
+        item["properties"] = .object(itemProperties)
+        components["items"] = .object(item)
+        properties["components"] = .object(components)
+        root["properties"] = .object(properties)
+        return .object(root)
+    }()
+
     static let component = SchemaParts.object([
         "name": SchemaParts.string("Specific human name, e.g. 'Dell 27-inch monitor', 'Beef burger', 'Cotton T-shirt'."),
         "category": SchemaParts.enumeration(SchemaParts.categories, "Category; decides which metrics apply."),

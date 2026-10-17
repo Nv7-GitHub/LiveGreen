@@ -131,7 +131,7 @@ final class LiveGreenTourTests: XCTestCase {
 
     @MainActor
     private func checkCompare(_ app: XCUIApplication) {
-        selectTab("Compare", in: app)
+        selectTab("Leaderboard", in: app)
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] %@", "people like you"))
             .firstMatch.waitForExistence(timeout: 15))
         snap("10-compare")

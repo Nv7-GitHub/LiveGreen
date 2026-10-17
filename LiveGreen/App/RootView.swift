@@ -15,7 +15,7 @@ struct RootView: View {
             Tab("History", systemImage: "clock.arrow.circlepath", value: AppTab.history) {
                 NavigationStack { HistoryTab() }
             }
-            Tab("Compare", systemImage: "chart.bar.xaxis", value: AppTab.compare) {
+            Tab("Leaderboard", systemImage: "trophy", value: AppTab.compare) {
                 CompareTab()
             }
             if model.flags.plugFeaturesEnabled {

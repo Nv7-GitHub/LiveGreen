@@ -1,38 +1,23 @@
 import SwiftUI
 import GreenCore
 
-/// Leaderboard of the seeded simulated network plus the user, greenest first (spec §9).
+/// Leaderboard of your friends plus you, greenest first (spec §9). Each person gets a circle with their
+/// initials.
 struct FriendsLeaderboard: View {
     let metric: MetricKey
     /// Greenest first, from `CohortModel.leaderboard`.
     let entries: [LeaderboardEntry]
-    /// Avatar SF Symbol per entry id.
-    let avatarSymbols: [String: String]
-
-    private func symbol(for entry: LeaderboardEntry) -> String {
-        entry.isUser ? "person.crop.circle.fill" : (avatarSymbols[entry.id] ?? "person.fill")
-    }
 
     var body: some View {
         GlassCard {
             VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("Leaderboard").font(.headline)
-                    Spacer()
-                    Label("Simulated network", systemImage: "person.3.sequence")
-                        .font(.caption.weight(.semibold))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .glassEffect(.regular.tint(Theme.warning.opacity(0.25)), in: .capsule)
-                }
                 ForEach(Array(entries.enumerated()), id: \.element.id) { rank, entry in
                     row(rank: rank + 1, entry: entry)
+                    if rank < entries.count - 1 { Divider().padding(.leading, 78) }
                 }
-                Text("Friends are sampled from your modeled peer cohort with a fixed seed. They are not real people.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
         }
+        .accessibilityIdentifier("leaderboard")
     }
 
     private func row(rank: Int, entry: LeaderboardEntry) -> some View {
@@ -40,14 +25,12 @@ struct FriendsLeaderboard: View {
             Text("\(rank)")
                 .font(.subheadline.weight(.bold).monospacedDigit())
                 .frame(width: 22)
-                .foregroundStyle(.secondary)
-            Image(systemName: symbol(for: entry))
-                .font(.body)
-                .frame(width: 34, height: 34)
-                .foregroundStyle(entry.isUser ? .white : Theme.leaf)
-                .background(entry.isUser ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(Theme.mint.opacity(0.3)), in: .circle)
+                .foregroundStyle(rank <= 3 ? Theme.leaf : .secondary)
+            InitialsAvatar(name: entry.name, isUser: entry.isUser)
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.name).font(.subheadline.weight(entry.isUser ? .bold : .regular))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 Text("Greener than \(SharePercent.format(entry.greenerThan))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -55,8 +38,42 @@ struct FriendsLeaderboard: View {
             Spacer()
             Text(YearlyValue.format(entry.value, metric: metric))
                 .font(.subheadline.monospacedDigit())
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .layoutPriority(1)
         }
         .padding(.vertical, 2)
+        .padding(.horizontal, entry.isUser ? 6 : 0)
+        .background(entry.isUser ? AnyShapeStyle(Theme.leaf.opacity(0.12)) : AnyShapeStyle(.clear),
+                    in: .rect(cornerRadius: 12))
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// A circle with a person's initials, tinted by a stable color derived from the name.
+struct InitialsAvatar: View {
+    let name: String
+    var isUser = false
+
+    private var initials: String {
+        guard !isUser else { return "You" }
+        return name.split(separator: " ").prefix(2).compactMap(\.first).map(String.init).joined().uppercased()
+    }
+
+    private static let palette: [Color] = [.teal, .indigo, .orange, .pink, .purple, .blue, .mint, .brown, .cyan]
+
+    private var color: Color {
+        guard !isUser else { return Theme.leaf }
+        let hash = name.unicodeScalars.reduce(0) { ($0 &* 31 &+ Int($1.value)) & 0xFFFF }
+        return Self.palette[hash % Self.palette.count]
+    }
+
+    var body: some View {
+        Text(initials)
+            .font(.system(size: isUser ? 11 : 13, weight: .bold, design: .rounded))
+            .foregroundStyle(.white)
+            .frame(width: 36, height: 36)
+            .background(color.gradient, in: .circle)
+            .accessibilityHidden(true)
     }
 }

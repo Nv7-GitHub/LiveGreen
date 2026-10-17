@@ -5,6 +5,11 @@ public protocol HTTPTransport: Sendable {
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse)
 }
 
+/// A transport that can also deliver a response body line by line as it arrives (server-sent events).
+public protocol HTTPStreamingTransport: HTTPTransport {
+    func lines(for request: URLRequest) async throws -> (AsyncThrowingStream<String, any Error>, HTTPURLResponse)
+}
+
 /// Production transport backed by `URLSession` async/await.
 public struct URLSessionTransport: HTTPTransport {
     public let session: URLSession
@@ -23,6 +28,27 @@ public struct URLSessionTransport: HTTPTransport {
         } catch let error as URLError where error.code == .timedOut {
             throw GreenCoreError.timeout
         }
+    }
+}
+
+extension URLSessionTransport: HTTPStreamingTransport {
+    public func lines(for request: URLRequest) async throws -> (AsyncThrowingStream<String, any Error>, HTTPURLResponse) {
+        let (bytes, response) = try await session.bytes(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw GreenCoreError.decoding("Non-HTTP response from \(request.url?.absoluteString ?? "?")")
+        }
+        let stream = AsyncThrowingStream<String, any Error> { continuation in
+            let task = Task {
+                do {
+                    for try await line in bytes.lines { continuation.yield(line) }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+        return (stream, http)
     }
 }
 

@@ -33,8 +33,10 @@ public struct FactorModelResolver: MetricResolver {
         let servingKg = FoodServing.servingKg(component)
         if let factor = store.foodFactor(group: q.foodGroup ?? component.name), let servingKg, servingKg > 0 {
             let sources = [factor.citation]
+            // Coffee's factor is per kg of beans; a brewed cup holds only its grounds' worth.
+            let factorKg = servingKg * FoodServing.dryIngredientShare(group: factor.group, component: component)
             func perServing(_ perKg: Double, _ unit: MetricUnit) -> Measured {
-                FactorRanges.multiplicative(perKg * servingKg, factor: 1.6, unit: unit, sources: sources)
+                FactorRanges.multiplicative(perKg * factorKg, factor: 1.6, unit: unit, sources: sources)
             }
             metrics[.carbon] = perServing(factor.kgCO2ePerKg, .kgCO2e)
             metrics[.water] = perServing(factor.litersPerKg, .liters)

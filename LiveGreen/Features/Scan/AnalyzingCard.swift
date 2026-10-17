@@ -14,6 +14,10 @@ struct AnalyzingCard: View {
     @State private var components: [Component] = []
     @State private var tierCounts: [Tier: Int] = [:]
     @State private var lastWarning: String?
+    /// Item names streamed from the vision model before identification finishes.
+    @State private var spotted: [String] = []
+    @State private var writtenCharacters = 0
+    @State private var identifyStart: Date?
 
     var body: some View {
         GlassCard {
@@ -27,6 +31,7 @@ struct AnalyzingCard: View {
                 }
                 ForEach(PipelineStep.allCases, id: \.self) { step in
                     stepRow(step)
+                    if step == .identifying, isIdentifying { liveIdentify }
                 }
                 if !components.isEmpty { componentChips }
                 if let lastWarning {
@@ -80,6 +85,53 @@ struct AnalyzingCard: View {
         return count > 0 ? "\(count) values" : nil
     }
 
+    private var isIdentifying: Bool {
+        progress.started.contains(.identifying) && !progress.finished.contains(.identifying)
+    }
+
+    /// While the model answers: a seconds counter, what it is doing, and each item name as it is spotted.
+    private var liveIdentify: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            TimelineView(.periodic(from: .now, by: 0.1)) { context in
+                let elapsed = identifyStart.map { context.date.timeIntervalSince($0) } ?? 0
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles").symbolEffect(.pulse)
+                    Text(liveStatus).lineLimit(1)
+                    Spacer()
+                    Text(elapsed, format: .number.precision(.fractionLength(1)))
+                        .monospacedDigit()
+                    + Text(" s")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+            if !spotted.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(Array(spotted.enumerated()), id: \.offset) { index, name in
+                            Label(name, systemImage: "eye")
+                                .font(.caption)
+                                .lineLimit(1)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .glassEffect(.regular.tint(Theme.mint.opacity(0.25)), in: .capsule)
+                                .transition(.scale.combined(with: .opacity))
+                                .id(index)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.leading, 32)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("liveIdentify")
+    }
+
+    private var liveStatus: String {
+        if spotted.isEmpty { return writtenCharacters > 0 ? "Reading the photo…" : "Looking at the photo…" }
+        return "Spotted \(spotted.count) item\(spotted.count == 1 ? "" : "s"), measuring sizes and materials…"
+    }
+
     private var componentChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
@@ -116,6 +168,10 @@ struct AnalyzingCard: View {
     private func apply(_ event: PipelineEvent) {
         progress.apply(event)
         switch event {
+        case .stepStarted(.identifying): identifyStart = .now
+        case let .identifyProgress(update):
+            spotted = update.itemNames
+            writtenCharacters = update.receivedCharacters
         case let .componentsIdentified(identified): components = identified
         case let .metricResolved(_, _, tier): tierCounts[tier, default: 0] += 1
         case let .warning(message): lastWarning = message
