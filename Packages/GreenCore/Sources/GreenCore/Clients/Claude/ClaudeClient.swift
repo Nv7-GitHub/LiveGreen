@@ -6,6 +6,9 @@ public struct ClaudeClient: Sendable {
     public struct Configuration: Sendable {
         /// `ANTHROPIC_API_KEY`. Calls throw `GreenCoreError.missingAPIKey` while it is nil or empty.
         public var apiKey: String?
+        /// `ANTHROPIC_WORKSPACE_ID`, sent as `anthropic-workspace-id`. Only needed for a key that is not scoped
+        /// to a workspace (the API answers 400 without it); workspace-scoped keys leave it nil.
+        public var workspaceID: String?
         public var model: ClaudeModel
         public var baseURL: URL
         public var identifyTimeout: Double
@@ -24,7 +27,7 @@ public struct ClaudeClient: Sendable {
         public var vocabulary: ReferenceVocabulary
         public var retry: RetryPolicy
 
-        public init(apiKey: String?, model: ClaudeModel = .opus,
+        public init(apiKey: String?, workspaceID: String? = nil, model: ClaudeModel = .sonnet,
                     baseURL: URL = URL(string: "https://api.anthropic.com")!,
                     identifyTimeout: Double = 30, alternativesTimeout: Double = 45, researchTimeout: Double = 45,
                     identifyEffort: ClaudeEffort = .low, alternativesEffort: ClaudeEffort = .low,
@@ -32,6 +35,7 @@ public struct ClaudeClient: Sendable {
                     researchSearchLimit: Int = 4, researchFetchLimit: Int = 3,
                     vocabulary: ReferenceVocabulary = .default, retry: RetryPolicy = .default) {
             self.apiKey = apiKey
+            self.workspaceID = workspaceID
             self.model = model
             self.baseURL = baseURL
             self.identifyTimeout = identifyTimeout
@@ -56,7 +60,7 @@ public struct ClaudeClient: Sendable {
         self.transport = transport
     }
 
-    public init(apiKey: String?, model: ClaudeModel = .opus, transport: any HTTPTransport = URLSessionTransport()) {
+    public init(apiKey: String?, model: ClaudeModel = .sonnet, transport: any HTTPTransport = URLSessionTransport()) {
         self.init(configuration: Configuration(apiKey: apiKey, model: model), transport: transport)
     }
 

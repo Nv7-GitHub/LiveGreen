@@ -33,6 +33,9 @@ extension ClaudeClient {
         request.setValue("application/json", forHTTPHeaderField: "content-type")
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue(Self.apiVersion, forHTTPHeaderField: "anthropic-version")
+        if let workspaceID = configuration.workspaceID?.trimmedNonEmpty {
+            request.setValue(workspaceID, forHTTPHeaderField: "anthropic-workspace-id")
+        }
         if body.fallbacks != nil {
             request.setValue(Self.fallbackBeta, forHTTPHeaderField: "anthropic-beta")
         }

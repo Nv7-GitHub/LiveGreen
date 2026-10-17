@@ -15,6 +15,8 @@ struct ToolCallSpec: Sendable {
     var maxTokens: Int
     var effort: ClaudeEffort
     var timeout: Double
+    /// Skip extended thinking where the model allows it (Sonnet 5.5 `between_tools`), for latency.
+    var thinkingOff = false
 
     var nudge: String {
         "Respond only by calling the `\(toolName)` tool now, with input that matches its schema exactly."
@@ -77,7 +79,7 @@ extension ClaudeClient {
         throw GreenCoreError.invalidModelOutput("No valid `\(spec.toolName)` call: \(lastProblem)")
     }
 
-    private func request(_ spec: ToolCallSpec, messages: [MessagesRequest.Message], maxTokens: Int) -> MessagesRequest {
+    func request(_ spec: ToolCallSpec, messages: [MessagesRequest.Message], maxTokens: Int) -> MessagesRequest {
         MessagesRequest(
             model: configuration.model.id,
             maxTokens: maxTokens,
@@ -85,6 +87,7 @@ extension ClaudeClient {
             messages: messages,
             tools: spec.tools,
             outputConfig: .init(effort: spec.effort),
+            thinking: spec.thinkingOff ? configuration.model.thinkingOff : nil,
             fallbacks: configuration.serverSideFallbacks ? "default" : nil)
     }
 

@@ -25,11 +25,16 @@ struct MessagesRequest: Encodable, Sendable {
     var tools: [JSONValue]
     var toolChoice: JSONValue = ["type": "auto"]
     var outputConfig: OutputConfig
+    /// `{"type": "between_tools"}` turns extended thinking off on Claude Sonnet 5.5; nil leaves the model's
+    /// default (adaptive), which is the only mode Claude Opus 5.5 accepts.
+    var thinking: JSONValue?
+    /// Server-sent events instead of one JSON body.
+    var stream: Bool?
     /// `"default"` enables server-side refusal fallbacks (beta `server-side-fallback-2026-07-01`).
     var fallbacks: String?
 
     enum CodingKeys: String, CodingKey {
-        case model, system, messages, tools, fallbacks
+        case model, system, messages, tools, fallbacks, thinking, stream
         case maxTokens = "max_tokens"
         case toolChoice = "tool_choice"
         case outputConfig = "output_config"

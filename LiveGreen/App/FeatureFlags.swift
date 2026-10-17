@@ -3,16 +3,25 @@ import GreenCore
 
 /// User-adjustable switches, persisted in UserDefaults and overridable by launch arguments:
 /// `-ScanMode ar|photo|barcode`, `-DemoMode YES`, `-PlugFeatures NO`, `-AIProvider grok|claude`,
-/// `-ModelChoice sonnet|opus`, `-MockPlug YES`.
+/// `-ModelChoice sonnet|opus`, `-MockPlug YES`. Claude is the analysis provider; `-AIProvider grok` is a developer
+/// override only (Grok otherwise just renders the greener image).
 nonisolated struct FeatureFlags: Codable, Hashable, Sendable {
     var scanMode: ScanMode = .photo
     var demoMode = false
     var plugFeaturesEnabled = true
-    var aiProvider: AIProvider = .grok
-    var modelChoice: ClaudeModel = .opus
+    var aiProvider: AIProvider = .claude
+    var modelChoice: ClaudeModel = .sonnet
     var useMockPlug = false
 
     static let defaultsKey = "LiveGreen.featureFlags"
+
+    /// The provider and model keys were renamed when Claude Sonnet 5.5 became the default, so flags saved by older
+    /// builds (Grok, Opus) do not carry over.
+    enum CodingKeys: String, CodingKey {
+        case scanMode, demoMode, plugFeaturesEnabled, useMockPlug
+        case aiProvider = "analysisProvider"
+        case modelChoice = "claudeModel"
+    }
 
     init() {}
 

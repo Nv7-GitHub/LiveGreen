@@ -17,8 +17,9 @@ open LiveGreen.xcodeproj
 
 | Key (in `Secrets.xcconfig`) | Used for | Required |
 |---|---|---|
-| `XAI_API_KEY` | Grok identify, alternatives and spec research (default AI provider) and the greener-image edit | yes (except demo mode) |
-| `ANTHROPIC_API_KEY` | Claude identify, alternatives and spec research, when Settings → AI provider is Claude | only for the Claude provider |
+| `ANTHROPIC_API_KEY` | Claude identify, alternatives and spec research (Sonnet 5.5 by default) | yes (except demo mode) |
+| `ANTHROPIC_WORKSPACE_ID` | Sent as `anthropic-workspace-id`; only for an Anthropic key that is not scoped to a workspace | only for unscoped keys |
+| `XAI_API_KEY` | Grok greener-image edit | yes (except demo mode) |
 | `ELECTRICITYMAPS_API_KEY` | Live grid carbon intensity (paid beyond 24 h of history) | optional (without it, US grid data comes from EIA's Hourly Electric Grid Monitor, no key needed) |
 | `ENERGYSTAR_APP_TOKEN` | ENERGY STAR Socrata queries | optional |
 

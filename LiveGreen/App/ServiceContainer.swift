@@ -31,7 +31,7 @@ nonisolated struct ServiceContainer: Sendable {
     /// Demo mode (spec §11): replays the recorded fixture scenes end to end with no network. Identify,
     /// alternatives, research and the greener image are canned; records, factors and the engine are real.
     static func demo(scene: DemoScene = .deskSetup, latency: Duration = .milliseconds(450),
-                     modelChoice: ClaudeModel = .opus) -> ServiceContainer {
+                     modelChoice: ClaudeModel = .sonnet) -> ServiceContainer {
         let reference = ReferenceStore.bundled
         let products = FakeProductDatabase()
         let appliances = FakeApplianceDatabase()
@@ -83,7 +83,8 @@ nonisolated struct ServiceContainer: Sendable {
         case .grok:
             GrokAnalysisClient(configuration: .init(apiKey: secrets.value(for: .xai), vocabulary: vocabulary))
         case .claude:
-            ClaudeClient(configuration: .init(apiKey: secrets.value(for: .anthropic), model: flags.modelChoice,
+            ClaudeClient(configuration: .init(apiKey: secrets.value(for: .anthropic),
+                                              workspaceID: secrets.value(for: .anthropicWorkspace), model: flags.modelChoice,
                                               vocabulary: vocabulary))
         }
     }

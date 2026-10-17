@@ -43,8 +43,9 @@ open LiveGreen.xcodeproj
 
 | Key | Used for | Needed |
 |---|---|---|
-| `XAI_API_KEY` | Grok: identify, swaps, spec research (default provider) and the greener image | yes, except demo mode |
-| `ANTHROPIC_API_KEY` | Claude, only when Settings → AI provider is Claude | only for Claude |
+| `ANTHROPIC_API_KEY` | Claude: identify, swaps, spec research (Sonnet 5.5 by default) | yes, except demo mode |
+| `ANTHROPIC_WORKSPACE_ID` | `anthropic-workspace-id` header, only for a key not scoped to a workspace | only for unscoped keys |
+| `XAI_API_KEY` | Grok: the greener image | yes, except demo mode |
 | `ELECTRICITYMAPS_API_KEY` | Optional live grid data; without it EIA is used (no key) | no |
 | `ENERGYSTAR_APP_TOKEN` | Higher ENERGY STAR rate limits | no |
 
@@ -114,7 +115,7 @@ docs/                             this file, the spec, screenshots
    long edge ≤ 1568 px, JPEG), so boxes map straight onto the displayed photo.
 2. **Identifying**: the AI provider's `identify` returns components with category, normalized box,
    identifiers, quantities, default usage, deferrable load, one fallback carbon estimate and optional
-   questions. While Grok streams, `.identifyProgress` events carry item names as they appear.
+   questions. The call streams, and `.identifyProgress` events carry item names as they appear.
 3. **Evidence ladder** per component and metric, first source that answers wins, tier recorded:
    - T1 exact record: Open Food Facts (GTIN), ENERGY STAR (brand + model), bundled ASUS PCF figures
    - T2 researched spec: AI web search; a value is kept only if it cites a page the search returned
@@ -128,8 +129,11 @@ docs/                             this file, the spec, screenshots
 
 ## 6. AI providers and models (measured)
 
-`Settings → AI provider` picks Grok (default) or Claude for identify, swaps and research. The greener
-image always uses Grok. `ServiceContainer.analysisClient` builds the client.
+Claude runs identify, swaps and research; Settings → Claude model picks Sonnet 5.5 (default, fast) or Opus 5.5.
+The greener image always uses Grok. The Grok analysis client is still in GreenCore and can be selected with the
+developer launch argument `-AIProvider grok`; there is no Settings switch for it. Saved flags from builds where
+Grok/Opus were the defaults are ignored (the coding keys were renamed). `ServiceContainer.analysisClient` builds
+the client.
 
 ### Grok (xAI Responses API, `POST https://api.x.ai/v1/responses`)
 
@@ -177,11 +181,25 @@ prompt names. Output is 1024×1024.
 
 ### Claude (Anthropic Messages API)
 
-`claude-opus-5-5` (default) or `claude-sonnet-5-5`. These models reject `temperature` and a forced
+`claude-sonnet-5-5` (default) or `claude-opus-5-5`. These models reject `temperature` and a forced
 `tool_choice` with a 400, so `ClaudeToolLoop` uses `tool_choice: auto`, checks the call happened, nudges
 once and sends decode errors back as `is_error` tool results. Research uses the `web_search` and
 `web_fetch` server tools, and quotes are checked against the fetched page text. Claude is also available
 on Google Cloud Vertex AI (not implemented: it would need OAuth tokens, ideally via a small proxy).
+
+Identify is tuned for latency the same way as the Grok setup (`ClaudeClient+Identify`, `ClaudeClient+Stream`):
+
+- Slim schema (`ReportComponentsTool.slimDefinition`, one fallback carbon estimate per item) and the matching
+  `carbonEstimateOnly` prompt: output tokens drive latency.
+- `stream: true` with `eager_input_streaming: true` on `report_components`, so `input_json_delta` fragments
+  arrive as they are generated; `ProgressThrottle` turns the partial JSON into item names. The prompt asks for
+  `scene_title` first and `name` first in each component, since the schema's keys are sorted alphabetically.
+- Sonnet 5.5: `thinking: {type: "between_tools"}` (no extended thinking; `disabled` is a 400 on this model) at
+  effort `low`. Opus 5.5 always thinks, so it only gets effort `low` and is noticeably slower.
+- Anything other than a clean streamed call (HTTP error, text answer, cut-off or invalid JSON) falls back to the
+  non-streaming `runTool` loop with retries and nudges. Refusals and timeouts are thrown.
+- An Anthropic key that is not scoped to a workspace gets a 400 unless `anthropic-workspace-id` is sent
+  (`ANTHROPIC_WORKSPACE_ID`).
 
 ## 7. Grid data and the smart plug
 
