@@ -17,8 +17,10 @@ struct PhotoScanView: View {
     @State private var errorMessage: String?
     @Namespace private var controls
 
-    /// Leaves room for the scan tab's mode switch and the floating tab bar below these controls.
-    private let bottomClearance: CGFloat = 96
+    @Environment(AppModel.self) private var model: AppModel?
+
+    /// Leaves room for the scan tab's mode switch (plus demo scene buttons) and the tab bar below.
+    private var bottomClearance: CGFloat { model?.flags.demoMode == true ? 184 : 128 }
 
     var body: some View {
         ZStack {

@@ -13,7 +13,10 @@ struct BarcodeLabelScanner: View {
     @State private var manualCode = ""
     @State private var isLive = DataScannerRepresentable.isReady
 
-    private let bottomClearance: CGFloat = 96
+    @Environment(AppModel.self) private var model: AppModel?
+
+    /// Leaves room for the scan tab's mode switch (plus demo scene buttons) and the tab bar below.
+    private var bottomClearance: CGFloat { model?.flags.demoMode == true ? 184 : 128 }
     /// Keeps the parser input bounded while a label stays in view.
     private let maxLines = 80
 
