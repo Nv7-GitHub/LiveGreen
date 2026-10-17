@@ -40,11 +40,18 @@ struct SummaryHeader: View {
         guard metric != .carbon, metric != .yearlyElectricity else { return nil }
         let engine = ImpactEngine()
         let consumables = result.components.filter {
-            if case .unitsPerYear = engine.annualBasis(for: $0) { return $0.metrics[metric] != nil }
+            if case .unitsPerYear = engine.annualBasis(for: $0) { return $0.displayable(metric) != nil }
             return false
         }
-        guard !consumables.isEmpty else { return nil }
-        return engine.yearlyTotals(consumables, seed: result.totalsSeed)[metric]
+        guard !consumables.isEmpty, let yearly = engine.yearlyTotals(consumables, seed: result.totalsSeed)[metric],
+              !yearly.isEffectivelyZero else { return nil }
+        return yearly
+    }
+
+    /// Totals only for metrics some item shows (see `Component.displayable`), so "0 oz plastic" never appears.
+    private func shownTotal(_ metric: MetricKey) -> Measured? {
+        guard ResultInsights.shows(metric, in: result.components) else { return nil }
+        return result.totals[metric]
     }
 
     private func headlineTitle(_ metric: MetricKey) -> String {
@@ -60,7 +67,7 @@ struct SummaryHeader: View {
     }
 
     @ViewBuilder private func singleTotal(_ metric: MetricKey) -> some View {
-        if let total = result.totals[metric] {
+        if let total = shownTotal(metric) {
             let perYear = yearly(metric, in: yearlyTotals)
             let headline = perYear ?? total
             VStack(alignment: .leading, spacing: 14) {
@@ -87,7 +94,7 @@ struct SummaryHeader: View {
                     if let repeats = repeatPurchases(metric) {
                         stat("Per year, re-buying", Measured.format(repeats.displayValue), unit: repeats.displaySymbol)
                     }
-                    stat("Items", "\(result.components.count)", unit: nil)
+                    stat("Items", "\(ResultInsights.components(result.components, showing: filter).count)", unit: nil)
                 }
             }
             .accessibilityElement(children: .combine)
@@ -118,7 +125,7 @@ struct SummaryHeader: View {
         return LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)],
                          alignment: .leading, spacing: 10) {
             ForEach(ScanTotals.additiveMetrics, id: \.self) { metric in
-                if let total = result.totals[metric] {
+                if let total = shownTotal(metric) {
                     let shown = yearly(metric, in: perYear) ?? total
                     VStack(alignment: .leading, spacing: 4) {
                         Label(metric.displayName, systemImage: metric.systemImage)

@@ -71,7 +71,7 @@ struct ComponentHotspots: View {
                 if isSelected {
                     VStack(alignment: .leading, spacing: 0) {
                         Text(component.name).font(.caption.weight(.semibold)).lineLimit(1)
-                        if let value = component.metrics[filter.shareMetric] {
+                        if let value = component.displayable(filter.shareMetric) {
                             Text(value.formatted).font(.caption2.monospacedDigit()).opacity(0.85)
                         }
                     }

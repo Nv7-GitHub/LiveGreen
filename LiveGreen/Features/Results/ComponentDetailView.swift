@@ -16,7 +16,7 @@ struct ComponentDetailView: View {
     @State private var flowMetric: MetricKey?
 
     private var flowMetrics: [MetricKey] {
-        StageSplit.flowMetrics.filter { component.metrics[$0] != nil }
+        StageSplit.flowMetrics.filter { component.displayable($0) != nil }
     }
 
     private var activeFlowMetric: MetricKey? {
@@ -28,7 +28,7 @@ struct ComponentDetailView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             header
-            if let metric = activeFlowMetric, let measured = component.metrics[metric] {
+            if let metric = activeFlowMetric, let measured = component.displayable(metric) {
                 GlassCard {
                     VStack(alignment: .leading, spacing: 12) {
                         if flowMetrics.count > 1 { flowPicker(selected: metric) }
@@ -86,7 +86,7 @@ struct ComponentDetailView: View {
 
     private func shortName(_ metric: MetricKey) -> String {
         switch metric {
-        case .yearlyElectricity: "kWh"
+        case .yearlyElectricity: "Electricity"
         case .waterPollution: "Pollution"
         case .land: "Land"
         default: metric.displayName

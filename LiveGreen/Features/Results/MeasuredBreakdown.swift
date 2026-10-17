@@ -21,9 +21,11 @@ struct MeasuredBreakdown: Identifiable, Hashable {
         return parts
     }
 
-    /// Item vs packaging plastic (spec §4), when the resolver knew the split.
+    /// Item vs packaging plastic (spec §4), when the resolver knew the split and both parts have some
+    /// plastic; "Packaging 0 g" says nothing the row does not.
     static func plastic(of component: Component) -> [MeasuredBreakdown] {
-        guard let split = component.plasticSplit else { return [] }
+        guard let split = component.plasticSplit,
+              !split.item.isEffectivelyZero, !split.packaging.isEffectivelyZero else { return [] }
         return [MeasuredBreakdown(label: "Item", measured: split.item),
                 MeasuredBreakdown(label: "Packaging", measured: split.packaging)]
     }

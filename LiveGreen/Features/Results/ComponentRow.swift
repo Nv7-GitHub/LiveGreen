@@ -9,7 +9,8 @@ struct ComponentRow: View {
     let share: Double
     let isSelected: Bool
 
-    private var shown: Measured? { component.metrics[filter.shareMetric] }
+    /// Missing or ≈ 0 values are left off rather than shown as a dash.
+    private var shown: Measured? { component.displayable(filter.shareMetric) }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -28,8 +29,6 @@ struct ComponentRow: View {
                         Text(shown.formatted)
                             .font(.subheadline.weight(.semibold).monospacedDigit())
                             .lineLimit(1)
-                    } else {
-                        Text("—").foregroundStyle(.secondary)
                     }
                 }
                 HStack(spacing: 8) {
@@ -67,8 +66,8 @@ struct ComponentRow: View {
     private var subtitle: String {
         let shareText = share > 0 && share < 0.005 ? "<1%" : "\(Int((share * 100).rounded()))%"
         guard filter != .all else {
-            let resolved = component.category.applicableMetrics.filter { component.metrics[$0] != nil }.count
-            return "\(resolved)/\(component.category.applicableMetrics.count) metrics"
+            let count = component.displayableMetrics.count
+            return count == 1 ? "1 metric" : "\(count) metrics"
         }
         return shareText
     }
