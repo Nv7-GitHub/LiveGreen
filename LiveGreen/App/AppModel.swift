@@ -13,6 +13,8 @@ final class AppModel {
         didSet {
             guard flags != oldValue else { return }
             flags.save()
+            // Scan mode and plug visibility don't change the services, so background swap fetches keep running.
+            guard flags.servicesDiffer(from: oldValue) else { return }
             services = ServiceContainer.make(flags: flags, secrets: secrets)
             swapPrefetch.reset()
         }
@@ -84,6 +86,7 @@ final class AppModel {
 
     func deleteScan(id: UUID) {
         scans.removeAll { $0.id == id }
+        swapPrefetch.forget(id)
         perform { try store.deleteScan(id: id) }
     }
 

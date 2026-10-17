@@ -93,6 +93,11 @@ final class SwapPrefetcher {
         return image.task
     }
 
+    /// Stops and forgets one scan's fetches, e.g. when the scan is deleted.
+    func forget(_ scanID: UUID) {
+        entries.removeValue(forKey: scanID)?.cancel()
+    }
+
     /// Forgets everything, e.g. when the services change.
     func reset() {
         entries.values.forEach { $0.cancel() }

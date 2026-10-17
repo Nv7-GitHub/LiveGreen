@@ -15,6 +15,12 @@ nonisolated struct FeatureFlags: Codable, Hashable, Sendable {
 
     static let defaultsKey = "LiveGreen.featureFlags"
 
+    /// Whether `ServiceContainer.make` would build different services for these flags.
+    func servicesDiffer(from other: FeatureFlags) -> Bool {
+        demoMode != other.demoMode || aiProvider != other.aiProvider || modelChoice != other.modelChoice
+            || useMockPlug != other.useMockPlug
+    }
+
     /// The provider and model keys were renamed when Claude Sonnet 5.5 became the default, so flags saved by older
     /// builds (Grok, Opus) do not carry over.
     enum CodingKeys: String, CodingKey {

@@ -29,6 +29,8 @@ struct AlternativesView: View {
                         loadingCard
                     case let .failed(message):
                         failureCard(message)
+                    case .ready where !hasSwaps:
+                        noSwapsCard
                     case .ready:
                         swapCards
                         ProjectedSavingsCard(savings: SwapMath.projectedSavings(screen.result, selection: selection),
@@ -39,7 +41,7 @@ struct AlternativesView: View {
                 .padding()
             }
             .safeAreaInset(edge: .bottom) {
-                if screen.phase == .ready, screen.showsGreenerImage { generateBar }
+                if screen.phase == .ready, hasSwaps, screen.showsGreenerImage { generateBar }
             }
             // The image section is empty until generation starts, so scroll once it has content.
             .onChange(of: screen.imageState) { _, state in
@@ -55,6 +57,10 @@ struct AlternativesView: View {
 
     private var selection: [UUID: UUID] { screen.visibleSelection(plugFeatures: plugFeatures) }
 
+    private var hasSwaps: Bool {
+        screen.result.components.contains { !screen.alternatives(for: $0, plugFeatures: plugFeatures).isEmpty }
+    }
+
     // MARK: - Sections
 
     private var loadingCard: some View {
@@ -68,6 +74,18 @@ struct AlternativesView: View {
                 }
             }
         }
+    }
+
+    private var noSwapsCard: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("No greener swaps found", systemImage: "leaf").font(.headline)
+                Text("Every swap we checked made at least one thing a lot worse, so none is suggested.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityIdentifier("alternatives.none")
     }
 
     private func failureCard(_ message: String) -> some View {
