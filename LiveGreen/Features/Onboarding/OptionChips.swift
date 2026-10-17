@@ -48,9 +48,14 @@ private struct ChipGrid<Option: ProfileOption>: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 6)
                 .foregroundStyle(selected ? .white : .primary)
-                .glassEffect(.regular.tint(selected ? Theme.leaf : nil).interactive(), in: .rect(cornerRadius: 16))
+                // Glass is drawn, not hit-tested: without a content shape only the text and icon took taps.
+                .contentShape([.interaction, .accessibility], .rect(cornerRadius: Self.cornerRadius))
+                .glassEffect(.regular.tint(selected ? Theme.leaf : nil).interactive(),
+                             in: .rect(cornerRadius: Self.cornerRadius))
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
+
+    private static var cornerRadius: CGFloat { 16 }
 }

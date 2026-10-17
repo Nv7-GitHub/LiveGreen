@@ -3,8 +3,8 @@ import GreenCore
 import GreenCoreFakes
 
 /// AR capture mode (spec §5.1): world-tracked camera, capture a frame, anchor glass labels per component.
-/// The anchored labels are the result surface; a label opens the component detail, and "Results" opens the
-/// full results screen.
+/// The anchored labels are the result surface; a label opens the component detail. The Items menu lists every
+/// identified item (including ones off screen) and opens the full results screen.
 struct ARScanView: View {
     let onCapture: (Data, OCRHints) -> Void
     /// Result whose components should be anchored as labels. When nil, the saved scan for the last capture is used.
@@ -19,6 +19,8 @@ struct ARScanView: View {
     @State private var snapshot: ARCaptureSnapshot?
     @State private var isCapturing = false
     @State private var selected: Component?
+    /// Global y of the top of the capture controls, so labels stay clear of them.
+    @State private var controlsTop: CGFloat?
 
     init(onCapture: @escaping (Data, OCRHints) -> Void, result: ScanResult? = nil,
          onSelectComponent: ((Component) -> Void)? = nil, onOpenResult: ((ScanResult) -> Void)? = nil) {
@@ -41,10 +43,13 @@ struct ARScanView: View {
             ARViewContainer(controller: session)
                 .ignoresSafeArea()
             if let anchored = anchoredResult {
-                ARLabelsOverlay(components: anchored.components, positions: session.labelPositions, onSelect: select)
+                ARLabelsOverlay(components: anchored.components, positions: session.labelPositions,
+                                topInset: session.topBarInset, controlsTop: controlsTop,
+                                selectedID: selected?.id, onSelect: select)
                     .ignoresSafeArea()
             }
             controls
+                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minY } action: { controlsTop = $0 }
                 .padding(.bottom, model.flags.demoMode ? 150 : 96)
         }
         .onAppear { session.run() }
@@ -71,21 +76,22 @@ struct ARScanView: View {
                         Label("Capture", systemImage: isCapturing ? "hourglass" : "camera.aperture")
                             .font(.headline)
                             .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
                     }
                     .buttonStyle(.glassProminent)
                     .disabled(isCapturing || !session.tracking.isReady)
-                    if let anchored = anchoredResult, let onOpenResult {
-                        Button("Results", systemImage: "list.bullet.rectangle") { onOpenResult(anchored) }
-                            .buttonStyle(.glass)
-                            .accessibilityIdentifier("arFullResults")
+                    .accessibilityIdentifier("arCapture")
+                    if let anchored = anchoredResult {
+                        itemsMenu(anchored)
                     }
                     if session.anchoredResultID != nil {
                         Button("Clear labels", systemImage: "xmark") { clearLabels() }
                             .labelStyle(.iconOnly)
                             .buttonStyle(.glass)
+                            .accessibilityIdentifier("arClearLabels")
                     }
                 }
+                // Large controls: every button in the row is at least 44 pt tall.
+                .controlSize(.large)
             }
         }
         .animation(.smooth, value: session.tracking)
@@ -94,9 +100,28 @@ struct ARScanView: View {
     private var statusMessage: String {
         if isCapturing { return "Reading labels…" }
         if let anchored = anchoredResult, session.anchoredResultID == anchored.id {
-            return session.labelPositions.isEmpty ? "Look around to find your labels" : "Tap a label for details"
+            return session.labelPositions.isEmpty ? "Look around, or open Items" : "Tap a label or Items for details"
         }
         return session.tracking.message
+    }
+
+    /// A dependable way to open any item, even when its label is off screen or crowded, plus the full results.
+    private func itemsMenu(_ anchored: ScanResult) -> some View {
+        Menu {
+            if let onOpenResult {
+                Button("Full results", systemImage: "list.bullet.rectangle") { onOpenResult(anchored) }
+                    .accessibilityIdentifier("arFullResults")
+                Divider()
+            }
+            ForEach(anchored.components) { component in
+                Button(component.name, systemImage: component.category.systemImage) { select(component) }
+            }
+        } label: {
+            Label("Items", systemImage: "list.bullet")
+        }
+        .menuOrder(.fixed)
+        .buttonStyle(.glass)
+        .accessibilityIdentifier("arItems")
     }
 
     private var statusImage: String {
