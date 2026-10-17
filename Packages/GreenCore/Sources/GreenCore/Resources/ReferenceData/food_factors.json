@@ -1,0 +1,1058 @@
+{
+ "description": "Per-kg retail-weight impacts by food group. Water is freshwater withdrawals (L), land is m²·yr, eutrophication g PO4e. stageShares map OWID supply-chain stages: land use+farm+feed→materials, processing+packaging→manufacturing, transport+retail→transport, losses→endOfLife.",
+ "records": [
+  {
+   "group": "apples",
+   "name": "Apples",
+   "aliases": [
+    "apple"
+   ],
+   "gPO4ePerKg": 1.45,
+   "kgCO2ePerKg": 0.43,
+   "landM2YearPerKg": 0.63,
+   "litersPerKg": 180.1,
+   "stageShares": {
+    "materials": 0.4937,
+    "manufacturing": 0.1057,
+    "transport": 0.2457,
+    "endOfLife": 0.1548
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "bananas",
+   "name": "Bananas",
+   "aliases": [
+    "banana"
+   ],
+   "gPO4ePerKg": 3.29,
+   "kgCO2ePerKg": 0.86,
+   "landM2YearPerKg": 1.93,
+   "litersPerKg": 114.5,
+   "stageShares": {
+    "materials": 0.3038,
+    "manufacturing": 0.1418,
+    "transport": 0.357,
+    "endOfLife": 0.1974
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "barley",
+   "name": "Barley",
+   "aliases": [
+    "beer"
+   ],
+   "gPO4ePerKg": 2.33,
+   "kgCO2ePerKg": 1.18,
+   "landM2YearPerKg": 1.11,
+   "litersPerKg": 17.1,
+   "stageShares": {
+    "materials": 0.1569,
+    "manufacturing": 0.5296,
+    "transport": 0.2535,
+    "endOfLife": 0.06
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "beef",
+   "name": "Beef (beef herd)",
+   "aliases": [
+    "steak",
+    "burger",
+    "hamburger",
+    "ground_beef",
+    "beef_herd"
+   ],
+   "gPO4ePerKg": 301.41,
+   "kgCO2ePerKg": 99.48,
+   "landM2YearPerKg": 326.21,
+   "litersPerKg": 1451.2,
+   "stageShares": {
+    "materials": 0.8258,
+    "manufacturing": 0.0217,
+    "transport": 0.0073,
+    "endOfLife": 0.1452
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "beef_dairy_herd",
+   "name": "Beef (dairy herd)",
+   "aliases": [
+    "dairy_beef"
+   ],
+   "gPO4ePerKg": 365.29,
+   "kgCO2ePerKg": 33.3,
+   "landM2YearPerKg": 43.24,
+   "litersPerKg": 2714.3,
+   "stageShares": {
+    "materials": 0.8013,
+    "manufacturing": 0.0577,
+    "transport": 0.0254,
+    "endOfLife": 0.1155
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "beet_sugar",
+   "name": "Beet Sugar",
+   "aliases": [],
+   "gPO4ePerKg": 5.41,
+   "kgCO2ePerKg": 1.81,
+   "landM2YearPerKg": 1.83,
+   "litersPerKg": 217.7,
+   "stageShares": {
+    "materials": 0.2957,
+    "manufacturing": 0.1833,
+    "transport": 0.3686,
+    "endOfLife": 0.1525
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "berries_grapes",
+   "name": "Berries & Grapes",
+   "aliases": [
+    "berries",
+    "grapes",
+    "strawberries",
+    "blueberries"
+   ],
+   "gPO4ePerKg": 6.12,
+   "kgCO2ePerKg": 1.53,
+   "landM2YearPerKg": 2.41,
+   "litersPerKg": 419.6,
+   "stageShares": {
+    "materials": 0.4847,
+    "manufacturing": 0.1378,
+    "transport": 0.1654,
+    "endOfLife": 0.2121
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "brassicas",
+   "name": "Brassicas",
+   "aliases": [
+    "broccoli",
+    "cabbage",
+    "cauliflower",
+    "kale"
+   ],
+   "gPO4ePerKg": 5.01,
+   "kgCO2ePerKg": 0.51,
+   "landM2YearPerKg": 0.55,
+   "litersPerKg": 119.4,
+   "stageShares": {
+    "materials": 0.5441,
+    "manufacturing": 0.088,
+    "transport": 0.2167,
+    "endOfLife": 0.1512
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "cane_sugar",
+   "name": "Cane Sugar",
+   "aliases": [
+    "sugar"
+   ],
+   "gPO4ePerKg": 16.92,
+   "kgCO2ePerKg": 3.2,
+   "landM2YearPerKg": 2.04,
+   "litersPerKg": 620.1,
+   "stageShares": {
+    "materials": 0.5484,
+    "manufacturing": 0.038,
+    "transport": 0.2598,
+    "endOfLife": 0.1537
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "cassava",
+   "name": "Cassava",
+   "aliases": [],
+   "gPO4ePerKg": 0.69,
+   "kgCO2ePerKg": 1.32,
+   "landM2YearPerKg": 1.81,
+   "litersPerKg": 0.0,
+   "stageShares": {
+    "materials": 0.6152,
+    "manufacturing": 0.0341,
+    "transport": 0.101,
+    "endOfLife": 0.2497
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "cheese",
+   "name": "Cheese",
+   "aliases": [],
+   "gPO4ePerKg": 98.37,
+   "kgCO2ePerKg": 23.88,
+   "landM2YearPerKg": 87.79,
+   "litersPerKg": 5605.2,
+   "stageShares": {
+    "materials": 0.8341,
+    "manufacturing": 0.0382,
+    "transport": 0.0198,
+    "endOfLife": 0.1079
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "citrus",
+   "name": "Citrus Fruit",
+   "aliases": [
+    "orange",
+    "oranges",
+    "lemon",
+    "lime"
+   ],
+   "gPO4ePerKg": 2.24,
+   "kgCO2ePerKg": 0.39,
+   "landM2YearPerKg": 0.86,
+   "litersPerKg": 82.7,
+   "stageShares": {
+    "materials": 0.5749,
+    "manufacturing": 0.0838,
+    "transport": 0.2072,
+    "endOfLife": 0.1341
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "coffee",
+   "name": "Coffee",
+   "aliases": [
+    "espresso"
+   ],
+   "gPO4ePerKg": 110.52,
+   "kgCO2ePerKg": 28.53,
+   "landM2YearPerKg": 21.62,
+   "litersPerKg": 25.9,
+   "stageShares": {
+    "materials": 0.5108,
+    "manufacturing": 0.0806,
+    "transport": 0.0066,
+    "endOfLife": 0.402
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "dark_chocolate",
+   "name": "Dark Chocolate",
+   "aliases": [
+    "chocolate",
+    "cocoa"
+   ],
+   "gPO4ePerKg": 87.08,
+   "kgCO2ePerKg": 46.65,
+   "landM2YearPerKg": 68.96,
+   "litersPerKg": 540.6,
+   "stageShares": {
+    "materials": 0.6968,
+    "manufacturing": 0.0226,
+    "transport": 0.0032,
+    "endOfLife": 0.2774
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "eggs",
+   "name": "Eggs",
+   "aliases": [
+    "egg"
+   ],
+   "gPO4ePerKg": 21.76,
+   "kgCO2ePerKg": 4.67,
+   "landM2YearPerKg": 6.27,
+   "litersPerKg": 577.7,
+   "stageShares": {
+    "materials": 0.907,
+    "manufacturing": 0.0346,
+    "transport": 0.0256,
+    "endOfLife": 0.0328
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "fish_farmed",
+   "name": "Fish (farmed)",
+   "aliases": [
+    "fish",
+    "salmon",
+    "tilapia"
+   ],
+   "gPO4ePerKg": 235.12,
+   "kgCO2ePerKg": 13.63,
+   "landM2YearPerKg": 8.41,
+   "litersPerKg": 3691.3,
+   "stageShares": {
+    "materials": 0.8132,
+    "manufacturing": 0.0134,
+    "transport": 0.0248,
+    "endOfLife": 0.1487
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "groundnuts",
+   "name": "Groundnuts",
+   "aliases": [
+    "peanuts",
+    "peanut"
+   ],
+   "gPO4ePerKg": 14.14,
+   "kgCO2ePerKg": 3.23,
+   "landM2YearPerKg": 9.11,
+   "litersPerKg": 1852.3,
+   "stageShares": {
+    "materials": 0.6381,
+    "manufacturing": 0.1611,
+    "transport": 0.0556,
+    "endOfLife": 0.1452
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "lamb",
+   "name": "Lamb & Mutton",
+   "aliases": [
+    "mutton"
+   ],
+   "gPO4ePerKg": 97.13,
+   "kgCO2ePerKg": 39.72,
+   "landM2YearPerKg": 369.81,
+   "litersPerKg": 1802.8,
+   "stageShares": {
+    "materials": 0.7793,
+    "manufacturing": 0.0475,
+    "transport": 0.0247,
+    "endOfLife": 0.1485
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "maize",
+   "name": "Maize",
+   "aliases": [
+    "corn"
+   ],
+   "gPO4ePerKg": 4.03,
+   "kgCO2ePerKg": 1.7,
+   "landM2YearPerKg": 2.94,
+   "litersPerKg": 215.7,
+   "stageShares": {
+    "materials": 0.7008,
+    "manufacturing": 0.0991,
+    "transport": 0.0762,
+    "endOfLife": 0.1239
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "milk",
+   "name": "Milk",
+   "aliases": [
+    "dairy_milk"
+   ],
+   "gPO4ePerKg": 10.65,
+   "kgCO2ePerKg": 3.15,
+   "landM2YearPerKg": 8.95,
+   "litersPerKg": 628.2,
+   "stageShares": {
+    "materials": 0.7186,
+    "manufacturing": 0.0807,
+    "transport": 0.1137,
+    "endOfLife": 0.087
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "nuts",
+   "name": "Nuts",
+   "aliases": [
+    "almonds",
+    "walnuts",
+    "cashews"
+   ],
+   "gPO4ePerKg": 19.15,
+   "kgCO2ePerKg": 0.43,
+   "landM2YearPerKg": 12.96,
+   "litersPerKg": 4133.8,
+   "stageShares": {
+    "materials": 0.9123,
+    "manufacturing": 0.0474,
+    "transport": 0.0404,
+    "endOfLife": 0.0
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "oatmeal",
+   "name": "Oatmeal",
+   "aliases": [
+    "oats",
+    "oat"
+   ],
+   "gPO4ePerKg": 11.23,
+   "kgCO2ePerKg": 2.48,
+   "landM2YearPerKg": 7.6,
+   "litersPerKg": 482.4,
+   "stageShares": {
+    "materials": 0.7556,
+    "manufacturing": 0.0597,
+    "transport": 0.0527,
+    "endOfLife": 0.132
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "onions_leeks",
+   "name": "Onions & Leeks",
+   "aliases": [
+    "onion",
+    "leek"
+   ],
+   "gPO4ePerKg": 3.24,
+   "kgCO2ePerKg": 0.5,
+   "landM2YearPerKg": 0.39,
+   "litersPerKg": 14.3,
+   "stageShares": {
+    "materials": 0.4345,
+    "manufacturing": 0.0902,
+    "transport": 0.2698,
+    "endOfLife": 0.2055
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "other_fruit",
+   "name": "Other Fruit",
+   "aliases": [
+    "fruit"
+   ],
+   "gPO4ePerKg": 2.43,
+   "kgCO2ePerKg": 1.05,
+   "landM2YearPerKg": 0.89,
+   "litersPerKg": 153.5,
+   "stageShares": {
+    "materials": 0.4746,
+    "manufacturing": 0.0546,
+    "transport": 0.1896,
+    "endOfLife": 0.2812
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "other_pulses",
+   "name": "Other Pulses",
+   "aliases": [
+    "beans",
+    "lentils",
+    "chickpeas",
+    "pulses"
+   ],
+   "gPO4ePerKg": 17.08,
+   "kgCO2ePerKg": 1.79,
+   "landM2YearPerKg": 15.57,
+   "litersPerKg": 435.7,
+   "stageShares": {
+    "materials": 0.6281,
+    "manufacturing": 0.1977,
+    "transport": 0.0759,
+    "endOfLife": 0.0983
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "other_vegetables",
+   "name": "Other Vegetables",
+   "aliases": [
+    "vegetables",
+    "salad",
+    "lettuce"
+   ],
+   "gPO4ePerKg": 2.27,
+   "kgCO2ePerKg": 0.53,
+   "landM2YearPerKg": 0.38,
+   "litersPerKg": 102.5,
+   "stageShares": {
+    "materials": 0.3333,
+    "manufacturing": 0.192,
+    "transport": 0.3395,
+    "endOfLife": 0.1353
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "peas",
+   "name": "Peas",
+   "aliases": [
+    "pea"
+   ],
+   "gPO4ePerKg": 7.52,
+   "kgCO2ePerKg": 0.98,
+   "landM2YearPerKg": 7.46,
+   "litersPerKg": 396.6,
+   "stageShares": {
+    "materials": 0.7356,
+    "manufacturing": 0.046,
+    "transport": 0.1378,
+    "endOfLife": 0.0806
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "pork",
+   "name": "Pig Meat",
+   "aliases": [
+    "pig_meat",
+    "bacon",
+    "ham",
+    "sausage"
+   ],
+   "gPO4ePerKg": 76.38,
+   "kgCO2ePerKg": 12.31,
+   "landM2YearPerKg": 17.36,
+   "litersPerKg": 1795.8,
+   "stageShares": {
+    "materials": 0.733,
+    "manufacturing": 0.0689,
+    "transport": 0.0633,
+    "endOfLife": 0.1348
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "potatoes",
+   "name": "Potatoes",
+   "aliases": [
+    "potato",
+    "fries",
+    "french_fries",
+    "chips"
+   ],
+   "gPO4ePerKg": 3.48,
+   "kgCO2ePerKg": 0.46,
+   "landM2YearPerKg": 0.88,
+   "litersPerKg": 59.1,
+   "stageShares": {
+    "materials": 0.4184,
+    "manufacturing": 0.0965,
+    "transport": 0.2885,
+    "endOfLife": 0.1966
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "poultry",
+   "name": "Poultry Meat",
+   "aliases": [
+    "chicken",
+    "turkey"
+   ],
+   "gPO4ePerKg": 48.7,
+   "kgCO2ePerKg": 9.87,
+   "landM2YearPerKg": 12.22,
+   "litersPerKg": 660.0,
+   "stageShares": {
+    "materials": 0.6982,
+    "manufacturing": 0.0912,
+    "transport": 0.0634,
+    "endOfLife": 0.1472
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "prawns_farmed",
+   "name": "Prawns (farmed)",
+   "aliases": [
+    "shrimp",
+    "shrimps",
+    "prawns",
+    "prawn"
+   ],
+   "gPO4ePerKg": 227.22,
+   "kgCO2ePerKg": 26.87,
+   "landM2YearPerKg": 2.97,
+   "litersPerKg": 3515.4,
+   "stageShares": {
+    "materials": 0.6631,
+    "manufacturing": 0.02,
+    "transport": 0.0254,
+    "endOfLife": 0.2915
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "rice",
+   "name": "Rice",
+   "aliases": [],
+   "gPO4ePerKg": 35.07,
+   "kgCO2ePerKg": 4.45,
+   "landM2YearPerKg": 2.8,
+   "litersPerKg": 2248.4,
+   "stageShares": {
+    "materials": 0.7944,
+    "manufacturing": 0.0333,
+    "transport": 0.0355,
+    "endOfLife": 0.1367
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "root_vegetables",
+   "name": "Root Vegetables",
+   "aliases": [
+    "carrot",
+    "carrots",
+    "beets"
+   ],
+   "gPO4ePerKg": 1.61,
+   "kgCO2ePerKg": 0.43,
+   "landM2YearPerKg": 0.33,
+   "litersPerKg": 28.4,
+   "stageShares": {
+    "materials": 0.3927,
+    "manufacturing": 0.1048,
+    "transport": 0.358,
+    "endOfLife": 0.1445
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "soy_milk",
+   "name": "Soy milk",
+   "aliases": [
+    "soymilk",
+    "plant_milk"
+   ],
+   "gPO4ePerKg": 1.06,
+   "kgCO2ePerKg": 0.98,
+   "landM2YearPerKg": 0.66,
+   "litersPerKg": 27.8,
+   "stageShares": {
+    "materials": 0.2797,
+    "manufacturing": 0.2675,
+    "transport": 0.3897,
+    "endOfLife": 0.0631
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "tofu",
+   "name": "Tofu",
+   "aliases": [
+    "soy"
+   ],
+   "gPO4ePerKg": 6.16,
+   "kgCO2ePerKg": 3.16,
+   "landM2YearPerKg": 3.52,
+   "litersPerKg": 148.6,
+   "stageShares": {
+    "materials": 0.4595,
+    "manufacturing": 0.3072,
+    "transport": 0.1414,
+    "endOfLife": 0.0919
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "tomatoes",
+   "name": "Tomatoes",
+   "aliases": [
+    "tomato"
+   ],
+   "gPO4ePerKg": 7.51,
+   "kgCO2ePerKg": 2.09,
+   "landM2YearPerKg": 0.8,
+   "litersPerKg": 369.8,
+   "stageShares": {
+    "materials": 0.5163,
+    "manufacturing": 0.0757,
+    "transport": 0.0928,
+    "endOfLife": 0.3152
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "wheat_rye",
+   "name": "Wheat & Rye",
+   "aliases": [
+    "wheat",
+    "bread",
+    "pasta",
+    "flour",
+    "rye"
+   ],
+   "gPO4ePerKg": 7.16,
+   "kgCO2ePerKg": 1.57,
+   "landM2YearPerKg": 3.85,
+   "litersPerKg": 647.5,
+   "stageShares": {
+    "materials": 0.5829,
+    "manufacturing": 0.1887,
+    "transport": 0.1153,
+    "endOfLife": 0.1131
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "wine",
+   "name": "Wine",
+   "aliases": [],
+   "gPO4ePerKg": 4.57,
+   "kgCO2ePerKg": 1.79,
+   "landM2YearPerKg": 1.78,
+   "litersPerKg": 78.9,
+   "stageShares": {
+    "materials": 0.3384,
+    "manufacturing": 0.4799,
+    "transport": 0.0717,
+    "endOfLife": 0.11
+   },
+   "verified": true,
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "olive_oil",
+   "name": "Olive Oil",
+   "aliases": [
+    "olive"
+   ],
+   "kgCO2ePerKg": 5.42,
+   "litersPerKg": 2141.7,
+   "landM2YearPerKg": 26.31,
+   "gPO4ePerKg": 37.26,
+   "stageShares": {
+    "materials": 0.6388,
+    "manufacturing": 0.2274,
+    "transport": 0.0789,
+    "endOfLife": 0.0549
+   },
+   "verified": false,
+   "note": "GHG is the sum of OWID supply-chain stages (verified); water, land and eutrophication not re-verified.",
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "palm_oil",
+   "name": "Palm Oil",
+   "aliases": [
+    "palm"
+   ],
+   "kgCO2ePerKg": 7.32,
+   "litersPerKg": 0.0,
+   "landM2YearPerKg": 2.42,
+   "gPO4ePerKg": 11.7,
+   "stageShares": {
+    "materials": 0.6329,
+    "manufacturing": 0.2615,
+    "transport": 0.0306,
+    "endOfLife": 0.075
+   },
+   "verified": false,
+   "note": "GHG is the sum of OWID supply-chain stages (verified); water, land and eutrophication not re-verified.",
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "rapeseed_oil",
+   "name": "Rapeseed Oil",
+   "aliases": [
+    "canola_oil",
+    "canola"
+   ],
+   "kgCO2ePerKg": 3.77,
+   "litersPerKg": 240.9,
+   "landM2YearPerKg": 10.63,
+   "gPO4ePerKg": 19.2,
+   "stageShares": {
+    "materials": 0.6243,
+    "manufacturing": 0.2533,
+    "transport": 0.0578,
+    "endOfLife": 0.0646
+   },
+   "verified": false,
+   "note": "GHG is the sum of OWID supply-chain stages (verified); water, land and eutrophication not re-verified.",
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "soybean_oil",
+   "name": "Soybean Oil",
+   "aliases": [
+    "vegetable_oil"
+   ],
+   "kgCO2ePerKg": 6.32,
+   "litersPerKg": 34.0,
+   "landM2YearPerKg": 10.52,
+   "gPO4ePerKg": 11.69,
+   "stageShares": {
+    "materials": 0.6755,
+    "manufacturing": 0.1698,
+    "transport": 0.05,
+    "endOfLife": 0.1046
+   },
+   "verified": false,
+   "note": "GHG is the sum of OWID supply-chain stages (verified); water, land and eutrophication not re-verified.",
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "sunflower_oil",
+   "name": "Sunflower Oil",
+   "aliases": [],
+   "kgCO2ePerKg": 3.6,
+   "litersPerKg": 1007.2,
+   "landM2YearPerKg": 17.66,
+   "gPO4ePerKg": 51.79,
+   "stageShares": {
+    "materials": 0.5831,
+    "manufacturing": 0.2765,
+    "transport": 0.0622,
+    "endOfLife": 0.0782
+   },
+   "verified": false,
+   "note": "GHG is the sum of OWID supply-chain stages (verified); water, land and eutrophication not re-verified.",
+   "citation": {
+    "title": "Poore & Nemecek (2018), Science 360:987, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "soft_drinks",
+   "name": "Carbonated soft drinks (per kg / L)",
+   "aliases": [
+    "soda",
+    "cola",
+    "soft_drink",
+    "pop"
+   ],
+   "kgCO2ePerKg": 0.4,
+   "litersPerKg": 3.0,
+   "landM2YearPerKg": 0.15,
+   "gPO4ePerKg": 0.6,
+   "stageShares": {
+    "materials": 0.25,
+    "manufacturing": 0.55,
+    "transport": 0.15,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "note": "Order-of-magnitude figure for sugared soft drinks incl. container; not from Poore & Nemecek.",
+   "citation": {
+    "title": "Carbon Trust certified soft-drink footprints (Coca-Cola Enterprises, 2012)",
+    "tier": 3,
+    "url": "https://www.carbontrust.com/our-work-and-impact/impact-stories/coca-cola-enterprises"
+   }
+  }
+ ]
+}

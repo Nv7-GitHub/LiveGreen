@@ -1,0 +1,396 @@
+{
+ "description": "Curated ASUS Product Carbon Footprint report figures (ISO 14067 / PAIA-based, 4-year life). ASUS reports raw-material procurement inside its Manufacturing phase, so it is mapped to manufacturing. typicalPowerW is derived from annualKWh at 8 h/day.",
+ "records": [
+  {
+   "model": "UX3405M",
+   "name": "ASUS Zenbook 14 OLED (UX3405M)",
+   "productType": "Notebook",
+   "totalKgCO2e": 210,
+   "uncertaintyKgCO2e": null,
+   "annualKWh": 15.83,
+   "lifespanYears": 4,
+   "typicalPowerW": 5.4,
+   "stageShares": {
+    "manufacturing": 0.766,
+    "transport": 0.041,
+    "use": 0.192,
+    "endOfLife": 0.001
+   },
+   "reportDate": "2024-02",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report UX3405M",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_UX3405M.pdf"
+   }
+  },
+  {
+   "model": "UX3405C",
+   "name": "ASUS Zenbook 14 OLED (UX3405C)",
+   "productType": "Notebook",
+   "totalKgCO2e": 230,
+   "uncertaintyKgCO2e": 36,
+   "annualKWh": 15.07,
+   "lifespanYears": 4,
+   "typicalPowerW": 5.2,
+   "stageShares": {
+    "manufacturing": 0.84,
+    "transport": 0.06,
+    "use": 0.099,
+    "endOfLife": 0.001
+   },
+   "reportDate": "2024-11",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report UX3405C",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_UX3405C.pdf"
+   }
+  },
+  {
+   "model": "UX5406S",
+   "name": "ASUS Zenbook S 14 (UX5406S)",
+   "productType": "Notebook",
+   "totalKgCO2e": 259,
+   "uncertaintyKgCO2e": 47,
+   "annualKWh": 15.24,
+   "lifespanYears": 4,
+   "typicalPowerW": 5.2,
+   "stageShares": {
+    "manufacturing": 0.8252,
+    "transport": 0.0879,
+    "use": 0.0859,
+    "endOfLife": 0.001
+   },
+   "reportDate": "2024-11",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report UX5406S",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_UX5406S.pdf"
+   }
+  },
+  {
+   "model": "UX8406C",
+   "name": "ASUS Zenbook DUO (UX8406C)",
+   "productType": "Notebook",
+   "totalKgCO2e": 299,
+   "uncertaintyKgCO2e": 40,
+   "annualKWh": 6.23,
+   "lifespanYears": 4,
+   "typicalPowerW": 2.1,
+   "stageShares": {
+    "manufacturing": 0.886,
+    "transport": 0.082,
+    "use": 0.031,
+    "endOfLife": 0.001
+   },
+   "reportDate": "2025-01",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report UX8406C",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_UX8406C.pdf"
+   }
+  },
+  {
+   "model": "UX5606S",
+   "name": "ASUS Zenbook S 16 (UX5606S)",
+   "productType": "Notebook",
+   "totalKgCO2e": 250,
+   "uncertaintyKgCO2e": 34,
+   "annualKWh": 15.24,
+   "lifespanYears": 4,
+   "typicalPowerW": 5.2,
+   "stageShares": {
+    "manufacturing": 0.8182,
+    "transport": 0.0919,
+    "use": 0.0889,
+    "endOfLife": 0.001
+   },
+   "reportDate": "2025-01",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report UX5606S",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_UX5606S.pdf"
+   }
+  },
+  {
+   "model": "UM5606K",
+   "name": "ASUS Zenbook S 16 (UM5606K)",
+   "productType": "Notebook",
+   "totalKgCO2e": 382,
+   "uncertaintyKgCO2e": 150,
+   "annualKWh": 26.38,
+   "lifespanYears": 4,
+   "typicalPowerW": 9.0,
+   "stageShares": {
+    "manufacturing": 0.831,
+    "transport": 0.066,
+    "use": 0.102,
+    "endOfLife": 0.001
+   },
+   "reportDate": "2025-04",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report UM5606K",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_UM5606K.pdf"
+   }
+  },
+  {
+   "model": "UM5606W",
+   "name": "ASUS Zenbook S 16 (UM5606W)",
+   "productType": "Notebook",
+   "totalKgCO2e": 381,
+   "uncertaintyKgCO2e": 80,
+   "annualKWh": 29.23,
+   "lifespanYears": 4,
+   "typicalPowerW": 10.0,
+   "stageShares": {
+    "manufacturing": 0.8122,
+    "transport": 0.0749,
+    "use": 0.1119,
+    "endOfLife": 0.001
+   },
+   "reportDate": "2024-08",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report UM5606W",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_UM5606W.pdf"
+   }
+  },
+  {
+   "model": "UM3406K",
+   "name": "ASUS Zenbook 14 (UM3406K)",
+   "productType": "Notebook",
+   "totalKgCO2e": 337,
+   "uncertaintyKgCO2e": 140,
+   "annualKWh": 16.46,
+   "lifespanYears": 4,
+   "typicalPowerW": 5.6,
+   "stageShares": {
+    "manufacturing": 0.8831,
+    "transport": 0.042,
+    "use": 0.0739,
+    "endOfLife": 0.001
+   },
+   "reportDate": "2025-02",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report UM3406K",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_UM3406K.pdf"
+   }
+  },
+  {
+   "model": "UX5304V",
+   "name": "ASUS Zenbook S 13 OLED (UX5304V)",
+   "productType": "Notebook",
+   "totalKgCO2e": 213,
+   "uncertaintyKgCO2e": null,
+   "annualKWh": 18.69,
+   "lifespanYears": 4,
+   "typicalPowerW": 6.4,
+   "stageShares": {
+    "manufacturing": 0.707,
+    "transport": 0.032,
+    "use": 0.259,
+    "endOfLife": 0.002
+   },
+   "reportDate": "2023-04",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report UX5304V",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_UX5304V.pdf"
+   }
+  },
+  {
+   "model": "UM5302T",
+   "name": "ASUS Zenbook S 13 OLED (UM5302T)",
+   "productType": "Notebook",
+   "totalKgCO2e": 237,
+   "uncertaintyKgCO2e": null,
+   "annualKWh": 16.86,
+   "lifespanYears": 4,
+   "typicalPowerW": 5.8,
+   "stageShares": {
+    "manufacturing": 0.777,
+    "transport": 0.043,
+    "use": 0.179,
+    "endOfLife": 0.001
+   },
+   "reportDate": "2022-09",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report UM5302T",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_UM5302T.pdf"
+   }
+  },
+  {
+   "model": "X1504V",
+   "name": "ASUS Vivobook 15 (X1504V)",
+   "productType": "Notebook",
+   "totalKgCO2e": 197,
+   "uncertaintyKgCO2e": null,
+   "annualKWh": 14.91,
+   "lifespanYears": 4,
+   "typicalPowerW": 5.1,
+   "stageShares": {
+    "manufacturing": 0.777,
+    "transport": 0.032,
+    "use": 0.189,
+    "endOfLife": 0.002
+   },
+   "reportDate": "2023",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report X1504V",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_X1504V.pdf"
+   }
+  },
+  {
+   "model": "UX3402V",
+   "name": "ASUS Zenbook 14 (UX3402V)",
+   "productType": "Notebook",
+   "totalKgCO2e": 228,
+   "uncertaintyKgCO2e": null,
+   "annualKWh": 24.58,
+   "lifespanYears": 4,
+   "typicalPowerW": 8.4,
+   "stageShares": {
+    "manufacturing": 0.677,
+    "transport": 0.047,
+    "use": 0.274,
+    "endOfLife": 0.002
+   },
+   "reportDate": "2023-06",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report UX3402V",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_UX3402V.pdf"
+   }
+  },
+  {
+   "model": "UX3404V",
+   "name": "ASUS Zenbook 14X OLED (UX3404V)",
+   "productType": "Notebook",
+   "totalKgCO2e": 290,
+   "uncertaintyKgCO2e": null,
+   "annualKWh": 23.8,
+   "lifespanYears": 4,
+   "typicalPowerW": 8.2,
+   "stageShares": {
+    "manufacturing": 0.748,
+    "transport": 0.042,
+    "use": 0.209,
+    "endOfLife": 0.001
+   },
+   "reportDate": "2023-02",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report UX3404V",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_UX3404V.pdf"
+   }
+  },
+  {
+   "model": "VA24EHF",
+   "name": "ASUS VA24EHF 23.8\" monitor",
+   "productType": "Monitor",
+   "totalKgCO2e": 349,
+   "uncertaintyKgCO2e": 79,
+   "annualKWh": 43.0,
+   "lifespanYears": 4,
+   "typicalPowerW": 14.7,
+   "stageShares": {
+    "manufacturing": 0.662,
+    "transport": 0.018,
+    "use": 0.319,
+    "endOfLife": 0.001
+   },
+   "reportDate": "2024-08",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report VA24EHF",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_VA24EHF.pdf"
+   }
+  },
+  {
+   "model": "VA24DQSB",
+   "name": "ASUS VA24DQSB 23.8\" monitor",
+   "productType": "Monitor",
+   "totalKgCO2e": 328,
+   "uncertaintyKgCO2e": 87,
+   "annualKWh": 30.3,
+   "lifespanYears": 4,
+   "typicalPowerW": 10.4,
+   "stageShares": {
+    "manufacturing": 0.802,
+    "transport": 0.028,
+    "use": 0.169,
+    "endOfLife": 0.001
+   },
+   "reportDate": "2024-08",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report VA24DQSB",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_VA24DQSB.pdf"
+   }
+  },
+  {
+   "model": "VA27DQSB",
+   "name": "ASUS VA27DQSB 27\" monitor",
+   "productType": "Monitor",
+   "totalKgCO2e": 420,
+   "uncertaintyKgCO2e": 96,
+   "annualKWh": 31.2,
+   "lifespanYears": 4,
+   "typicalPowerW": 10.7,
+   "stageShares": {
+    "manufacturing": 0.848,
+    "transport": 0.028,
+    "use": 0.123,
+    "endOfLife": 0.001
+   },
+   "reportDate": "2024",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report VA27DQSB",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_VA27DQSB.pdf"
+   }
+  },
+  {
+   "model": "VA27UQSB",
+   "name": "ASUS VA27UQSB 27\" monitor",
+   "productType": "Monitor",
+   "totalKgCO2e": 491,
+   "uncertaintyKgCO2e": 101,
+   "annualKWh": 73.35,
+   "lifespanYears": 4,
+   "typicalPowerW": 25.1,
+   "stageShares": {
+    "manufacturing": 0.6,
+    "transport": 0.027,
+    "use": 0.372,
+    "endOfLife": 0.001
+   },
+   "reportDate": "2024",
+   "verified": true,
+   "citation": {
+    "title": "ASUS Product Carbon Footprint Report VA27UQSB",
+    "tier": 1,
+    "url": "https://esg.asus.com/files/carbon_footprint/Product-Carbon-Footprint-Report_VA27UQSB.pdf"
+   }
+  }
+ ]
+}
