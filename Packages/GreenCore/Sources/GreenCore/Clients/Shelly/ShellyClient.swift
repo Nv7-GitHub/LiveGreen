@@ -44,7 +44,7 @@ public struct ShellyClient: PlugController {
     }
 
     public func setSwitch(on: Bool) async throws {
-        try await perform("Switch.Set", params: ShellyScheduleJob.SwitchSetParams(id: 0, on: on))
+        try await perform("Switch.Set", params: SwitchSetParams(id: 0, on: on))
     }
 
     /// Sets the plug's time zone, replaces every job with the plan, then puts the switch in the state

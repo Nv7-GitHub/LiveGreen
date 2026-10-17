@@ -1,12 +1,5 @@
 import Foundation
 
-/// JSON-RPC 2.0-style envelope used by Shelly Gen2+ (`POST http://<ip>/rpc`).
-struct ShellyRPCRequest<Params: Encodable & Sendable>: Encodable, Sendable {
-    var id: Int
-    var method: String
-    var params: Params?
-}
-
 struct ShellyRPCResponse<Result: Decodable>: Decodable {
     struct RPCError: Decodable {
         var code: Int

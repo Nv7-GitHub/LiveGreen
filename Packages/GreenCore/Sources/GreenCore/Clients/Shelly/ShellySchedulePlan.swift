@@ -1,31 +1,5 @@
 import Foundation
 
-/// One Shelly `Schedule.Create` job: a 6-field cron timespec ("sec min hour dom month dow") and the RPC
-/// calls it runs.
-public struct ShellyScheduleJob: Codable, Sendable, Hashable {
-    public struct Call: Codable, Sendable, Hashable {
-        public var method: String
-        public var params: SwitchSetParams
-    }
-
-    public struct SwitchSetParams: Codable, Sendable, Hashable {
-        public var id: Int
-        public var on: Bool
-    }
-
-    public var enable: Bool
-    public var timespec: String
-    public var calls: [Call]
-
-    public init(timespec: String, switchOn: Bool, enable: Bool = true) {
-        self.enable = enable
-        self.timespec = timespec
-        self.calls = [Call(method: "Switch.Set", params: SwitchSetParams(id: 0, on: switchOn))]
-    }
-
-    public var switchOn: Bool? { calls.first?.params.on }
-}
-
 /// Turns a green-hours plan into plug-side schedule jobs (spec §8.3): one job switches on at the start
 /// of every window and one switches off at every window end, using comma lists of hours so a whole day
 /// fits in two of the plug's limited job slots.

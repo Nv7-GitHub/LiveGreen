@@ -7,18 +7,43 @@ public struct ShellyScheduleJob: Codable, Sendable, Hashable {
     /// 6-field cron: "second minute hour day-of-month month day-of-week", in the device's local time.
     public var timespec: String
     public var calls: [ShellyCall]
+
+    public init(enable: Bool = true, timespec: String, calls: [ShellyCall]) {
+        self.enable = enable
+        self.timespec = timespec
+        self.calls = calls
+    }
+
+    /// A job running a single `Switch.Set` on switch `switchID`.
+    public init(timespec: String, switchOn: Bool, switchID: Int = 0, enable: Bool = true) {
+        self.init(enable: enable, timespec: timespec,
+                  calls: [ShellyCall(method: "Switch.Set", params: SwitchSetParams(id: switchID, on: switchOn))])
+    }
+
+    /// The switch state the job sets, when it is a `Switch.Set` job.
+    public var switchOn: Bool? { calls.first { $0.method == "Switch.Set" }?.params.on }
 }
 
 /// One RPC call inside a schedule job.
 public struct ShellyCall: Codable, Sendable, Hashable {
     public var method: String
     public var params: SwitchSetParams
+
+    public init(method: String, params: SwitchSetParams) {
+        self.method = method
+        self.params = params
+    }
 }
 
 /// `Switch.Set` parameters.
 public struct SwitchSetParams: Codable, Sendable, Hashable {
     public var id: Int
     public var on: Bool
+
+    public init(id: Int, on: Bool) {
+        self.id = id
+        self.on = on
+    }
 }
 
 /// A JSON-RPC 2.0 request frame as posted to `http://<ip>/rpc`.
