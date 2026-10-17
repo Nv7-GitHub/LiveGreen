@@ -101,7 +101,9 @@ struct ScanPipelineTests {
         let bike = try #require(updated.components.first { $0.name == "E-bike" })
         #expect(bike.alternatives.contains { $0.kind == .smartPlugScheduling })
         let product = try #require(bike.alternatives.first { $0.kind == .product })
-        #expect(product.metrics[.carbon] != nil)
+        // Unidentified swaps use the suggester's own estimates rather than the original's generic factors.
+        let carbon = try #require(product.metrics[.carbon])
+        #expect(carbon.value < bike.metrics[.carbon]!.value)
     }
 
     @Test func answersRerunTheEngineLocally() async throws {

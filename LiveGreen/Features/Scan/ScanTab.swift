@@ -6,7 +6,8 @@ import GreenCoreFakes
 struct ScanTab: View {
     @Environment(AppModel.self) private var model
     @State private var phase: Phase = .capture
-    @State private var progress = PipelineProgress()
+    @State private var events: AsyncThrowingStream<PipelineEvent, Error>?
+    @State private var runID = UUID()
     @State private var path: [ScanResult] = []
     @Namespace private var glass
 
@@ -29,8 +30,11 @@ struct ScanTab: View {
                             if model.flags.demoMode { demoButtons }
                             modePicker
                         case .analyzing:
-                            PipelineProgressCard(progress: progress)
-                                .glassEffectID("status", in: glass)
+                            if let events {
+                                AnalyzingCard(events: events, onComplete: finish, onFailure: fail)
+                                    .id(runID)
+                                    .glassEffectID("status", in: glass)
+                            }
                         case let .failed(message):
                             failureCard(message)
                                 .glassEffectID("status", in: glass)
@@ -88,22 +92,21 @@ struct ScanTab: View {
 
     private func start(image: Data, hints: OCRHints, scene: DemoScene? = nil) {
         let coordinator = model.makeScanCoordinator(scene: scene)
-        progress = PipelineProgress()
+        events = coordinator.scan(image: image, hints: hints)
+        runID = UUID()
         phase = .analyzing
-        Task {
-            do {
-                for try await event in coordinator.scan(image: image, hints: hints) {
-                    progress.apply(event)
-                    if case let .completed(result) = event {
-                        model.save(result)
-                        path.append(result)
-                    }
-                }
-                phase = .capture
-            } catch {
-                phase = .failed(error.localizedDescription)
-            }
-        }
+    }
+
+    private func finish(_ result: ScanResult) {
+        model.save(result)
+        path.append(result)
+        events = nil
+        phase = .capture
+    }
+
+    private func fail(_ error: any Error) {
+        events = nil
+        phase = .failed(error.localizedDescription)
     }
 }
 

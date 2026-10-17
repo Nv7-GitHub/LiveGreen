@@ -109,6 +109,9 @@ public struct ScanPipeline: Sendable {
 
     // MARK: - Steps
 
+    /// Below this a schedule saves too little to recommend a plug (e.g. a charger's idle draw).
+    static let minimumPlugKWhPerYear = 15.0
+
     static func componentID(scan: UUID, index: Int) -> UUID {
         var raw = scan.uuid
         raw.8 ^= 0x80
@@ -215,7 +218,7 @@ public struct ScanPipeline: Sendable {
     private func plugCandidate(for component: Component, deferrable: DeferrableLoadType?) -> PlugCandidate? {
         let device = engine.store?.deviceProfile(deviceType: component.quantities.deviceType ?? component.name)
         guard let load = deferrable ?? device?.deferrableLoad,
-              let kWh = component.metrics[.yearlyElectricity]?.value, kWh > 0 else { return nil }
+              let kWh = component.metrics[.yearlyElectricity]?.value, kWh >= Self.minimumPlugKWhPerYear else { return nil }
         let watts = component.quantities.ratedPowerW ?? device?.chargerWatts ?? component.metrics[.powerOn]?.value ?? 100
         var candidate = PlugCandidate(loadType: load, chargerWatts: watts, dailyKWh: kWh / ImpactEngine.daysPerYear)
         candidate.estimatedSavings = plugSavings(for: candidate)
@@ -229,11 +232,25 @@ public struct ScanPipeline: Sendable {
         return GreenHoursPlanner.estimatedSavings(for: candidate, forecast: .fallback(record))
     }
 
+    /// Records and cited research first, as for originals. An alternative without its own identifiers would get
+    /// the same generic factor-model numbers as the item it replaces (a refurbished laptop is still a "laptop"),
+    /// so the suggester's bounded per-metric estimates come next and the factor model fills what is left.
+    private func resolveAlternative(_ component: Component) async -> Component {
+        if let hit = await ladder.cached(component) { return hit }
+        var result = await ladder.resolve(component, profile: profile, tiers: .exactRecord ... .researchedSpec)
+        if component.identifiers.cacheKey == nil {
+            result = await ladder.resolve(result, profile: profile, tiers: .estimate ... .estimate)
+        }
+        result = await ladder.resolve(result, profile: profile, tiers: .factorModel ... .estimate)
+        await ladder.remember(result)
+        return result
+    }
+
     private func resolve(_ alternative: Alternative) async -> Alternative {
         let asComponent = Component(id: alternative.id, name: alternative.name, category: alternative.category,
                                     identifiers: alternative.identifiers, quantities: alternative.quantities,
                                     usage: alternative.usage, fallbackEstimates: alternative.fallbackEstimates)
-        let resolved = completed(await ladder.resolve(asComponent, profile: profile), deferrable: nil)
+        let resolved = completed(await resolveAlternative(asComponent), deferrable: nil)
         var filled = alternative
         filled.metrics = resolved.metrics
         return filled

@@ -3,7 +3,6 @@ import GreenCore
 
 /// Builds the locally-added "Shelly smart plug + green-hours scheduling" alternative (spec §7, §8.3).
 nonisolated enum SmartPlugAlternative {
-    static let name = "Shelly smart plug + green-hours scheduling"
 
     /// Yearly charging carbon of a deferrable load, now and with green-hours scheduling.
     struct ChargingCarbon: Hashable, Sendable {
@@ -32,16 +31,7 @@ nonisolated enum SmartPlugAlternative {
         return (updated, charging)
     }
 
-    /// The same device, so every metric matches; its yearly carbon saving comes from the plug candidate
-    /// (see `SwapMath.yearlySaving`) because scheduling changes when it charges, not what it is.
-    static func make(for component: Component) -> Alternative {
-        let load = component.plugCandidate?.loadType.displayName.lowercased() ?? "charger"
-        return Alternative(id: stableID(for: component), kind: .smartPlugScheduling, name: name,
-                           category: component.category, identifiers: component.identifiers,
-                           quantities: component.quantities, usage: component.usage,
-                           rationale: "Keep your \(load), but let a plug switch it on only during the cleanest grid hours.",
-                           practicality: Practicality(cost: .lower, effort: .easy), metrics: component.metrics)
-    }
+    static func make(for component: Component) -> Alternative { .smartPlugScheduling(for: component) }
 
     /// kWh/yr × the day's average intensity vs. kWh/yr × the planned cleanest hours (spec §8.3), using the
     /// same forecast and planner as the Plugs tab.
@@ -60,13 +50,5 @@ nonisolated enum SmartPlugAlternative {
             Measured(value: max(kg, 0), relativeRange: 0.3, unit: .kgCO2e, tier: savings.tier, sources: savings.sources)
         }
         return ChargingCarbon(current: measured(current), scheduled: measured(current - savings.value), savings: savings)
-    }
-
-    /// Derived from the component id so a re-run keeps the user's pick.
-    private static func stableID(for component: Component) -> UUID {
-        var raw = component.id.uuid
-        raw.14 ^= 0x5A
-        raw.15 ^= 0xA5
-        return UUID(uuid: raw)
     }
 }
