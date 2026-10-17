@@ -3,6 +3,8 @@ import GreenCore
 
 /// Peer comparison and percentiles (spec §9): hero percentile, cohort curve, trend and simulated leaderboard.
 struct CompareTab: View {
+    /// Read in `body` so converted numbers refresh when Settings switches units.
+    @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
     @Environment(AppModel.self) private var model
     @State private var metric: MetricKey = .carbon
     @State private var analysis = CompareAnalysis.empty
@@ -12,6 +14,7 @@ struct CompareTab: View {
     private var inputs: [AnyHashable] { [model.scans.map(\.id), model.scans.map(\.date), model.profile] }
 
     var body: some View {
+        let _ = unitSystem
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {

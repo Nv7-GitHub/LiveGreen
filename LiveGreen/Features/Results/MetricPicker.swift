@@ -4,11 +4,13 @@ import SwiftUI
 /// options show their icon, and the selected one expands to show its name.
 struct MetricPicker: View {
     @Binding var selection: ResultMetricFilter
+    /// Only the metrics that apply to something in the scan.
+    var options: [ResultMetricFilter] = ResultMetricFilter.allCases
     @Namespace private var indicator
 
     var body: some View {
         HStack(spacing: 2) {
-            ForEach(ResultMetricFilter.allCases) { filter in
+            ForEach(options) { filter in
                 segment(filter)
             }
         }

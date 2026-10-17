@@ -5,6 +5,8 @@ import GreenCoreFakes
 /// Greener swaps per component (spec §7): pick one per component, compare like-for-like,
 /// see projected yearly savings and generate a picture of the greener setup.
 struct AlternativesView: View {
+    /// Read in `body` so converted numbers refresh when Settings switches units.
+    @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
     @Environment(AppModel.self) private var app
     @State private var screen: AlternativesModel
     @Namespace private var glass
@@ -16,6 +18,7 @@ struct AlternativesView: View {
     private var plugFeatures: Bool { app.flags.plugFeaturesEnabled }
 
     var body: some View {
+        let _ = unitSystem
         ScrollViewReader { scroller in
             ScrollView {
                 VStack(spacing: 16) {

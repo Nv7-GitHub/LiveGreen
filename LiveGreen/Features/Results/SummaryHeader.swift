@@ -44,12 +44,12 @@ struct SummaryHeader: View {
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.secondary)
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(Measured.format(headline.value))
+                        Text(Measured.format(headline.displayValue))
                             .font(.system(size: 52, weight: .bold, design: .rounded).monospacedDigit())
                             .contentTransition(.numericText())
                             .minimumScaleFactor(0.5)
                             .lineLimit(1)
-                        Text(headline.unit.symbol)
+                        Text(headline.displaySymbol)
                             .font(.title3.weight(.semibold))
                             .foregroundStyle(.secondary)
                     }
@@ -58,7 +58,7 @@ struct SummaryHeader: View {
                         .foregroundStyle(.secondary)
                 }
                 HStack(spacing: 10) {
-                    if perYear != nil { stat("Lifetime", Measured.format(total.value), unit: total.unit.symbol) }
+                    if perYear != nil { stat("Lifetime", Measured.format(total.displayValue), unit: total.displaySymbol) }
                     stat("Items", "\(result.components.count)", unit: nil)
                 }
             }
@@ -97,8 +97,8 @@ struct SummaryHeader: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         HStack(alignment: .firstTextBaseline, spacing: 3) {
-                            Text(Measured.format(shown.value)).font(.title3.weight(.bold).monospacedDigit())
-                            Text(shown.unit.symbol).font(.caption).foregroundStyle(.secondary)
+                            Text(Measured.format(shown.displayValue)).font(.title3.weight(.bold).monospacedDigit())
+                            Text(shown.displaySymbol).font(.caption).foregroundStyle(.secondary)
                         }
                         Text(yearly(metric, in: perYear) == nil ? "total" : "per year")
                             .font(.caption2)

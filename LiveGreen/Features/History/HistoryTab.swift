@@ -4,6 +4,8 @@ import GreenCore
 /// Past scans from the SwiftData store, filterable by the search-role tab's text; swipe to delete.
 /// Expects to be hosted in a `NavigationStack` (RootView provides one per tab).
 struct HistoryTab: View {
+    /// Read in `body` so converted numbers refresh when Settings switches units.
+    @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
     var searchText: String = ""
     @Environment(AppModel.self) private var model
 
@@ -15,6 +17,7 @@ struct HistoryTab: View {
     }
 
     var body: some View {
+        let _ = unitSystem
         List {
             ForEach(filtered) { scan in
                 NavigationLink(value: HistoryRoute(scanID: scan.id)) {

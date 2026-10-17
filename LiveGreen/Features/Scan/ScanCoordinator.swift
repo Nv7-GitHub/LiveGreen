@@ -55,4 +55,11 @@ final class ScanCoordinator: ScanCoordinating {
     func applying(_ answers: [QuestionAnswer], to result: ScanResult) -> ScanResult {
         pipeline.applying(answers.map { ($0.question.componentID, $0.option) }, to: result)
     }
+
+    /// Re-runs the engine after the user edits one usage field of a component.
+    func applying(usage field: UsageField, value: Double, to componentID: UUID, in result: ScanResult) -> ScanResult {
+        guard let component = result.component(withID: componentID) else { return result }
+        let edits = ImpactEngine().usageEdits(field, value, for: component)
+        return pipeline.applying(edits.map { (componentID, $0) }, to: result)
+    }
 }

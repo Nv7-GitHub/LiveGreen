@@ -3,6 +3,8 @@ import GreenCore
 
 /// Smart plug home (spec §8): paired plugs, pairing entry point and plug recommendations from scans.
 struct PlugsTab: View {
+    /// Read in `body` so converted numbers refresh when Settings switches units.
+    @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
     @Environment(AppModel.self) private var model
     @State private var path: [UUID] = []
     @State private var showsPairing = false
@@ -15,6 +17,7 @@ struct PlugsTab: View {
     }
 
     var body: some View {
+        let _ = unitSystem
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {

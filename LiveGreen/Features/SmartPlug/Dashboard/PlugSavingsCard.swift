@@ -18,17 +18,18 @@ struct PlugSavingsCard: View {
                 .font(.headline)
                 .foregroundStyle(Theme.leaf)
             HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(Measured.format(plug.savings.savedKgCO2e * 1000))
+                let saved = DisplayUnits.smallCarbon(kg: plug.savings.savedKgCO2e)
+                Text(Measured.format(saved.value))
                     .font(.largeTitle.weight(.bold).monospacedDigit())
                     .contentTransition(.numericText())
-                Text("g CO₂e").foregroundStyle(.secondary)
+                Text(saved.unit).foregroundStyle(.secondary)
             }
             Text("Measured from \(Measured.format(plug.savings.measuredKWh)) kWh at each hour's grid intensity, versus the day's average.")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             if let yearlyEstimateKg {
                 Divider()
-                LabeledContent("This plan, per year", value: "~\(Measured.format(yearlyEstimateKg)) kg CO₂e")
+                LabeledContent("This plan, per year", value: "~\(DisplayUnits.carbon(kg: yearlyEstimateKg))")
                     .font(.subheadline)
             }
         }

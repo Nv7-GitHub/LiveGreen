@@ -7,6 +7,8 @@ import GreenCoreFakes
 /// detent sheet (portrait) or a side inspector (landscape). Gated questions (spec §5.5) appear in one
 /// sheet and re-run the engine locally.
 struct ScanResultView: View {
+    /// Read in `body` so converted numbers refresh when Settings switches units.
+    @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
     /// Re-runs the engine with question answers and returns the updated result.
     typealias Rerun = @MainActor (ScanResult, [QuestionAnswer]) async -> ScanResult
 
@@ -39,7 +41,13 @@ struct ScanResultView: View {
 
     private var selectedComponent: Component? { selectedID.flatMap(current.component(withID:)) }
 
+    private var availableFilters: [ResultMetricFilter] { ResultInsights.availableFilters(for: current.components) }
+
+    /// The components that have the selected metric; a laptop has no land use, so it leaves the Land view.
+    private var shownComponents: [Component] { ResultInsights.components(current.components, showing: filter) }
+
     var body: some View {
+        let _ = unitSystem
         Group {
             if isLandscape {
                 HStack(alignment: .top, spacing: 0) {
@@ -81,6 +89,9 @@ struct ScanResultView: View {
             QuestionsSheet(questions: pendingQuestions, onApply: applyAnswers, onUseEstimate: useEstimates)
         }
         .onChange(of: result) { _, newValue in current = newValue }
+        .onChange(of: availableFilters, initial: true) { _, options in
+            if !options.contains(filter) { filter = options.first ?? .carbon }
+        }
         // Greener swaps save picks and the image to the stored scan; pick them up when returning here.
         .onAppear { if let saved = savedCopy, saved != current { current = saved } }
         .task { await offerQuestionsOnce() }
@@ -92,7 +103,7 @@ struct ScanResultView: View {
         ScrollView {
             VStack(spacing: 14) {
                 photo
-                MetricPicker(selection: $filter)
+                MetricPicker(selection: $filter, options: availableFilters)
                 SummaryHeader(result: current, filter: filter)
                 if !pendingQuestions.isEmpty { questionsBanner }
                 componentList
@@ -113,7 +124,7 @@ struct ScanResultView: View {
             // On the photo itself: on the container it would replace every hotspot's identifier.
             .accessibilityIdentifier("resultPhoto")
             .overlay {
-                ComponentHotspots(components: current.components, filter: filter,
+                ComponentHotspots(components: shownComponents, filter: filter,
                                   selectedID: selectedID, onSelect: select)
             }
             .clipShape(.rect(cornerRadius: Theme.cardCornerRadius))
@@ -121,7 +132,7 @@ struct ScanResultView: View {
     }
 
     private var componentList: some View {
-        let ranked = ResultInsights.ranked(current.components, by: filter.shareMetric)
+        let ranked = ResultInsights.ranked(shownComponents, by: filter.shareMetric)
         return VStack(alignment: .leading, spacing: 6) {
             Text(filter == .all ? "Items" : "Items by \(filter.title.lowercased())")
                 .font(.headline)
@@ -132,7 +143,7 @@ struct ScanResultView: View {
                     Button { select(component) } label: {
                         ComponentRow(component: component, number: index + 1, filter: filter,
                                      share: ResultInsights.share(of: component, metric: filter.shareMetric,
-                                                                 in: current.components),
+                                                                 in: shownComponents),
                                      isSelected: component.id == selectedID)
                     }
                     .buttonStyle(.plain)
@@ -201,7 +212,8 @@ struct ScanResultView: View {
     private func detail(for component: Component) -> some View {
         var plugAction: (() -> Void)?
         if model.flags.plugFeaturesEnabled { plugAction = { openPlugs() } }
-        return ComponentDetailView(component: component, preferredMetric: filter.shareMetric, plugAction: plugAction)
+        return ComponentDetailView(component: component, preferredMetric: filter.shareMetric, plugAction: plugAction,
+                                   onUsageChange: { field, value in applyUsage(field, value, to: component.id) })
             .id(component.id)
     }
 
@@ -259,6 +271,14 @@ struct ScanResultView: View {
             model.save(updated)
             isRerunning = false
         }
+    }
+
+    /// Usage edited in the detail sheet: re-run the engine on-device and save.
+    private func applyUsage(_ field: UsageField, _ value: Double, to componentID: UUID) {
+        let base = savedCopy ?? current
+        let updated = model.makeScanCoordinator().applying(usage: field, value: value, to: componentID, in: base)
+        withAnimation(.smooth) { current = updated }
+        model.save(updated)
     }
 
     /// Default re-run: GreenCore's impact engine, deterministic and on-device (spec §5.5).

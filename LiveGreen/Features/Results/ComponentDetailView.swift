@@ -10,6 +10,8 @@ struct ComponentDetailView: View {
     var preferredMetric: MetricKey = .carbon
     /// Shown when the component is a deferrable load and plug features are on.
     var plugAction: (() -> Void)?
+    /// Called when the user changes a usage field; nil hides the usage editor.
+    var onUsageChange: ((UsageField, Double) -> Void)?
 
     @State private var flowMetric: MetricKey?
 
@@ -33,6 +35,9 @@ struct ComponentDetailView: View {
                         FlowView(component: component, metric: metric, measured: measured)
                     }
                 }
+            }
+            if let onUsageChange {
+                UsageEditorCard(component: component, onChange: onUsageChange)
             }
             if let candidate = component.plugCandidate, let plugAction {
                 GlassCard(tint: Theme.mint.opacity(0.2)) {

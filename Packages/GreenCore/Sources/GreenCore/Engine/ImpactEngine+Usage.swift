@@ -32,3 +32,44 @@ extension ImpactEngine {
         return applyingUsage((component.usage ?? UsageProfile()).setting(field, to: value), to: component, profile: profile)
     }
 }
+
+extension ImpactEngine {
+    /// Hours of active use one full charge covers for battery devices (phones, tablets, laptops), used to turn
+    /// "hours a day" into charges per week.
+    public static let activeHoursPerCharge = 6.0
+
+    /// Battery capacity for the component's device type, when it is a battery device.
+    public func batteryKWh(for component: Component) -> Double? {
+        store?.deviceProfile(deviceType: component.quantities.deviceType ?? component.name)?.batteryKWh
+    }
+
+    /// The usage fields that drive this component's yearly numbers, with the value the engine uses now (the
+    /// stored usage, else its default), so they can be edited even when no question was asked.
+    public func editableUsage(for component: Component) -> [(field: UsageField, value: Double)] {
+        let usage = component.usage
+        switch component.category {
+        case .electronic:
+            let typical = store?.deviceProfile(deviceType: component.quantities.deviceType ?? component.name)?
+                .defaults.typicalHoursOnPerDay ?? 4
+            let hoursOn = usage?.hoursOnPerDay ?? typical
+            return [(.hoursOnPerDay, hoursOn), (.standbyHoursPerDay, usage?.standbyHoursPerDay ?? max(0, 24 - hoursOn))]
+        case .food:
+            return [(.servingsPerWeek, usage?.servingsPerWeek ?? 1)]
+        case .packaging, .personalCare:
+            return [(.usesPerWeek, usage?.usesPerWeek ?? 1)]
+        case .clothing, .household:
+            return []
+        }
+    }
+
+    /// Answers that apply a usage edit. For battery devices, hours of use also set charges per week, since
+    /// their electricity comes from charging.
+    public func usageEdits(_ field: UsageField, _ value: Double, for component: Component) -> [AnswerOption] {
+        var edits = [AnswerOption(label: field.rawValue, field: field, value: value)]
+        if field == .hoursOnPerDay, batteryKWh(for: component) != nil {
+            let charges = min(max(value * 7 / Self.activeHoursPerCharge, 0), 21)
+            edits.append(AnswerOption(label: UsageField.chargesPerWeek.rawValue, field: .chargesPerWeek, value: charges))
+        }
+        return edits
+    }
+}

@@ -23,8 +23,9 @@ struct OnboardingFlow: View {
     private var isLast: Bool { step == OnboardingStep.allCases.last }
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             header
+            LiveEstimateCard(profile: profile, step: step)
             ScrollView {
                 card
                     .id(step)
@@ -32,7 +33,8 @@ struct OnboardingFlow: View {
                         insertion: .move(edge: movingForward ? .trailing : .leading).combined(with: .opacity),
                         removal: .move(edge: movingForward ? .leading : .trailing).combined(with: .opacity)))
             }
-            .scrollClipDisabled()
+            // Clipped so the question scrolls under, not over, the live estimate above it.
+            .contentMargins(.vertical, 8, for: .scrollContent)
             .scrollBounceBehavior(.basedOnSize)
             .scrollDismissesKeyboard(.interactively)
             navigation
@@ -109,7 +111,6 @@ struct OnboardingFlow: View {
     private func finish() {
         var completed = profile
         completed.region = USRegionLookup.resolved(profile.region)
-        if completed.commuteMode == .remote { completed.commuteKmPerWeek = 0 }
         onComplete(completed)
     }
 }

@@ -13,7 +13,7 @@ struct PlugScheduleCard: View {
                 Text("Today's green hours").font(.headline)
                 Spacer()
                 if let schedule = dashboard.previewSchedule, let intensity = schedule.expectedIntensity {
-                    Text("avg \(Measured.format(intensity)) g/kWh")
+                    Text("avg \(Measured.format(DisplayUnits.gridIntensityValue(gramsPerKWh: intensity))) \(DisplayUnits.gridIntensityUnit)")
                         .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                 }
             }

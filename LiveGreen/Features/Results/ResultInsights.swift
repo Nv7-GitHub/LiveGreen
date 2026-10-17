@@ -35,6 +35,22 @@ nonisolated enum ResultInsights {
             .reduce(0) { $0 + $1.share }
     }
 
+    /// Picker options for a scan: metrics at least one component's category uses and has a value for.
+    /// "All" is offered when more than one metric is.
+    static func availableFilters(for components: [Component]) -> [ResultMetricFilter] {
+        let metrics = ResultMetricFilter.allCases.filter { filter in
+            guard let metric = filter.metric else { return false }
+            return components.contains { $0.category.applies(metric) && $0.metrics[metric] != nil }
+        }
+        return metrics.count > 1 ? metrics + [.all] : metrics
+    }
+
+    /// Components that report `filter`'s metric ("All" keeps every component).
+    static func components(_ components: [Component], showing filter: ResultMetricFilter) -> [Component] {
+        guard let metric = filter.metric else { return components }
+        return components.filter { $0.category.applies(metric) && $0.metrics[metric] != nil }
+    }
+
     /// Components ordered by the given metric, largest first; unknown values last.
     static func ranked(_ components: [Component], by metric: MetricKey) -> [Component] {
         components.sorted { lhs, rhs in

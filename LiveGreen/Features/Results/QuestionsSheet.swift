@@ -1,14 +1,16 @@
 import SwiftUI
 import GreenCore
 
-/// All gated questions in one glass sheet (spec §5.5): chip answers per question, "Use estimate" to
-/// keep the current ranges, or "Update numbers" to re-run the engine with the answers.
+/// All gated questions in one glass sheet (spec §5.5): chip answers per question plus a "Custom" chip with
+/// a slider over the field's full range, "Use estimate" to keep the current ranges, or "Update numbers" to
+/// re-run the engine with the answers.
 struct QuestionsSheet: View {
     let questions: [PendingQuestion]
     let onApply: ([QuestionAnswer]) -> Void
     let onUseEstimate: () -> Void
 
     @State private var picks: [PendingQuestion.ID: AnswerOption] = [:]
+    @State private var customValues: [PendingQuestion.ID: Double] = [:]
 
     private var answers: [QuestionAnswer] {
         questions.compactMap { question in picks[question.id].map { QuestionAnswer(question: question, option: $0) } }
@@ -46,8 +48,12 @@ struct QuestionsSheet: View {
                 ForEach(Array(pending.question.options.enumerated()), id: \.offset) { _, option in
                     chip(option, for: pending)
                 }
+                if let field = Self.field(of: pending) { customChip(field, for: pending) }
             }
             .padding(.top, 4)
+            if let field = Self.field(of: pending), let value = customValues[pending.id] {
+                customSlider(field, value: value, for: pending)
+            }
             if !pending.question.affectedMetrics.isEmpty {
                 Label("Affects " + pending.question.affectedMetrics.map { $0.displayName.lowercased() }
                     .joined(separator: ", "), systemImage: "scope")
@@ -59,10 +65,70 @@ struct QuestionsSheet: View {
         .accessibilityElement(children: .contain)
     }
 
-    private func chip(_ option: AnswerOption, for pending: PendingQuestion) -> some View {
-        let isPicked = picks[pending.id] == option
+    /// The usage field a question's options set, when they all set the same one.
+    private static func field(of pending: PendingQuestion) -> UsageField? {
+        let fields = Set(pending.question.options.compactMap(\.field))
+        return fields.count == 1 ? fields.first : nil
+    }
+
+    private func customChip(_ field: UsageField, for pending: PendingQuestion) -> some View {
+        let isActive = customValues[pending.id] != nil
         return Button {
-            withAnimation(.snappy) { picks[pending.id] = isPicked ? nil : option }
+            withAnimation(.snappy) {
+                if isActive {
+                    customValues[pending.id] = nil
+                    picks[pending.id] = nil
+                } else {
+                    let start = pending.question.options.compactMap(\.value).max() ?? field.customRange.lowerBound
+                    setCustom(min(max(start, field.customRange.lowerBound), field.customRange.upperBound),
+                              field: field, for: pending)
+                }
+            }
+        } label: {
+            Label("Custom", systemImage: "slider.horizontal.3")
+                .font(.subheadline.weight(isActive ? .semibold : .regular))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .contentShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .glassEffect(isActive ? .regular.tint(Theme.leaf.opacity(0.6)).interactive() : .regular.interactive(),
+                     in: .capsule)
+        .accessibilityAddTraits(isActive ? .isSelected : [])
+        .accessibilityIdentifier("customAnswer")
+    }
+
+    private func customSlider(_ field: UsageField, value: Double, for pending: PendingQuestion) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(field.customLabel(value))
+                .font(.title3.weight(.semibold).monospacedDigit())
+                .contentTransition(.numericText())
+            Slider(value: Binding(get: { value }, set: { setCustom($0, field: field, for: pending) }),
+                   in: field.customRange, step: field.customStep) {
+                Text("Custom answer")
+            } minimumValueLabel: {
+                Text(Measured.format(field.customRange.lowerBound)).font(.caption2)
+            } maximumValueLabel: {
+                Text(Measured.format(field.customRange.upperBound)).font(.caption2)
+            }
+            .tint(Theme.leaf)
+        }
+        .padding(.top, 4)
+        .transition(.opacity.combined(with: .move(edge: .top)))
+    }
+
+    private func setCustom(_ value: Double, field: UsageField, for pending: PendingQuestion) {
+        customValues[pending.id] = value
+        picks[pending.id] = AnswerOption(label: field.customLabel(value), field: field, value: value)
+    }
+
+    private func chip(_ option: AnswerOption, for pending: PendingQuestion) -> some View {
+        let isPicked = picks[pending.id] == option && customValues[pending.id] == nil
+        return Button {
+            withAnimation(.snappy) {
+                customValues[pending.id] = nil
+                picks[pending.id] = isPicked ? nil : option
+            }
         } label: {
             Text(option.label)
                 .font(.subheadline.weight(isPicked ? .semibold : .regular))

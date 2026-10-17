@@ -87,3 +87,55 @@ struct CohortModelTests {
         #expect(trend.allSatisfy { (0...1).contains($0.greenerThan) })
     }
 }
+
+@Suite("LifestyleEstimate")
+struct LifestyleEstimateTests {
+    @Test func travelComesFromDistancePerMode() {
+        let profile = UserProfile(commuteKmPerWeekByMode: [.car: 100, .transit: 50, .bike: 30])
+        let estimate = LifestyleEstimate(profile: profile)
+        // (100 × 0.25 + 50 × 0.10 + 30 × 0) × 52 weeks.
+        #expect(abs((estimate.kgPerYear[.travel] ?? 0) - 1_560) < 1e-6)
+    }
+
+    @Test func greenerAnswersLowerTheEstimate() {
+        let base = LifestyleEstimate(profile: UserProfile(diet: .omnivore, commuteKmPerWeekByMode: [.car: 200]))
+        let greener = LifestyleEstimate(profile: UserProfile(diet: .vegan, commuteKmPerWeekByMode: [.bike: 200],
+                                                             clothingHabit: .mostlySecondHand))
+        #expect(greener.totalKg < base.totalKg)
+        #expect((greener.kgPerYear[.food] ?? 0) < (base.kgPerYear[.food] ?? 0))
+        #expect(greener.kgPerYear[.travel] == 0)
+        #expect(base.regionAverageKg > 0)
+    }
+
+    @Test func legacyProfilesDecodeIntoOneMode() throws {
+        let json = #"""
+            {"region":{"countryCode":"US"},"householdSize":1,"diet":"vegan","commuteMode":"car","commuteKmPerWeek":80,
+             "homeType":"apartment","heating":"heatPump","clothingHabit":"mixed","chargingItems":[],"onboardingCompleted":true}
+            """#
+        let profile = try JSONDecoder().decode(UserProfile.self, from: Data(json.utf8))
+        #expect(profile.commuteKmPerWeekByMode == [.car: 80])
+        #expect(profile.commuteMode == .car)
+        let roundTrip = try JSONDecoder().decode(UserProfile.self, from: JSONEncoder().encode(profile))
+        #expect(roundTrip == profile)
+    }
+}
+
+@Suite("Editable usage")
+struct EditableUsageTests {
+    let engine = ImpactEngine()
+
+    @Test func electronicsDefaultToTheDeviceTypicalHours() {
+        let monitor = Component(name: "Monitor", category: .electronic, quantities: Quantities(deviceType: "monitor"))
+        let fields = engine.editableUsage(for: monitor)
+        #expect(fields.map(\.field) == [.hoursOnPerDay, .standbyHoursPerDay])
+        #expect(fields[0].value + fields[1].value == 24)
+    }
+
+    @Test func phoneHoursAlsoSetCharges() {
+        let phone = Component(name: "Phone", category: .electronic, quantities: Quantities(deviceType: "smartphone"))
+        guard engine.batteryKWh(for: phone) != nil else { return }
+        let edits = engine.usageEdits(.hoursOnPerDay, 9, for: phone)
+        #expect(edits.map(\.field) == [.hoursOnPerDay, .chargesPerWeek])
+        #expect(edits[1].value == 9 * 7 / ImpactEngine.activeHoursPerCharge)
+    }
+}

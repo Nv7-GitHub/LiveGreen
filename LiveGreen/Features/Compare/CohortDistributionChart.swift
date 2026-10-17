@@ -65,7 +65,7 @@ struct CohortDistributionChart: View {
                     AxisMarks(values: .automatic(desiredCount: 4)) { value in
                         AxisGridLine()
                         AxisValueLabel {
-                            if let x = value.as(Double.self) { Text(Measured.format(x)) }
+                            if let x = value.as(Double.self) { Text(Measured.format(DisplayUnits.value(x, metric.unit))) }
                         }
                     }
                 }
@@ -74,7 +74,7 @@ struct CohortDistributionChart: View {
                 .accessibilityLabel("Peer distribution of \(CohortMetric.shortName(metric))")
                 .accessibilityValue("You: \(YearlyValue.format(userValue, metric: metric)); median \(YearlyValue.format(distribution.median, metric: metric))")
 
-                Text("Yearly \(metric.unit.symbol) for the categories you've scanned · green = people with a larger footprint")
+                Text("Yearly \(DisplayUnits.symbol(metric.unit)) for the categories you've scanned · green = people with a larger footprint")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

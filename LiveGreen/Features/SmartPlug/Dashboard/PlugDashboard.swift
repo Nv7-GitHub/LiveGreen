@@ -3,6 +3,8 @@ import GreenCore
 
 /// One plug: live status, grid now, today's green hours, schedule controls and measured savings (spec §8.3).
 struct PlugDashboard: View {
+    /// Read in `body` so converted numbers refresh when Settings switches units.
+    @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
     let plugID: UUID
     /// Called when the user swaps an offline plug for the mock plug.
     var onSwitchPlug: (UUID) -> Void = { _ in }
@@ -20,6 +22,7 @@ struct PlugDashboard: View {
     }
 
     var body: some View {
+        let _ = unitSystem
         ScrollView {
             if let plug = dashboard.plug {
                 VStack(spacing: 16) {
@@ -67,7 +70,7 @@ struct PlugDashboard: View {
                 Image(systemName: "bolt.fill").font(.title2).foregroundStyle(Theme.leaf)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Grid now").font(.caption).foregroundStyle(.secondary)
-                    Text("\(Measured.format(outlook.intensity())) g CO₂e/kWh")
+                    Text(DisplayUnits.gridIntensity(gramsPerKWh: outlook.intensity()))
                         .font(.title3.weight(.semibold).monospacedDigit())
                     Text(outlook.current?.isEstimated == false ? "Live · \(outlook.zone)" : "Estimated · \(outlook.zone)")
                         .font(.caption).foregroundStyle(.secondary)
@@ -80,7 +83,7 @@ struct PlugDashboard: View {
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("Day average").font(.caption).foregroundStyle(.secondary)
-                    Text(Measured.format(outlook.forecast.dayAverage)).font(.headline.monospacedDigit())
+                    Text(Measured.format(DisplayUnits.gridIntensityValue(gramsPerKWh: outlook.forecast.dayAverage))).font(.headline.monospacedDigit())
                 }
             }
             .glassCard()

@@ -156,7 +156,7 @@ final class LiveGreenTourTests: XCTestCase {
         save.tap()
         let apply = app.buttons["plug.applySchedule"]
         XCTAssertTrue(apply.waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] %@", "g CO₂e/kWh"))
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] %@", "CO₂e/"))
             .firstMatch.waitForExistence(timeout: 15), "Grid outlook loads")
         snap("14-plug-dashboard")
         for _ in 0..<4 where !apply.isHittable { app.swipeUp() }

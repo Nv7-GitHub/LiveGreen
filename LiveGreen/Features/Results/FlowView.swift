@@ -135,7 +135,7 @@ private struct SankeyDrawing {
 
     private func drawLabel(_ part: (stage: LifecycleStage, share: Double), at point: CGPoint,
                            in context: inout GraphicsContext) {
-        let value = Measured.format(total.value * part.share)
+        let value = Measured.format(total.displayValue * part.share)
         let name = Text(part.stage.flowLabel).font(.caption2.weight(.semibold))
         let detail = Text("\(value) · \(Int((part.share * 100).rounded()))%")
             .font(.caption2.monospacedDigit())

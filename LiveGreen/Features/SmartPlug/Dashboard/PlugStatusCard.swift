@@ -34,7 +34,8 @@ struct PlugStatusCard: View {
                 reading(Measured.format(status.activePowerW), "W", "Power now")
                 reading(Measured.format(status.totalEnergyWh / 1000), "kWh", "Energy total")
                 if let temperature = status.temperatureC {
-                    reading(Measured.format(temperature), "°C", "Temp")
+                    let shown = DisplayUnits.temperature(celsius: temperature)
+                    reading(Measured.format(shown.value), shown.unit, "Temp")
                 }
             }
             Toggle(isOn: Binding(get: { status.isOn }, set: onToggle)) {

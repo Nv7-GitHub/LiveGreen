@@ -59,11 +59,17 @@ public struct CohortModel: Sendable {
         return LogNormal(median: median, sigma: sigma)
     }
 
-    /// Whole-footprint median (all categories), with the commute modifier applied to carbon.
+    /// Whole-footprint median (all categories), with the commute modifier applied to carbon: the
+    /// distance-weighted mix of each mode's modifier (the main mode's when no distances are set).
     public func wholeFootprintMedian(for metric: MetricKey) -> Double {
         let base = baseline.medians[metric] ?? 0
         guard metric == .carbon else { return base }
-        return base * (reference.commuteModifiers[profile.commuteMode] ?? 1)
+        let distances = profile.commuteKmPerWeekByMode
+        let total = distances.values.reduce(0, +)
+        let modifier = total > 0
+            ? distances.reduce(0) { $0 + (reference.commuteModifiers[$1.key] ?? 1) * $1.value } / total
+            : reference.commuteModifiers[profile.commuteMode] ?? 1
+        return base * modifier
     }
 
     /// Compares a scanned footprint with peers for every metric it covers.

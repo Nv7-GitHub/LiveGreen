@@ -56,7 +56,7 @@ struct AlternativeRow: View {
     private var carbonSavingText: String? {
         guard let saving = SwapMath.yearlySaving(.carbon, component: component, alternative: alternative),
               saving.value > 0 else { return nil }
-        return "−\(Measured.format(saving.value)) kg CO₂e/yr"
+        return "−\(DisplayUnits.carbon(kg: saving.value))/yr"
     }
 }
 

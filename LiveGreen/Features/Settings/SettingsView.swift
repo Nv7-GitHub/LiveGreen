@@ -9,6 +9,7 @@ struct SettingsView: View {
     @State private var keyRevision = 0
     @State private var isEditingProfile = false
     @State private var saveError: String?
+    @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
 
     var body: some View {
         @Bindable var model = model
@@ -26,6 +27,10 @@ struct SettingsView: View {
                 }
                 .foregroundStyle(.primary)
                 .accessibilityIdentifier("settings.editProfile")
+                Picker("Units", selection: $unitSystem) {
+                    ForEach(UnitSystem.allCases, id: \.self) { Text($0.displayName).tag($0) }
+                }
+                .accessibilityIdentifier("settings.units")
             }
 
             Section {
@@ -116,7 +121,7 @@ private struct ProfileSummaryRow: View {
                 .foregroundStyle(Theme.leaf)
             VStack(alignment: .leading, spacing: 2) {
                 Text(location).font(.headline)
-                Text("\(profile.householdSize) in household · \(profile.diet.profileLabel) · \(profile.commuteMode.profileLabel)")
+                Text("\(profile.householdSize) in household · \(profile.diet.profileLabel) · \(profile.commuteModes.map(\.profileLabel).joined(separator: " + "))")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Text("\(profile.homeType.profileLabel) · \(profile.heating.profileLabel)")

@@ -31,25 +31,25 @@ struct ProjectedSavingsCard: View {
             Label(metric.displayName, systemImage: metric.systemImage)
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
-                Text("\(Self.signed(-saving.value)) \(yearlyUnit(metric))")
+                Text("\(Self.signed(-saving.value, metric)) \(yearlyUnit(metric))")
                     .font(.body.weight(.semibold).monospacedDigit())
                     .foregroundStyle(saves ? Theme.leaf : Theme.warning)
                 // The headline is the yearly change (negative = saved), so the range uses the same sign.
-                Text("\(Self.signed(-saving.high)) to \(Self.signed(-saving.low))")
+                Text("\(Self.signed(-saving.high, metric)) to \(Self.signed(-saving.low, metric))")
                     .font(.caption2.monospacedDigit()).foregroundStyle(.secondary)
             }
         }
         .font(.subheadline)
     }
 
-    private static func signed(_ change: Double) -> String {
-        let magnitude = Measured.format(abs(change))
+    private static func signed(_ change: Double, _ metric: MetricKey) -> String {
+        let magnitude = Measured.format(DisplayUnits.value(abs(change), metric.unit))
         if change > 0 { return "+\(magnitude)" }
         return change < 0 ? "−\(magnitude)" : magnitude
     }
 
     private func yearlyUnit(_ metric: MetricKey) -> String {
-        metric.unit == .kilowattHoursPerYear ? metric.unit.symbol : "\(metric.unit.symbol)/yr"
+        metric.unit == .kilowattHoursPerYear ? metric.unit.symbol : "\(DisplayUnits.symbol(metric.unit))/yr"
     }
 }
 

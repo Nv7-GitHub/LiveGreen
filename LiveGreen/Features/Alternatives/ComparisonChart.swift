@@ -94,7 +94,7 @@ private struct MetricComparison: View {
                 AxisMarks(values: .automatic(desiredCount: 4)) { value in
                     AxisGridLine()
                     AxisValueLabel {
-                        if let number = value.as(Double.self) { Text(Measured.format(number)) }
+                        if let number = value.as(Double.self) { Text(Measured.format(DisplayUnits.value(number, current.unit))) }
                     }
                 }
             }
@@ -102,7 +102,7 @@ private struct MetricComparison: View {
             .chartForegroundStyleScale(["Current": Color.gray.opacity(0.55), "Swap": Theme.leaf])
             .chartYAxis(.hidden)
             .chartLegend(position: .bottom, alignment: .leading)
-            .chartXAxisLabel(current.unit.symbol, alignment: .trailing)
+            .chartXAxisLabel(current.displaySymbol, alignment: .trailing)
             .frame(height: 112)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(title): current \(current.formatted), swap \(alternative.formatted)")

@@ -15,12 +15,7 @@ struct OnboardingStepContent: View {
         case .diet:
             SingleChoiceChips(selection: $profile.diet)
         case .commute:
-            VStack(alignment: .leading, spacing: 16) {
-                SingleChoiceChips(selection: $profile.commuteMode)
-                if profile.commuteMode != .remote {
-                    DistanceSlider(kmPerWeek: $profile.commuteKmPerWeek)
-                }
-            }
+            CommutePlanner(distances: $profile.commuteKmPerWeekByMode)
         case .home:
             VStack(alignment: .leading, spacing: 16) {
                 SingleChoiceChips(selection: $profile.homeType)
@@ -76,19 +71,31 @@ private struct HouseholdPicker: View {
     }
 }
 
-private struct DistanceSlider: View {
+/// Stored in km; shown and edited in miles in the imperial unit system.
+struct DistanceSlider: View {
+    var title = "Distance per week"
     @Binding var kmPerWeek: Double
+
+    private static let kmPerMile = 1.609_34
+    private var imperial: Bool { DisplayUnits.system == .imperial }
+
+    private var shown: Binding<Double> {
+        Binding(get: { imperial ? kmPerWeek / Self.kmPerMile : kmPerWeek },
+                set: { kmPerWeek = imperial ? $0 * Self.kmPerMile : $0 })
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("Distance per week").font(.subheadline.weight(.semibold))
+                Text(title).font(.subheadline.weight(.semibold))
                 Spacer()
-                Text("\(Int(kmPerWeek)) km").font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
+                Text("\(Int(shown.wrappedValue.rounded())) \(imperial ? "mi" : "km") a week")
+                    .font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
             }
-            Slider(value: $kmPerWeek, in: 0...500, step: 5)
-                .accessibilityLabel("Commute distance per week")
-                .accessibilityValue("\(Int(kmPerWeek)) kilometers")
+            Slider(value: shown, in: 0...(imperial ? 300 : 500), step: 5)
+                .tint(Theme.leaf)
+                .accessibilityLabel("\(title) per week")
+                .accessibilityValue("\(Int(shown.wrappedValue.rounded())) \(imperial ? "miles" : "kilometers")")
         }
     }
 }

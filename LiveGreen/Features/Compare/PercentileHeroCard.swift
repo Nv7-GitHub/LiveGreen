@@ -46,12 +46,12 @@ struct PercentileHeroCard: View {
     }
 }
 
-/// Formats a yearly cohort value with its unit, e.g. "1.2k kg CO₂e/yr".
+/// Formats a yearly cohort value (canonical metric units) for display, e.g. "2.6k lb CO₂e/yr".
 enum YearlyValue {
     static func format(_ value: Double, metric: MetricKey) -> String {
-        let symbol = metric.unit.symbol
+        let symbol = DisplayUnits.symbol(metric.unit)
         let perYear = metric == .yearlyElectricity ? "" : "/yr"
-        return "\(Measured.format(value)) \(symbol)\(perYear)"
+        return "\(Measured.format(DisplayUnits.value(value, metric.unit))) \(symbol)\(perYear)"
     }
 }
 

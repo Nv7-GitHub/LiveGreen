@@ -1,0 +1,63 @@
+import SwiftUI
+import GreenCore
+
+/// Lets the user set how they actually use an item (hours a day, servings a week…) at any time, not only
+/// when a question was asked. Each slider covers the field's full range and commits when released.
+struct UsageEditorCard: View {
+    let component: Component
+    let onChange: (UsageField, Double) -> Void
+
+    @State private var drafts: [UsageField: Double] = [:]
+
+    /// The fields that drive this item's numbers, starting from the engine's current values.
+    private var current: [(field: UsageField, value: Double)] { ImpactEngine().editableUsage(for: component) }
+    private var fields: [UsageField] { current.map(\.field) }
+
+    var body: some View {
+        if !fields.isEmpty {
+            GlassCard {
+                VStack(alignment: .leading, spacing: 14) {
+                    Label("Your usage", systemImage: "slider.horizontal.3").font(.headline)
+                    ForEach(fields, id: \.self) { field in
+                        row(field)
+                    }
+                    Text("Numbers update when you let go of a slider.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .accessibilityIdentifier("usageEditor")
+        }
+    }
+
+    private func row(_ field: UsageField) -> some View {
+        let value = drafts[field] ?? current.first { $0.field == field }?.value ?? field.customRange.lowerBound
+        return VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Text(Self.title(field)).font(.subheadline)
+                Spacer()
+                Text(field.customLabel(value))
+                    .font(.subheadline.weight(.semibold).monospacedDigit())
+                    .contentTransition(.numericText())
+            }
+            Slider(value: Binding(get: { value }, set: { drafts[field] = $0 }),
+                   in: field.customRange, step: field.customStep) { editing in
+                if !editing, let draft = drafts[field] { onChange(field, draft) }
+            }
+            .tint(Theme.leaf)
+            .accessibilityLabel(Self.title(field))
+            .accessibilityValue(field.customLabel(value))
+        }
+    }
+
+    static func title(_ field: UsageField) -> String {
+        switch field {
+        case .hoursOnPerDay: "In use"
+        case .standbyHoursPerDay: "Plugged in, idle"
+        case .servingsPerWeek: "Servings"
+        case .wearsPerYear: "Worn"
+        case .usesPerWeek: "Used"
+        case .chargesPerWeek: "Charged"
+        }
+    }
+}

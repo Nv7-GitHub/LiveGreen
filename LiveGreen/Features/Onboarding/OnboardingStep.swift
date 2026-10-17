@@ -18,13 +18,13 @@ enum OnboardingStep: Int, CaseIterable, Identifiable {
 
     var subtitle: String {
         switch self {
-        case .location: "Sets your electricity grid and the per-capita baseline you're compared with."
-        case .household: "Shared homes split their energy and appliance footprint."
-        case .diet: "Diet shifts the food footprint of people like you."
-        case .commute: "Your typical weekly commute."
-        case .home: "Home type and heating shape your energy baseline."
-        case .clothing: "New versus second-hand clothing."
-        case .chargers: "Loads like these can charge when the grid is cleanest with a smart plug."
+        case .location: "Your area sets the starting estimate above and how clean your electricity is."
+        case .household: "Count everyone you share a home with. Energy and appliances are split between you."
+        case .diet: "What you usually eat. Food is one of the biggest parts of most footprints."
+        case .commute: "Pick every way you get around in a typical week, then set roughly how far."
+        case .home: "The size of your home and how it's heated drive your home energy."
+        case .clothing: "Making new clothes is carbon-heavy; second-hand avoids most of it."
+        case .chargers: "Things you plug in to charge. A smart plug can charge them when the grid is cleanest."
         }
     }
 
