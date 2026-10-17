@@ -16,10 +16,14 @@ public enum GridLocation: Sendable, Hashable {
 }
 
 /// Electricity Maps v3 grid carbon intensity (spec §8.3): `/v3/carbon-intensity/latest` and `/history`
-/// (last 24 h), plus `/past-range` for longer windows, authenticated with the `auth-token` header.
+/// (last 24 h), the endpoints a free key can use, authenticated with the `auth-token` header. Longer windows
+/// use the paid `/past-range` endpoint only when `usesPastRange` is on.
 public struct ElectricityMapsClient: GridSignal {
     /// `ELECTRICITYMAPS_API_KEY`. Calls throw `GreenCoreError.missingAPIKey` while it is nil or empty.
     public var apiKey: String?
+    /// For commercial keys: windows over 24 h ask `/past-range`, falling back to `/history` when the key's
+    /// plan refuses it.
+    public var usesPastRange: Bool
     public var baseURL: URL
     public var timeout: Double
     public var retry: RetryPolicy
@@ -28,9 +32,10 @@ public struct ElectricityMapsClient: GridSignal {
     let now: @Sendable () -> Date
 
     public init(apiKey: String?, baseURL: URL = URL(string: "https://api.electricitymap.org")!, timeout: Double = 10,
-                retry: RetryPolicy = .default, transport: any HTTPTransport = URLSessionTransport(),
-                now: @escaping @Sendable () -> Date = { Date() }) {
+                usesPastRange: Bool = false, retry: RetryPolicy = .default,
+                transport: any HTTPTransport = URLSessionTransport(), now: @escaping @Sendable () -> Date = { Date() }) {
         self.apiKey = apiKey
+        self.usesPastRange = usesPastRange
         self.baseURL = baseURL
         self.timeout = timeout
         self.retry = retry
@@ -54,23 +59,32 @@ public struct ElectricityMapsClient: GridSignal {
         return point
     }
 
-    /// Hourly readings, oldest first. Up to 24 h uses `/history`; longer windows use `/past-range`.
+    /// Hourly readings, oldest first, from `/history` (at most the last 24 h). With `usesPastRange`, longer
+    /// windows come from `/past-range`, or `/history` when the plan does not include it (401/403/404).
     public func history(at location: GridLocation, hours: Int) async throws -> [GridIntensityPoint] {
         let hours = max(hours, 1)
         let list: ReadingList
-        if hours <= 24 {
-            list = try await get("v3/carbon-intensity/history", location.queryItems)
+        if hours > 24, usesPastRange {
+            do {
+                list = try await pastRange(at: location, hours: hours)
+            } catch GreenCoreError.http(let status, _) where [401, 403, 404].contains(status) {
+                list = try await get("v3/carbon-intensity/history", location.queryItems)
+            }
         } else {
-            let end = now()
-            let start = end.addingTimeInterval(-Double(hours) * 3600)
-            list = try await get("v3/carbon-intensity/past-range", location.queryItems + [
-                URLQueryItem(name: "start", value: Self.timestamp(start)),
-                URLQueryItem(name: "end", value: Self.timestamp(end)),
-            ])
+            list = try await get("v3/carbon-intensity/history", location.queryItems)
         }
         let zone = list.zone ?? location.zoneName
         let points = list.readings.compactMap { $0.point(fallbackZone: zone) }.sorted { $0.date < $1.date }
         return Array(points.suffix(hours))
+    }
+
+    private func pastRange(at location: GridLocation, hours: Int) async throws -> ReadingList {
+        let end = now()
+        let start = end.addingTimeInterval(-Double(hours) * 3600)
+        return try await get("v3/carbon-intensity/past-range", location.queryItems + [
+            URLQueryItem(name: "start", value: Self.timestamp(start)),
+            URLQueryItem(name: "end", value: Self.timestamp(end)),
+        ])
     }
 
     func get<T: Decodable>(_ path: String, _ query: [URLQueryItem]) async throws -> T {

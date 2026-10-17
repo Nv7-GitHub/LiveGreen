@@ -71,6 +71,11 @@ struct PlugDashboard: View {
                         .font(.title3.weight(.semibold).monospacedDigit())
                     Text(outlook.current?.isEstimated == false ? "Live · \(outlook.zone)" : "Estimated · \(outlook.zone)")
                         .font(.caption).foregroundStyle(.secondary)
+                    if let issue = outlook.historyIssue {
+                        Label("Grid history unavailable (\(issue)); planning from stored readings or the regional pattern.",
+                              systemImage: "exclamationmark.triangle")
+                            .font(.caption2).foregroundStyle(Theme.warning)
+                    }
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {

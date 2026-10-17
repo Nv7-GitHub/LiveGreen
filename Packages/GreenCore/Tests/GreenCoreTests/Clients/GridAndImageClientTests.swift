@@ -38,9 +38,28 @@ struct ElectricityMapsClientTests {
         #expect(points.map(\.gramsCO2ePerKWh) == [238, 251, 243], "oldest first, null reading dropped")
     }
 
-    @Test func longHistoryUsesPastRange() async throws {
+    @Test func longHistoryStaysOnTheFreeEndpoint() async throws {
+        let transport = MockTransport([.fixture("electricitymaps/history.json")])
+        let points = try await client(transport).history(zone: "US-NE-ISNE", hours: 168)
+        #expect(transport.requests.map { $0.url?.path() } == ["/v3/carbon-intensity/history"])
+        #expect(points.count == 3)
+    }
+
+    @Test func pastRangeFallsBackToHistoryWhenThePlanRefusesIt() async throws {
+        let transport = MockTransport([.json("{\"error\":\"Not available on your plan\"}", status: 403),
+                                       .fixture("electricitymaps/history.json")])
+        var client = client(transport)
+        client.usesPastRange = true
+        let points = try await client.history(zone: "US-NE-ISNE", hours: 168)
+        #expect(transport.requests.map { $0.url?.path() } == ["/v3/carbon-intensity/past-range", "/v3/carbon-intensity/history"])
+        #expect(points.count == 3)
+    }
+
+    @Test func commercialKeyUsesPastRange() async throws {
         let transport = MockTransport([.fixture("electricitymaps/past_range.json")])
-        let points = try await client(transport).history(zone: "DE", hours: 168)
+        var client = client(transport)
+        client.usesPastRange = true
+        let points = try await client.history(zone: "DE", hours: 168)
         let request = try #require(transport.requests.first)
         #expect(request.url?.path() == "/v3/carbon-intensity/past-range")
         #expect(request.queryValue("start") == "2026-10-10T00:00:00Z")

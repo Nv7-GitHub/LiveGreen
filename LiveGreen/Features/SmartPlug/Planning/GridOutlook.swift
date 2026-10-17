@@ -6,6 +6,9 @@ nonisolated struct GridOutlook: Hashable, Sendable {
     var zone: String
     var current: GridIntensityPoint?
     var forecast: GridForecast
+    /// Why live history could not be read (missing key, plan or network error), so the UI can say the
+    /// forecast falls back to stored readings or the regional shape.
+    var historyIssue: String?
 
     /// Default "done by" hour for estimates before a plug is configured.
     static let defaultDeadlineHour = 7
@@ -36,18 +39,30 @@ nonisolated struct GridOutlook: Hashable, Sendable {
         profile.region.gridZone ?? profile.region.usState.map { "US-\($0)" } ?? profile.region.countryCode
     }
 
-    /// Forecast from 7 days of history (median per hour), falling back to the bundled regional shape.
+    /// Forecast from up to 7 days of history (median per hour): the live window plus readings archived on
+    /// earlier refreshes, falling back to the bundled regional shape.
     static func load(grid: any GridSignal, reference: any ReferenceProviding,
                      profile: UserProfile) async throws -> GridOutlook {
         let zone = zone(for: profile)
         async let latest = try? grid.latest(zone: zone)
-        async let history = try? grid.history(zone: zone, hours: 7 * 24)
+        async let history = loadHistory(grid: grid, zone: zone)
         let regions = [profile.region.gridZone, profile.region.usState.map { "US-\($0)" }, profile.region.countryCode]
         let record = regions.compactMap { $0 }.lazy.compactMap { reference.gridIntensity(region: $0) }.first
         let current = await latest
-        guard let forecast = GridForecast.make(history: await history ?? [], fallback: record) else {
+        let (fresh, issue) = await history
+        // Only live Electricity Maps readings are archived; bundled and demo signals regenerate theirs.
+        let readings = grid is ElectricityMapsClient ? GridHistoryArchive.merge(fresh, zone: zone) : fresh
+        guard let forecast = GridForecast.make(history: readings, fallback: record) else {
             throw GreenCoreError.notFound
         }
-        return GridOutlook(zone: zone, current: current, forecast: forecast)
+        return GridOutlook(zone: zone, current: current, forecast: forecast, historyIssue: issue)
+    }
+
+    private static func loadHistory(grid: any GridSignal, zone: String) async -> ([GridIntensityPoint], String?) {
+        do {
+            return (try await grid.history(zone: zone, hours: 7 * 24), nil)
+        } catch {
+            return ([], error.localizedDescription)
+        }
     }
 }
