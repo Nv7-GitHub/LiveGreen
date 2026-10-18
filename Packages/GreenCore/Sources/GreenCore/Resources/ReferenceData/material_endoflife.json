@@ -1,5 +1,5 @@
 {
- "description": "End-of-life properties: decomposition years in the environment, practical recycling rate %, plastic flag, SPI resin code (1–7) and cradle-to-gate kg CO2e/kg and L/kg for the factor model.",
+ "description": "End-of-life properties: decomposition years in the environment, practical recycling rate %, plastic flag, SPI resin code (1–7) and cradle-to-gate kg CO2e/kg and L/kg for the factor model. inert: does not break down (glass, ceramic, stainless steel), so no decomposition time is shown; consumed: used up rather than thrown away (food, a product's formula), so it is never packaging or waste.",
  "records": [
   {
    "material": "pet",
@@ -245,6 +245,7 @@
    "resinCode": null,
    "kgCO2ePerKg": 0.85,
    "litersPerKg": 5,
+   "inert": true,
    "verified": true,
    "citation": {
     "title": "US EPA Facts and Figures (glass containers 31.3% recycled, 2018); NOAA decomposition timeline",
@@ -458,6 +459,7 @@
    "kgCO2ePerKg": 0,
    "litersPerKg": 0,
    "verified": false,
+   "note": "Production footprint not modelled (0): material factors cannot price chips and boards, so a blend with much of it leaves carbon to records or estimates.",
    "citation": {
     "title": "Global E-waste Monitor 2020 (UNU/ITU)",
     "tier": 3,
@@ -476,11 +478,149 @@
    "resinCode": null,
    "kgCO2ePerKg": 0,
    "litersPerKg": 0,
+   "consumed": true,
    "verified": false,
+   "note": "Food itself. It is eaten, so it is never packaging or waste; outside food the app reads it as a product's formula (detergent_formula).",
    "citation": {
     "title": "US EPA, Advancing Sustainable Materials Management: Facts and Figures (2018 data)",
     "tier": 3,
     "url": "https://www.epa.gov/facts-and-figures-about-materials-waste-and-recycling/national-overview-facts-and-figures-materials"
+   }
+  },
+  {
+   "material": "pet_thermoform",
+   "aliases": [
+    "thermoformed_pet",
+    "pet_cup",
+    "plastic_cup",
+    "clear_cup",
+    "cold_cup",
+    "clamshell",
+    "plastic_clamshell",
+    "dome_lid"
+   ],
+   "decompositionYears": 450,
+   "recyclablePercent": 4.0,
+   "isPlastic": true,
+   "resinCode": 1,
+   "kgCO2ePerKg": 2.9,
+   "litersPerKg": 20,
+   "verified": false,
+   "note": "Cups, lids, clamshells and trays thermoformed from PET sheet. Recycling: NAPCOR's thermoform reports put it far below PET bottles' ~29%; ~4% is used (estimate). Carbon: this table's PET resin (2.2 kg/kg) plus ~0.7 kg/kg for sheet extrusion and thermoforming (estimate). Decomposition as PET.",
+   "citation": {
+    "title": "NAPCOR, Postconsumer PET Recycling Activity reports (PET thermoforms)",
+    "tier": 3,
+    "url": "https://napcor.com"
+   }
+  },
+  {
+   "material": "ceramic",
+   "aliases": [
+    "ceramics",
+    "stoneware",
+    "porcelain",
+    "earthenware",
+    "ceramic_mug",
+    "ceramic_bowl",
+    "ceramic_plate"
+   ],
+   "decompositionYears": 1000000,
+   "recyclablePercent": 0.0,
+   "isPlastic": false,
+   "resinCode": null,
+   "kgCO2ePerKg": 2.5,
+   "litersPerKg": 15,
+   "inert": true,
+   "verified": false,
+   "note": "Fired clay tableware. Carbon: about 14 MJ per reusable ceramic cup (Hocking 1994), ~45-50 MJ/kg mostly kiln gas, ~2.5 kg CO2e/kg; published ceramic-tableware footprints span ~1.5-4. Not accepted curbside and it contaminates glass cullet, so 0% recyclable. Inert: it does not break down, so no decomposition time is shown. Water is a placeholder.",
+   "citation": {
+    "title": "Hocking (1994), Reusable and disposable cups: an energy-based evaluation, Environmental Management 18:889",
+    "tier": 3
+   }
+  },
+  {
+   "material": "glass_tableware",
+   "aliases": [
+    "glassware",
+    "drinking_glass",
+    "tempered_glass",
+    "borosilicate",
+    "borosilicate_glass",
+    "pyrex",
+    "glass_bowl",
+    "glass_cup",
+    "glass_tumbler",
+    "glass_plate"
+   ],
+   "decompositionYears": 1000000,
+   "recyclablePercent": 0.0,
+   "isPlastic": false,
+   "resinCode": null,
+   "kgCO2ePerKg": 1.5,
+   "litersPerKg": 5,
+   "inert": true,
+   "verified": false,
+   "note": "Drinking glasses, glass bowls and ovenware (tempered soda-lime or borosilicate). Carbon: about 5.5 MJ per reusable glass cup (Hocking 1994); container glass's 0.85 kg/kg plus tempering gives ~1.5 kg CO2e/kg (estimate). It melts differently from bottles and jars and is not accepted with container glass, so 0% recyclable. Inert, as glass.",
+   "citation": {
+    "title": "Hocking (1994), Reusable and disposable cups: an energy-based evaluation, Environmental Management 18:889",
+    "tier": 3
+   }
+  },
+  {
+   "material": "stainless_steel",
+   "aliases": [
+    "stainless",
+    "inox",
+    "18_8_stainless",
+    "18_10_stainless",
+    "stainless_cutlery"
+   ],
+   "decompositionYears": 1000,
+   "recyclablePercent": 30.0,
+   "isPlastic": false,
+   "resinCode": null,
+   "kgCO2ePerKg": 6.15,
+   "litersPerKg": 30,
+   "inert": true,
+   "verified": false,
+   "note": "Carbon: ISSF's global average for stainless steel, ~6.15 t CO2e per tonne (nickel and chromium dominate; high-scrap European grades are lower). Recyclable: valuable scrap, but small items (cutlery, bottles) are rarely collected curbside; ~30% assumed, near US EPA's rate for ferrous metals in durable goods (unverified). Inert: corrosion-resistant, so no decomposition time is shown. Water is a placeholder.",
+   "citation": {
+    "title": "International Stainless Steel Forum (ISSF), Stainless Steel and CO2: Facts and Scientific Observations",
+    "tier": 3,
+    "url": "https://www.worldstainless.org"
+   }
+  },
+  {
+   "material": "detergent_formula",
+   "aliases": [
+    "detergent",
+    "liquid_detergent",
+    "laundry_detergent",
+    "dish_soap",
+    "hand_soap",
+    "liquid_soap",
+    "soap",
+    "cleaner",
+    "cleaning_solution",
+    "cleaning_liquid",
+    "shampoo",
+    "conditioner",
+    "body_wash",
+    "lotion",
+    "surfactant"
+   ],
+   "decompositionYears": 0.1,
+   "recyclablePercent": 0.0,
+   "isPlastic": false,
+   "resinCode": null,
+   "kgCO2ePerKg": 1.0,
+   "litersPerKg": 3,
+   "consumed": true,
+   "verified": false,
+   "note": "The contents of a cleaning or personal-care product. It is used up rather than thrown away, so it is left out of end-of-life metrics. Carbon: ~30% surfactants at ~2-3 kg CO2e/kg (ERASM surfactant inventories), the rest mostly water, ~1 kg CO2e/kg for a liquid detergent; a dilute ready-to-use spray (~10% actives) is nearer 0.4. Water is the water in the product plus processing. Readily biodegradable surfactants break down in weeks.",
+   "citation": {
+    "title": "Schowanek et al. (2018), ERASM surfactant life cycle inventories, Int. J. Life Cycle Assessment",
+    "tier": 3
    }
   }
  ]

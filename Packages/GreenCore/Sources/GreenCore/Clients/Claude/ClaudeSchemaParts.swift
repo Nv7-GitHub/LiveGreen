@@ -20,6 +20,10 @@ enum SchemaParts {
         ["type": ["number", "null"], "description": .string(description)]
     }
 
+    static func nullableBoolean(_ description: String) -> JSONValue {
+        ["type": ["boolean", "null"], "description": .string(description)]
+    }
+
     static func enumeration(_ values: [String], _ description: String, nullable: Bool = false) -> JSONValue {
         let options = values.map(JSONValue.string) + (nullable ? [JSONValue.null] : [])
         return ["type": nullable ? ["string", "null"] : "string", "enum": .array(options),
@@ -42,16 +46,21 @@ enum SchemaParts {
     static let metricKeys = MetricKey.allCases.map(\.rawValue)
     static let categories = Category.allCases.map(\.rawValue)
 
-    static let materials = array(of: object([
-        "material": string("Lowercase snake_case material key, e.g. cotton, polyester, aluminium, pet."),
-        "percent": number("Share of the item's mass, 0-100."),
-    ], required: ["material", "percent"]), "Material split by mass; percentages should sum to ~100. Empty when unknown.")
+    static func materialList(_ description: String) -> JSONValue {
+        array(of: object([
+            "material": string("Lowercase snake_case material key, e.g. cotton, polyester, aluminium, pet."),
+            "percent": number("Share of the mass, 0-100."),
+        ], required: ["material", "percent"]), description)
+    }
+
+    static let materials = materialList("Material split by mass; percentages should sum to ~100. Empty when unknown.")
 
     static let identifiers = identifiersSchema(brand: "Brand exactly as printed or recognizable; null if not visible.")
 
     /// Identify's identifiers: the brand may come from a legible logo or from distinctive design, the product line
     /// goes in `model_line` with a `confidence`, and `model` stays an exact printed model number. `appearance_cues`
     /// sorts first, so the evidence is written before the brand it supports. No example names: the fast models copy them.
+    /// `packaging_materials` is optional, so items without packaging spend no output on it.
     static let identifyIdentifiers = identifiersSchema(
         brand: "Maker, from a legible logo or name or from distinctive design cues; null for unbranded or unrecognizable items.",
         model: "Exact model number as printed on the item or in the OCR hints; null if none is legible. Never guess one or derive it from the model line.",
@@ -61,29 +70,34 @@ enum SchemaParts {
             "confidence": enumeration(IdentificationConfidence.allCases.map(\.rawValue),
                 "For the most specific of model, model_line and brand: high = printed or a design unique to that line; medium = strong design cues, variant uncertain; low = best guess.",
                 nullable: true),
+        ],
+        optional: [
+            "packaging_materials": materialList("Food, drinks and filled household or personal-care products: split of the packaging thrown away after use (cup, lid, straw, bottle, can, bag, wrapper), the packaging that packaging_mass_g weighs. Omit or leave empty when unpackaged."),
         ])
 
     static func identifiersSchema(brand: String,
                                   model: String = "Model number/name exactly as printed on the item or in the OCR hints; null if none is legible. Never guess one.",
-                                  lineLevel: [String: JSONValue] = [:]) -> JSONValue {
+                                  lineLevel: [String: JSONValue] = [:], optional: [String: JSONValue] = [:]) -> JSONValue {
         object([
             "brand": nullableString(brand),
             "model": nullableString(model),
             "gtin": nullableString("GTIN/EAN/UPC digits if a barcode hint or printed number belongs to this item; else null."),
             "materials": materials,
             "visible_text": nullableString("Short label text read from this item (energy label, care label, nutrition panel), if any."),
-        ].merging(lineLevel) { _, line in line }, required: ["brand", "model", "gtin", "materials"] + lineLevel.keys.sorted())
+        ].merging(lineLevel) { _, line in line }.merging(optional) { _, extra in extra },
+        required: ["brand", "model", "gtin", "materials"] + lineLevel.keys.sorted())
     }
 
     static let quantities = object([
         "mass_kg": nullableNumber("Mass of the item as pictured (one unit or one serving), kg."),
-        "serving_kg": nullableNumber("Food only: mass of one serving, kg."),
-        "packaging_mass_g": nullableNumber("Mass of packaging around/with the item, g."),
+        "serving_kg": nullableNumber("Food only: mass of one serving, kg. A single drink, cup or snack pack is one serving."),
+        "packaging_mass_g": nullableNumber("Mass of the packaging thrown away after use (cup, lid, straw, bottle, wrapper), g. Null when unpackaged; reusable dishes are not packaging."),
         "screen_size_inches": nullableNumber("Displays only: diagonal, inches."),
         "rated_power_w": nullableNumber("Rated or label wattage, W (prefer OCR wattage hints)."),
         "volume_liters": nullableNumber("Drinks/containers/appliances: volume, L."),
-        "food_group": nullableString("Food only: reference food-group key (see list in instructions)."),
+        "food_group": nullableString("Food only: reference food-group key for the food as served (see list in instructions)."),
         "device_type": nullableString("Electronics/appliances: reference device-type key (see list in instructions)."),
+        "cooked": nullableBoolean("Food only: true when cooked from a dry grain, pasta or pulse (boiled rice, pasta, porridge, cooked or canned beans), so the mass includes absorbed water; else null."),
     ], required: ["mass_kg"])
 
     static let usage = object([

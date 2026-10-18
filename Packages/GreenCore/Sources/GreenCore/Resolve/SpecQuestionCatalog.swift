@@ -96,8 +96,9 @@ public enum SpecQuestionCatalog {
         var questions: [SpecQuestion] = []
         if !knowsMaterial {
             let mass = knowsMass ? nil : typicalHouseholdKg(component.name)
+            // Glass or ceramic household goods are tableware (mugs, bowls, vases), not bottles and jars.
             let materials: [(String, String)] = [("Wood", "wood"), ("Plastic", "other_plastic"), ("Metal", "steel"),
-                                                 ("Glass or ceramic", "glass"), ("Fabric", "cotton_textile")]
+                                                 ("Glass or ceramic", "ceramic"), ("Fabric", "cotton_textile")]
             questions.append(question(component, .material, "What is it mostly made of?",
                                       materials.map { SpecOption(label: $0.0, materials: [MaterialShare(material: $0.1, percent: 100)], massKg: mass) }))
         }

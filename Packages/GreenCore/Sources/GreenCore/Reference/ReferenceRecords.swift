@@ -8,6 +8,11 @@ public struct MaterialFactor: Codable, Sendable, Hashable {
     /// Cradle-to-gate production footprint.
     public var kgCO2ePerKg: Double
     public var litersPerKg: Double
+    /// Does not break down (glass, ceramic, stainless steel). It lingers without polluting, so it gets no
+    /// decomposition time.
+    public var isInert: Bool
+    /// Used up rather than thrown away (food, a cleaner's formula): never packaging, never in end-of-life metrics.
+    public var isConsumed: Bool
     public var verified: Bool
 
     public var citation: Source { endOfLife.citation }

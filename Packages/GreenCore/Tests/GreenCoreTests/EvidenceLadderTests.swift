@@ -39,7 +39,10 @@ struct EvidenceLadderTests {
             let result = await SampleScans.resolved(scene)
             #expect(!result.components.isEmpty)
             for component in result.components {
-                #expect(component.missingMetrics.isEmpty, "\(scene) \(component.name) missing \(component.missingMetrics)")
+                // Records and estimates only: unpackaged food has no end-of-life figures to give.
+                let unpackaged = component.category == .food && !FoodServing.isPackaged(component)
+                let allowed: Set<MetricKey> = unpackaged ? [.plasticMass, .recyclablePercent, .decompositionTime] : []
+                #expect(Set(component.missingMetrics).isSubset(of: allowed), "\(scene) \(component.name) missing \(component.missingMetrics)")
             }
             #expect(result.totals[.carbon] != nil)
         }
