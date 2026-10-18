@@ -21,7 +21,7 @@ extension ImpactEngine {
             return .unitsPerYear((usage?.servingsPerWeek ?? FoodServing.defaultServingsPerWeek) * Self.weeksPerYear)
         case .packaging, .personalCare:
             return .unitsPerYear((usage?.usesPerWeek ?? 1) * Self.weeksPerYear)
-        case .electronic, .clothing, .household:
+        case .electronic, .clothing, .household, .vehicle:
             return .lifetime(lifespan: lifespan(of: component))
         }
     }
@@ -32,6 +32,10 @@ extension ImpactEngine {
         if component.category == .clothing, let garment = store?.garment {
             return Measured(value: garment.lifespanYears, relativeRange: 0.4, unit: .years, tier: .factorModel,
                             sources: [garment.lifespanCitation])
+        }
+        if let vehicle = vehicleModel(for: component) {
+            return Measured(value: vehicle.factors.lifespanYears, relativeRange: 0.25, unit: .years, tier: .factorModel,
+                            sources: [vehicle.factors.lifespanCitation])
         }
         if let defaults = reference.deviceDefaults(deviceType: component.quantities.deviceType ?? component.name) {
             return Measured(value: defaults.lifespanYears, relativeRange: 0.3, unit: .years, tier: .factorModel,

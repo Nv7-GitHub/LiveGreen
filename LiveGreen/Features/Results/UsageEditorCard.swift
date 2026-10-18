@@ -56,8 +56,13 @@ struct UsageEditorCard: View {
         }
     }
 
-    /// For food, what the item's figures cover and how a year is counted from the slider.
+    /// For food, what the item's figures cover and how a year is counted from the slider; for a vehicle, what its
+    /// year is made of.
     private var basisNote: String? {
+        if component.category == .vehicle {
+            let years = Int(ImpactEngine().lifespan(of: component).value.rounded())
+            return "A year is driving this far, plus making the vehicle spread over \(years) years."
+        }
         guard let basis = component.basisTitle else { return nil }
         let unit = FoodServing.isPerPack(component) ? "packs" : "servings"
         return "\(basis). A year is \(unit) a week × 52."
@@ -73,6 +78,7 @@ struct UsageEditorCard: View {
         case .wearsPerYear: "Worn"
         case .usesPerWeek: "Used"
         case .chargesPerWeek: "Charged"
+        case .kmPerWeek: "Driven"
         }
     }
 }

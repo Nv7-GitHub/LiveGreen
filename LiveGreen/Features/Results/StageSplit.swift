@@ -75,12 +75,13 @@ nonisolated struct StageSplit: Equatable, Sendable {
             case .packaging: [.materials: 0.60, .manufacturing: 0.20, .transport: 0.08, .endOfLife: 0.12]
             case .household: [.materials: 0.40, .manufacturing: 0.30, .transport: 0.08, .use: 0.15, .endOfLife: 0.07]
             case .personalCare: [.materials: 0.35, .manufacturing: 0.15, .transport: 0.05, .use: 0.40, .endOfLife: 0.05]
+            case .vehicle: [.materials: 0.08, .manufacturing: 0.015, .transport: 0.003, .use: 0.9, .endOfLife: 0.002]
             }
         default:
             switch category {
             case .food, .clothing: [.materials: 0.90, .manufacturing: 0.07, .use: 0.03]
             case .personalCare: [.materials: 0.45, .manufacturing: 0.10, .use: 0.45]
-            case .electronic, .packaging, .household: [.materials: 0.60, .manufacturing: 0.35, .use: 0.05]
+            case .electronic, .packaging, .household, .vehicle: [.materials: 0.60, .manufacturing: 0.35, .use: 0.05]
             }
         }
     }

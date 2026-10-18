@@ -114,8 +114,14 @@ extension ScanPipeline {
     }
 
     /// A `household` item with a known powered device type (dishwasher, kettle…) is an electronic, so it gets
-    /// power and electricity metrics, ENERGY STAR records and the smart-plug option.
+    /// power and electricity metrics, ENERGY STAR records and the smart-plug option. A road vehicle filed as household
+    /// or electronic is a vehicle (`VehicleModel.isVehicle`).
     func reclassified(_ component: IdentifiedComponent) -> IdentifiedComponent {
+        if VehicleModel.isVehicle(name: component.name, category: component.category, quantities: component.quantities) {
+            var copy = component
+            copy.category = .vehicle
+            return copy
+        }
         guard component.category == .household, let type = component.quantities.deviceType,
               engine.store?.deviceProfile(deviceType: type) != nil else { return component }
         var copy = component

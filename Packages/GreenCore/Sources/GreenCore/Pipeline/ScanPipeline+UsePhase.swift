@@ -4,8 +4,18 @@ extension ScanPipeline {
     /// Spec-sheet PCFs (T2) and model estimates (T4) report electronics carbon without use-phase electricity
     /// (the prompts ask for that), so the use phase is added here: lifetime carbon = embodied + yearly kWh ×
     /// grid × lifespan, the same formula as the factor model. Records (T1) and factor models (T3) already
-    /// include it.
+    /// include it. A vehicle's researched or estimated carbon is its production likewise (the prompts ask for that),
+    /// and gets its driving added by the vehicle model.
     func addingUsePhase(to component: Component) -> Component {
+        if let vehicle = engine.vehicleModel(for: component) {
+            guard let production = component.metrics[.carbon],
+                  production.tier == .researchedSpec || production.tier == .estimate else { return component }
+            var result = component
+            let lifetime = engine.vehicleLifetimeCarbon(production: production, of: component, model: vehicle, profile: profile)
+            result.metrics[.carbon] = lifetime.carbon
+            result.stageShares = lifetime.stages
+            return result
+        }
         guard component.category == .electronic, let embodied = component.metrics[.carbon],
               embodied.tier == .researchedSpec || embodied.tier == .estimate,
               let kWh = component.metrics[.yearlyElectricity] else { return component }

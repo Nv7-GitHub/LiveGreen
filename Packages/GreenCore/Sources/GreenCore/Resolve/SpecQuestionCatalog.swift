@@ -16,6 +16,8 @@ public enum SpecQuestionCatalog {
         case .electronic: electronic(component, store: store)
         // The factor model only covers a personal-care item's container, never its carbon.
         case .personalCare: []
+        // Never "What is it mostly made of?": the vehicle model needs no material, and one material misprices a car.
+        case .vehicle: []
         }
     }
 

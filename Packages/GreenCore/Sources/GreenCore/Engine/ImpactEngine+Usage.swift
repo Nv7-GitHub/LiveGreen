@@ -1,29 +1,42 @@
 extension ImpactEngine {
     /// Applies an updated usage profile locally (spec §5.5: answering a question re-runs the engine, no network).
     /// For electronics, yearly electricity is re-derived from the power metrics and the carbon metric's use phase
-    /// is shifted by the change in electricity over the item's lifespan. Food and consumables need no change:
-    /// their yearly view already scales with servings, packs or uses.
+    /// is shifted by the change in electricity over the item's lifespan; for vehicles, by the change in yearly
+    /// driving. Food and consumables need no change: their yearly view already scales with servings, packs or uses.
     public func applyingUsage(_ usage: UsageProfile, to component: Component, profile: UserProfile) -> Component {
         var updated = component
         updated.usage = usage
+        if let vehicle = vehicleModel(for: component) {
+            if let kWh = vehicle.yearlyElectricity(usage, seed: component.stableSeed) { updated.metrics[.yearlyElectricity] = kWh }
+            let grid = gridGramsPerKWh(for: profile)
+            let yearlyDelta = vehicle.drivingKgCO2e(kmPerYear: vehicle.kmPerYear(usage), gramsPerKWh: grid)
+                - vehicle.drivingKgCO2e(kmPerYear: vehicle.kmPerYear(component.usage), gramsPerKWh: grid)
+            return shiftingUsePhase(of: updated, from: component, byKg: yearlyDelta * lifespan(of: component).value)
+        }
         guard component.category == .electronic,
               let newKWh = derivedYearlyElectricity(for: updated) else { return updated }
         let oldKWh = component.metrics[.yearlyElectricity]
         updated.metrics[.yearlyElectricity] = newKWh
 
-        guard let oldKWh, let carbon = component.metrics[.carbon] else { return updated }
+        guard let oldKWh else { return updated }
         let lifespanYears = lifespan(of: component).value
         let deltaKg = Self.useCarbon(kWh: newKWh.value - oldKWh.value, gramsPerKWh: gridGramsPerKWh(for: profile)) * lifespanYears
-        let newValue = max(carbon.value + deltaKg, 0)
-        updated.metrics[.carbon] = Measured(value: newValue, low: max(carbon.low + deltaKg, 0), high: max(carbon.high + deltaKg, newValue),
-                                            unit: carbon.unit, tier: carbon.tier, sources: carbon.sources)
+        return shiftingUsePhase(of: updated, from: component, byKg: deltaKg)
+    }
 
-        // Keep the flow view consistent: grow or shrink the use stage by the same delta.
+    /// `updated` with `component`'s carbon moved by `deltaKg` of use phase. The flow view stays consistent: the use
+    /// stage grows or shrinks by the same amount.
+    private func shiftingUsePhase(of updated: Component, from component: Component, byKg deltaKg: Double) -> Component {
+        guard let carbon = component.metrics[.carbon] else { return updated }
+        var result = updated
+        let newValue = max(carbon.value + deltaKg, 0)
+        result.metrics[.carbon] = Measured(value: newValue, low: max(carbon.low + deltaKg, 0), high: max(carbon.high + deltaKg, newValue),
+                                           unit: carbon.unit, tier: carbon.tier, sources: carbon.sources)
         let shares = stageShares(for: component, metric: .carbon)
         var absolute = shares.mapValues { $0 * carbon.value }
         absolute[.use, default: 0] = max((absolute[.use] ?? 0) + deltaKg, 0)
-        updated.stageShares = StageModel.normalized(absolute)
-        return updated
+        result.stageShares = StageModel.normalized(absolute)
+        return result
     }
 
     /// Applies one question answer (`AnswerOption.field` = `value`); options without a field leave the estimate.
@@ -64,6 +77,9 @@ extension ImpactEngine {
             return [(.servingsPerWeek, usage?.servingsPerWeek ?? FoodServing.defaultServingsPerWeek)]
         case .packaging, .personalCare:
             return [(.usesPerWeek, usage?.usesPerWeek ?? 1)]
+        case .vehicle:
+            let typicalKm = (vehicleModel(for: component)?.factors.kmPerYear ?? 0) / Self.weeksPerYear
+            return typicalKm > 0 || usage?.kmPerWeek != nil ? [(.kmPerWeek, usage?.kmPerWeek ?? typicalKm)] : []
         case .clothing, .household:
             return []
         }

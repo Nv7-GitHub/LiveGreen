@@ -143,6 +143,17 @@ extension ClaudeClient: VisionIdentifier {
         (jarred, canned, pickled or marinated vegetables, olives). Bread stays wheat_rye.
         \(PromptParts.vocabularyList(vocabulary))
 
+        Vehicles and household consumables
+        - Cars, SUVs, vans, pickups and motorcycles are `vehicle`, whatever drives them: an EV is a vehicle, not \
+        `electronic`. mass_kg is the curb mass. Set powertrain from badges and design: electric for a closed or \
+        absent grille, no tailpipe, a charge-port door, or a body unique to an EV line (Tesla models, Nissan Leaf, \
+        Hyundai Ioniq 5, Chevrolet Bolt, Polestar); hybrid or plug_in_hybrid for a hybrid or plug-in badge; diesel for \
+        a diesel badge; else petrol. Name the make and model line when a badge or the design shows it. Give no \
+        materials for a vehicle. Its fallback carbon is making it only; the app adds driving.
+        - consumable: true for household goods that are used up and replaced (cleaning sprays and detergents, paper \
+        notebooks and pads, sponges, candles, trash bags), with uses_per_container: about how many uses one lasts \
+        (treatments in a spray bottle, loads in a detergent jug, writing sessions in a notebook). Null for durable goods.
+
         Default usage
         - Typical usage for this specific user (see their profile): hours on and in standby per day for \
         electronics, servings per week for food, wears per year for clothing, uses per week for single-use and \

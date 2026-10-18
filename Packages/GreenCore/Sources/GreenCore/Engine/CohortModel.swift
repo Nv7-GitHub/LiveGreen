@@ -53,7 +53,7 @@ public struct CohortModel: Sendable {
                 value *= heatingModifier
             }
             return value
-        case .packaging, .personalCare:
+        case .packaging, .personalCare, .vehicle:
             return 1
         }
     }

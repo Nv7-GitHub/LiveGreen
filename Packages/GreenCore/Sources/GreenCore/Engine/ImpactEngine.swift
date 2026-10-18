@@ -8,6 +8,7 @@ import Foundation
 /// - packaging, personal care: per unit consumed; a year is `usesPerWeek × 52` units.
 /// - electronic, clothing, household (durables): per item over its whole life; carbon includes the use phase
 ///   (embodied + yearly use × lifespan), so a year is the lifetime value ÷ lifespan.
+/// - vehicle: likewise per vehicle over its life, the use phase being driving (`VehicleModel`).
 /// `yearlyElectricity` is already yearly.
 public struct ImpactEngine: Sendable {
     public static let daysPerYear = 365.0
@@ -90,6 +91,10 @@ public struct ImpactEngine: Sendable {
     /// Yearly electricity from power metrics and usage: battery charging when the device has a battery and
     /// `chargesPerWeek` is known, else on/standby power × hours. Nil when power or hours are unknown.
     public func derivedYearlyElectricity(for component: Component) -> Measured? {
+        // A vehicle's electricity is its charging for the distance driven, nil when it never plugs in.
+        if let vehicle = vehicleModel(for: component) {
+            return vehicle.yearlyElectricity(component.usage, seed: component.stableSeed)
+        }
         let profile = store?.deviceProfile(deviceType: component.quantities.deviceType ?? component.name)
         let usage = component.usage
         let mc = MonteCarlo(seed: component.stableSeed)
