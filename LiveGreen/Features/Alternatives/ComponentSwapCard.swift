@@ -16,9 +16,8 @@ struct ComponentSwapCard: View {
                 HStack {
                     Label(component.name, systemImage: component.category.systemImage).font(.headline)
                     Spacer()
-                    if let carbon = component.displayable(.carbon) {
-                        Text([carbon.formatted, component.basisLabel].compactMap(\.self).joined(separator: " "))
-                            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                    if let carbon = yearlyCarbon {
+                        Text("\(carbon.formatted)/yr").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                     }
                 }
                 ForEach(alternatives) { alternative in
@@ -41,6 +40,12 @@ struct ComponentSwapCard: View {
             }
         }
         .animation(.smooth, value: pick?.id)
+    }
+
+    /// The item's carbon per year, the basis of the savings and charts below it (not one serving or the lifetime).
+    private var yearlyCarbon: Measured? {
+        guard component.displayable(.carbon) != nil else { return nil }
+        return SwapMath.yearlyCarbon(of: component)
     }
 
     /// A food swap for a per-pack item covers the same amount of food at the same rate (`Alternative.onBasis`).
