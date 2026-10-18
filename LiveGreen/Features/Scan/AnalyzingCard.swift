@@ -22,7 +22,8 @@ struct AnalyzingCard: View {
     @State private var identifyStart: Date?
 
     var body: some View {
-        GlassCard {
+        // Tinted toward the system background so the text keeps its contrast over a dark or busy photo.
+        GlassCard(tint: Color(uiColor: .systemBackground).opacity(0.6)) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text("Analyzing").font(.headline)
@@ -33,9 +34,11 @@ struct AnalyzingCard: View {
                 }
                 ForEach(PipelineStep.allCases, id: \.self) { step in
                     stepRow(step)
-                    if step == .identifying, isIdentifying { liveIdentify }
+                    if step == .identifying {
+                        if isIdentifying { liveStatus }
+                        if !itemNames.isEmpty { itemChips }
+                    }
                 }
-                if !components.isEmpty { componentChips }
                 if let lastWarning {
                     Label(lastWarning, systemImage: "arrow.turn.down.right")
                         .font(.caption2)
@@ -69,7 +72,7 @@ struct AnalyzingCard: View {
         } else if progress.started.contains(step) {
             ProgressView().controlSize(.small)
         } else {
-            Image(systemName: "circle").foregroundStyle(.tertiary)
+            Image(systemName: "circle").foregroundStyle(.secondary)
         }
     }
 
@@ -79,7 +82,7 @@ struct AnalyzingCard: View {
         switch step {
         case .readingLabels: return nil
         case .identifying:
-            return components.isEmpty ? nil : "\(components.count) items"
+            return components.isEmpty ? nil : "\(components.count) item\(components.count == 1 ? "" : "s")"
         case .lookingUpRecords: count = tierCounts[.exactRecord, default: 0]
         case .researchingSpecs: count = tierCounts[.researchedSpec, default: 0]
         case .computing: count = tierCounts[.factorModel, default: 0] + tierCounts[.estimate, default: 0]
@@ -91,63 +94,70 @@ struct AnalyzingCard: View {
         progress.started.contains(.identifying) && !progress.finished.contains(.identifying)
     }
 
-    /// While the model answers: a seconds counter, what it is doing, and each item name as it is spotted.
-    private var liveIdentify: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            TimelineView(.periodic(from: .now, by: 0.1)) { context in
-                let elapsed = identifyStart.map { context.date.timeIntervalSince($0) } ?? 0
-                HStack(spacing: 6) {
-                    Image(systemName: "sparkles").symbolEffect(.pulse)
-                    Text(liveStatus).lineLimit(1)
-                    Spacer()
-                    Text(elapsed, format: .number.precision(.fractionLength(1)))
-                        .monospacedDigit()
-                    + Text(" s")
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+    /// While the model answers: what it is doing and a seconds counter. The line swaps its text without animating,
+    /// so an old and a new status never draw over each other mid-transition.
+    private var liveStatus: some View {
+        TimelineView(.periodic(from: .now, by: 0.1)) { context in
+            let elapsed = identifyStart.map { context.date.timeIntervalSince($0) } ?? 0
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Image(systemName: "sparkles").symbolEffect(.pulse)
+                Text(statusText)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 8)
+                Text("\(elapsed, format: .number.precision(.fractionLength(1))) s")
+                    .monospacedDigit()
             }
-            if !spotted.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        ForEach(Array(spotted.enumerated()), id: \.offset) { index, name in
-                            Label(name, systemImage: "eye")
-                                .font(.caption)
-                                .lineLimit(1)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                                .glassEffect(.regular.tint(Theme.mint.opacity(0.25)), in: .capsule)
-                                .transition(.scale.combined(with: .opacity))
-                                .id(index)
-                        }
-                    }
-                }
-            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .transaction { $0.animation = nil }
         }
         .padding(.leading, 32)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("liveIdentify")
     }
 
-    private var liveStatus: String {
+    private var statusText: String {
         if spotted.isEmpty { return writtenCharacters > 0 ? "Reading the photo…" : "Looking at the photo…" }
-        return "Spotted \(spotted.count) item\(spotted.count == 1 ? "" : "s"), measuring sizes and materials…"
+        return "Spotted \(spotted.count) item\(spotted.count == 1 ? "" : "s"), measuring…"
     }
 
-    private var componentChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
-                ForEach(components) { component in
-                    Label(component.name, systemImage: component.category.systemImage)
-                        .font(.caption)
-                        .lineLimit(1)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .glassEffect(.regular.tint(Theme.mint.opacity(0.25)), in: .capsule)
-                        .transition(.scale.combined(with: .opacity))
-                }
+    /// The items found so far: names as the model streams them, then the identified items in their place. Chips keep
+    /// their position, so a name the final answer words differently ("Gray SUV (partial)" → "Grey SUV (partially
+    /// visible)") reads as the same item updated, not a new one.
+    private var itemNames: [(name: String, systemImage: String)] {
+        components.isEmpty ? spotted.map { ($0, "eye") } : components.map { ($0.name, $0.category.systemImage) }
+    }
+
+    /// At most this many chips; the rest are counted in a last chip so the card stays short.
+    private static let maxChips = 6
+
+    private var itemChips: some View {
+        let items = itemNames
+        let shown = items.count > Self.maxChips ? Array(items.prefix(Self.maxChips - 1)) : items
+        return WrappingChips(spacing: 6) {
+            ForEach(Array(shown.enumerated()), id: \.offset) { _, item in
+                chip(item.name, systemImage: item.systemImage)
+            }
+            if shown.count < items.count {
+                chip("+\(items.count - shown.count) more", systemImage: "ellipsis")
             }
         }
+        .padding(.leading, 32)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("identifiedItems")
+    }
+
+    /// A plain tinted capsule: glass chips on the glass card merged into blurred blobs and drew over the next row.
+    private func chip(_ title: String, systemImage: String) -> some View {
+        Label(title, systemImage: systemImage)
+            .font(.caption)
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Theme.mint.opacity(0.3), in: .capsule)
+            .transition(.opacity)
     }
 
     private func consume() async {
@@ -180,6 +190,56 @@ struct AnalyzingCard: View {
         case let .warning(message): lastWarning = message
         default: break
         }
+    }
+}
+
+/// Lays chips out in rows, wrapping before the card's edge; a chip wider than a whole row is truncated to fit
+/// rather than clipped.
+private struct WrappingChips: Layout {
+    var spacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? .infinity
+        let rows = arrange(subviews, width: width)
+        let height = rows.map(\.height).reduce(0, +) + spacing * CGFloat(max(rows.count - 1, 0))
+        return CGSize(width: proposal.width ?? rows.map(\.width).max() ?? 0, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        for row in arrange(subviews, width: bounds.width) {
+            var x = bounds.minX
+            for (index, size) in zip(row.indices, row.sizes) {
+                subviews[index].place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+                x += size.width + spacing
+            }
+            y += row.height + spacing
+        }
+    }
+
+    private struct Row {
+        var indices: [Int] = []
+        var sizes: [CGSize] = []
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+    }
+
+    private func arrange(_ subviews: Subviews, width: CGFloat) -> [Row] {
+        var rows: [Row] = [Row()]
+        for index in subviews.indices {
+            let size = subviews[index].sizeThatFits(ProposedViewSize(width: width.isFinite ? width : nil, height: nil))
+            let fitted = CGSize(width: min(size.width, width), height: size.height)
+            if !rows[rows.count - 1].indices.isEmpty, rows[rows.count - 1].width + spacing + fitted.width > width {
+                rows.append(Row())
+            }
+            var row = rows[rows.count - 1]
+            row.width += (row.indices.isEmpty ? 0 : spacing) + fitted.width
+            row.height = max(row.height, fitted.height)
+            row.indices.append(index)
+            row.sizes.append(fitted)
+            rows[rows.count - 1] = row
+        }
+        return rows
     }
 }
 
