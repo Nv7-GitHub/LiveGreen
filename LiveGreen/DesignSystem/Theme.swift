@@ -14,7 +14,7 @@ enum Theme {
     static let cardCornerRadius: CGFloat = 24
     static let hotspotCornerRadius: CGFloat = 14
 
-    /// Hotspot tint for a component's share of scan carbon: green (small) → amber → red (dominant).
+    /// AR label tint for a component's share of scan carbon: green (small) → amber → red (dominant).
     static func carbonShareTint(_ share: Double) -> Color {
         let s = min(max(share, 0), 1)
         switch s {
@@ -22,6 +22,18 @@ enum Theme {
         case ..<0.4: return .yellow
         case ..<0.65: return .orange
         default: return danger
+        }
+    }
+
+    /// Results pin and row tint for how large an item's yearly amount is next to one person's year
+    /// (`ImpactLevel`): green → amber → orange → red, each dark enough for a white number. Gray without a level.
+    static func impactTint(_ level: ImpactLevel?) -> Color {
+        switch level {
+        case .low: leaf
+        case .moderate: Color(red: 0.80, green: 0.58, blue: 0.02)
+        case .high: Color(red: 0.91, green: 0.44, blue: 0.10)
+        case .veryHigh: danger
+        case nil: .gray
         }
     }
 }

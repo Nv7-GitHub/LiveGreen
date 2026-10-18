@@ -2,11 +2,15 @@ import SwiftUI
 import UIKit
 import GreenCore
 
-/// The captured still at its own aspect ratio, so normalized boxes map onto it directly. Barcode scans
-/// show the product's pack shot from its record; scans without any photo get a neutral 4:3 backdrop.
-struct ResultPhoto: View {
+/// The captured still at its own aspect ratio, so normalized boxes map onto it directly, with `overlay` (the
+/// hotspots) drawn on the image itself. With `maxHeight`, a tall photo is shown at most that tall, centered on a
+/// blurred copy of itself, so a phone screenshot no longer fills the first screen. Barcode scans show the product's
+/// pack shot from its record; scans without any photo get a neutral 4:3 backdrop.
+struct ResultPhoto<Overlay: View>: View {
     let data: Data?
     var mode: ScanMode = .photo
+    var maxHeight: CGFloat?
+    @ViewBuilder var overlay: Overlay
 
     private var image: UIImage? { data.flatMap(UIImage.init(data:)) }
 
@@ -22,11 +26,9 @@ struct ResultPhoto: View {
                     .frame(maxWidth: .infinity)
                     .background(.white)
                     .accessibilityLabel("Product photo")
+                    .overlay { overlay }
             } else {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .accessibilityLabel("Scanned photo")
+                photo(image)
             }
         } else {
             LinearGradient(colors: [Theme.moss.opacity(0.8), Theme.leaf.opacity(0.35)],
@@ -45,6 +47,36 @@ struct ResultPhoto: View {
                         .foregroundStyle(.white.opacity(0.7))
                         .padding(10)
                 }
+                .overlay { overlay }
         }
+    }
+
+    private func photo(_ image: UIImage) -> some View {
+        let aspect = image.size.height > 0 ? image.size.width / image.size.height : 4 / 3
+        return Image(uiImage: image)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .accessibilityLabel("Scanned photo")
+            // On the image itself: on the container it would replace every hotspot's identifier.
+            .accessibilityIdentifier("resultPhoto")
+            .overlay { overlay }
+            // Capping the width caps the height: a fitted image is its width over its aspect ratio tall.
+            .frame(maxWidth: maxHeight.map { $0 * aspect } ?? .infinity)
+            .frame(maxWidth: .infinity)
+            // Fills the bands beside a capped photo, so the card keeps its full width and rounded corners.
+            .background {
+                if maxHeight != nil {
+                    Color.clear
+                        .overlay {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .blur(radius: 24, opaque: true)
+                        }
+                        .overlay(.black.opacity(0.12))
+                        .clipped()
+                        .accessibilityHidden(true)
+                }
+            }
     }
 }
