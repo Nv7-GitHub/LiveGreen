@@ -1,9 +1,12 @@
 import Foundation
 import GreenCore
 
-/// Suggests one deterministic greener alternative per component, with estimates 40% better than the
-/// component's resolved metrics (its own fallback estimates where a metric is unresolved), so every metric
-/// improves and the swap passes the GreenScore trade-off rule.
+/// Suggests one deterministic greener alternative per component. Disposable packaging gets a reusable steel one,
+/// modeled from its own mass and material like a real suggester's. Everything else gets estimates 40% better than
+/// the component's resolved metrics (its own fallback estimates where a metric is unresolved) and names no food
+/// group, device type or materials, so the pipeline uses the estimates rather than modeling the swap as the same
+/// item; a durable swap of the same kind is still compared over the original's lifespan. Every swap passes the
+/// GreenScore trade-off rule.
 public struct FakeAlternativeSuggester: AlternativeSuggester {
     public var latency: Duration
 
@@ -21,6 +24,8 @@ public struct FakeAlternativeSuggester: AlternativeSuggester {
 
     private func alternative(for component: Component) -> Alternative {
         let (name, rationale, practicality) = Self.swap(for: component)
+        if component.category == .packaging { return reusable(for: component, name: name, rationale: rationale,
+                                                              practicality: practicality) }
         var baseline = component.fallbackEstimates
         for (metric, measured) in component.metrics {
             // An estimated swap's carbon is embodied only; the pipeline adds its use phase, as for originals.
@@ -37,9 +42,24 @@ public struct FakeAlternativeSuggester: AlternativeSuggester {
                                               low: min(estimate.low * factor, bound),
                                               high: min(estimate.high * factor, bound))
         }
-        return Alternative(name: name, category: component.category, quantities: component.quantities,
+        var quantities = component.quantities
+        quantities.foodGroup = nil
+        quantities.deviceType = nil
+        return Alternative(name: name, category: component.category, quantities: quantities,
                            usage: component.usage, rationale: rationale, practicality: practicality,
                            fallbackEstimates: estimates)
+    }
+
+    /// A steel cup or food container used for five years, washed after every use.
+    private func reusable(for component: Component, name: String, rationale: String,
+                          practicality: Practicality) -> Alternative {
+        let massKg = name.lowercased().contains("container") ? 0.35 : 0.3
+        return Alternative(name: name, category: .household,
+                           identifiers: Identifiers(materials: [MaterialShare(material: "steel", percent: 100)]),
+                           quantities: Quantities(massKg: massKg), usage: component.usage, rationale: rationale,
+                           practicality: practicality,
+                           fallbackEstimates: [.lifespan: EstimateRange(value: 5, low: 3, high: 8)],
+                           isReusable: true, lifespanYears: 5)
     }
 
     /// Lowercases a leading common word so it reads mid-sentence, keeping brands and acronyms ("ASUS").
@@ -67,7 +87,7 @@ public struct FakeAlternativeSuggester: AlternativeSuggester {
             ("Plant-based \(inline(withoutMeat(component.name)))",
              "Plant proteins need far less land and emit less methane.", Practicality(cost: .similar, effort: .easy))
         case .packaging where component.name.lowercased().contains("box"):
-            ("Reusable food container", "Bring your own container; one replaces hundreds of takeout boxes.",
+            ("Reusable steel food container", "Bring your own container; one replaces hundreds of takeout boxes.",
              Practicality(cost: .higher, effort: .moderate))
         case .packaging:
             ("Reusable steel cup", "One cup replaces hundreds of disposables.", Practicality(cost: .higher, effort: .easy))

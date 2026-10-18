@@ -10,10 +10,11 @@ struct MetricInspector: View {
         let metrics = component.displayableMetrics
         GlassCard {
             VStack(alignment: .leading, spacing: 4) {
-                HStack {
+                // The legend sits beside the title, clear of the sheet's Done button at the trailing edge.
+                HStack(spacing: 10) {
                     Text("Inspector").font(.headline)
-                    Spacer()
                     TierLegend()
+                    Spacer(minLength: 0)
                 }
                 ForEach(metrics, id: \.self) { metric in
                     if let measured = component.displayable(metric) {

@@ -99,8 +99,12 @@ struct AlternativesView: View {
         }
     }
 
+    /// Biggest yearly saving first (`SwapMath.byYearlySaving`), not the order items were spotted in.
     @ViewBuilder private var swapCards: some View {
-        ForEach(screen.result.components) { component in
+        let ordered = SwapMath.byYearlySaving(screen.result.components) {
+            screen.alternatives(for: $0, plugFeatures: plugFeatures)
+        }
+        ForEach(ordered) { component in
             let options = screen.alternatives(for: component, plugFeatures: plugFeatures)
             if !options.isEmpty {
                 ComponentSwapCard(component: component, alternatives: options,

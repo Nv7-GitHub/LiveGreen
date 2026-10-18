@@ -13,10 +13,12 @@ import Foundation
 /// A metric is relevant when it applies to both categories, both sides have a value, and the two values are not
 /// both negligible. Amounts are compared per year of doing the same job where they recur for the original
 /// (`recursYearly`), so a reusable cup is set against a year of disposable ones; ratings, shares, power draw and
-/// lifespan are compared as they are.
+/// lifespan are compared as they are. Decomposition time is a property of one item, so it is compared per item,
+/// only between items of the same kind (both single-use or both durable), capped at `decompositionCapYears`.
 ///
-/// A swap is kept only when no relevant metric gets more than `maxWorsening` worse and the score shows a real
-/// average gain (`minimumScore`). Smart-plug scheduling keeps the same device, so it is exempt and listed last.
+/// A swap is kept only when no relevant metric except decomposition gets more than `maxWorsening` worse, the score
+/// shows a real average gain (`minimumScore`), and a food swap is a real change (`isRelabelledFood`). Smart-plug
+/// scheduling keeps the same device, so it is exempt and listed last.
 public enum GreenScore {
     /// No relevant metric may get more than 40% worse (a factor of 1.4 on the log scale; for lifespan,
     /// repairability and recyclability that is a drop of more than ~29%).
@@ -34,9 +36,18 @@ public enum GreenScore {
         .waterPollution: 0.5,
     ]
 
-    /// Per-item amounts, which add up over items and years; the other metrics are ratings, shares, power draws
-    /// and lifespan. Decomposition counts as an amount: each item thrown away lingers that long.
-    public static let amounts: Set<MetricKey> = [.carbon, .water, .land, .plasticMass, .waterPollution, .decompositionTime]
+    /// Per-item amounts, which add up over items and years; the other metrics are ratings, shares, power draws,
+    /// lifespan and decomposition time. Decomposition is how long one item lingers, not an amount: a year of PET
+    /// cups is not 52 × 450 years, and how much is thrown away is what plastic mass counts.
+    public static let amounts: Set<MetricKey> = [.carbon, .water, .land, .plasticMass, .waterPollution]
+
+    /// Decomposition beyond this reads as "lasts" either way: plastics sit at 450–500 years, and glass's million
+    /// years is an inert material, not a worse pollutant.
+    public static let decompositionCapYears = 500.0
+
+    /// Metrics that count toward the score but never veto a swap: decomposition per item says little next to the
+    /// plastic and recyclability it comes with.
+    public static let vetoExempt: Set<MetricKey> = [.decompositionTime]
 
     /// One swap's verdict.
     public struct Assessment: Sendable, Hashable {
@@ -44,16 +55,18 @@ public enum GreenScore {
         public var score: Double
         /// Change per relevant metric (log ratio, positive = better), before clamping.
         public var changes: [MetricKey: Double]
+        /// A food swap that is the original food under another name (`GreenScore.isRelabelledFood`).
+        public var isRelabelledFood = false
 
         /// The relevant metric that gets most worse, when any does.
         public var worstMetric: MetricKey? {
             changes.filter { $0.value < 0 }.min { $0.value < $1.value }?.key
         }
 
-        /// No big trade-off on any metric and a real gain overall.
+        /// No big trade-off on any metric that can veto, a real gain overall, and a real change.
         public var isAcceptable: Bool {
-            !changes.isEmpty && score >= GreenScore.minimumScore
-                && changes.values.allSatisfy { $0 >= -log(1 + GreenScore.maxWorsening) }
+            !changes.isEmpty && !isRelabelledFood && score >= GreenScore.minimumScore
+                && changes.allSatisfy { GreenScore.vetoExempt.contains($0.key) || $0.value >= -log(1 + GreenScore.maxWorsening) }
         }
 
         /// Geometric-mean improvement as a fraction (0.25 = 25% better on average).
@@ -83,24 +96,60 @@ public enum GreenScore {
 
     /// The two values a swap is judged and shown on: per year where the metric recurs for the original (each side
     /// annualized by its own category and lifespan), else as stored. `annualized` is false for values as stored,
-    /// including yearly electricity, whose unit already says per year.
+    /// including yearly electricity, whose unit already says per year. Nil when either side has no value, and for
+    /// decomposition between a reusable and the single-use items it replaces, where one item's lifetime against
+    /// another's says nothing about how much lingers.
     public static func comparison(_ metric: MetricKey, original: Component, alternative: Alternative,
                                   engine: ImpactEngine) -> (current: Measured, swap: Measured, annualized: Bool)? {
         guard let current = original.metrics[metric], let swap = alternative.metrics[metric] else { return nil }
+        let replacement = alternative.asComponent(replacing: original)
+        if metric == .decompositionTime,
+           isDurable(original, engine: engine) != isDurable(replacement, engine: engine) { return nil }
         guard metric != .yearlyElectricity, recursYearly(metric, for: original, engine: engine) else {
             return (current, swap, false)
         }
-        let replacement = alternative.asComponent(replacing: original)
         return (current.scaled(by: yearlyFactor(metric, for: original, engine: engine)),
                 swap.scaled(by: yearlyFactor(metric, for: replacement, engine: engine)), true)
+    }
+
+    /// Kept for years (amortized over its lifespan) rather than used up.
+    static func isDurable(_ component: Component, engine: ImpactEngine) -> Bool {
+        if case .lifetime = engine.annualBasis(for: component) { return true }
+        return false
+    }
+
+    /// Whether a food swap is the original food under another name ("local", "organic", "home-made", "brown"): the
+    /// same food group, no smaller serving and no less packaging. Its factors are the original's, so any gap
+    /// between the two would only be a gap between evidence tiers, not a greener choice.
+    public static func isRelabelledFood(_ alternative: Alternative, replacing original: Component,
+                                        engine: ImpactEngine) -> Bool {
+        guard original.category == .food, alternative.category == .food,
+              let originalGroup = canonicalFoodGroup(original.quantities.foodGroup, engine: engine),
+              canonicalFoodGroup(alternative.quantities.foodGroup, engine: engine) == originalGroup else { return false }
+        let replacement = alternative.asComponent(replacing: original)
+        func isClearlySmaller(_ swap: Double?, than current: Double?) -> Bool {
+            guard let swap, let current, current > 0 else { return false }
+            return swap < current * 0.9
+        }
+        let smallerServing = isClearlySmaller(FoodServing.unitKg(replacement), than: FoodServing.unitKg(original))
+        let lessPackaging = isClearlySmaller(replacement.quantities.packagingMassG ?? 0, than: original.quantities.packagingMassG)
+        return !smallerServing && !lessPackaging
+    }
+
+    /// The reference group a food-group key or alias names ("lentils" → "other_pulses"), else the key lowercased.
+    static func canonicalFoodGroup(_ key: String?, engine: ImpactEngine) -> String? {
+        guard let key = key?.trimmingCharacters(in: .whitespaces).lowercased(), !key.isEmpty else { return nil }
+        return engine.reference.foodFactor(group: key)?.group ?? key
     }
 
     // MARK: - Score
 
     /// Change of one metric, positive = better: ln((current + floor) / (swap + floor)), flipped when higher is better.
+    /// Decomposition times are capped first (`decompositionCapYears`).
     public static func change(_ metric: MetricKey, current: Double, swap: Double) -> Double {
         let floor = negligible[metric] ?? 0
-        let ratio = log((max(current, 0) + floor) / (max(swap, 0) + floor))
+        let cap = metric == .decompositionTime ? decompositionCapYears : .infinity
+        let ratio = log((min(max(current, 0), cap) + floor) / (min(max(swap, 0), cap) + floor))
         guard ratio.isFinite else { return 0 }
         return metric.higherIsBetter ? -ratio : ratio
     }
@@ -126,7 +175,8 @@ public enum GreenScore {
         let limit = log(clampRatio)
         let clamped = changes.values.map { min(max($0, -limit), limit) }
         let score = clamped.isEmpty ? 0 : clamped.reduce(0, +) / Double(clamped.count)
-        return Assessment(score: score, changes: changes)
+        return Assessment(score: score, changes: changes,
+                          isRelabelledFood: isRelabelledFood(alternative, replacing: original, engine: engine))
     }
 
     /// Drops product swaps with a big trade-off or no real gain and orders the rest by score, best first.

@@ -42,13 +42,27 @@ extension ClaudeClient: AlternativeSuggester {
         given their profile (e.g. no meat for a vegetarian).
         - Name a real, current product with brand and model only when you are confident it exists (this enables \
         exact ENERGY STAR and spec-sheet lookups); otherwise describe the product type and leave identifiers null.
-        - Fill quantities like for the original (mass, serving size, wattage, screen size, volume, materials), and \
-        set food_group / device_type with the reference keys so factor tables apply.
+        - Fill quantities for the alternative itself (mass, serving size, wattage, screen size, volume), its \
+        identifiers.materials, and food_group / device_type with the reference keys: LiveGreen models the swap from \
+        these with the same factor tables as the original, so they decide its numbers. A food swap must be a \
+        different food (another food_group), a smaller serving or less packaging; the same food called local, \
+        organic, seasonal or home-made has the same factors and is not a swap.
+        - Reusables (a tumbler, jar, bottle, lunch box or bag used many times in place of single-use ones): set \
+        reusable true and category household, give the item's own mass and materials (stainless_steel, glass, \
+        glass_tableware, ceramic, pp, silicone, cotton…) and how many years it lasts in lifespan_years. LiveGreen \
+        spreads it over that life and adds washing for every use.
+        - Second-hand swaps: name the same kind of item and set condition used or refurbished; LiveGreen charges it a \
+        share of a new one's production impacts. Do not give it a longer lifespan than the original.
+        - lifespan_years only when the alternative lasts a different time than the original (kept longer, built to \
+        last); otherwise null, and both are compared over the same years.
         - usage: the expected usage after the swap (usually the same as the original's).
         - Practicality must be honest: cost lower / similar / higher than the original, effort easy / moderate / hard.
         - Do not suggest smart plugs or charge scheduling; LiveGreen adds that option itself.
         - fallback_estimates: rough last-resort bounds for every metric applicable to the alternative's category, \
-        in the same units and basis as the original's.
+        used only where the factor tables have nothing. Estimate the alternative on its own, from its own mass and \
+        materials, never by scaling the original's numbers, and on its own category's basis: food per serving, \
+        packaging and personal care per single unit, durables (electronics, clothing, household goods and every \
+        reusable) for one item over its whole life, made once, not per use.
 
         \(PromptParts.vocabularyList(vocabulary))
 
@@ -66,14 +80,15 @@ extension ClaudeClient: AlternativeSuggester {
         return """
             User profile: \(profile.promptSummary)
 
-            Components (JSON; current metric values are in canonical units, where already resolved):
+            Components (JSON):
             \(json)
 
             Call `suggest_alternatives` with one entry per component id.
             """
     }
 
-    /// What Claude sees about each component.
+    /// What Claude sees about each component. Its resolved metrics are left out: given them, the model scaled the
+    /// original's numbers down a few percent for a relabelled swap instead of describing the swap itself.
     struct ComponentBrief: Encodable {
         var id: String
         var name: String
@@ -81,7 +96,6 @@ extension ClaudeClient: AlternativeSuggester {
         var identifiers: Identifiers
         var quantities: Quantities
         var usage: UsageProfile?
-        var currentMetrics: [String: Double]
 
         /// Food is described per serving, as identify estimates it, so the swaps' fallback estimates come back per
         /// serving; the pipeline puts swaps for a per-pack item back on its pack (`Alternative.onBasis`).
@@ -93,7 +107,6 @@ extension ClaudeClient: AlternativeSuggester {
             identifiers = component.identifiers
             quantities = component.quantities
             usage = component.usage
-            currentMetrics = Dictionary(uniqueKeysWithValues: component.metrics.map { ($0.key.rawValue, $0.value.value) })
         }
     }
 }

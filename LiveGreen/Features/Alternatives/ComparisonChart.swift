@@ -2,8 +2,9 @@ import SwiftUI
 import Charts
 import GreenCore
 
-/// Current vs. alternative bars per key metric, with range whiskers and a "% better" chip (spec §7). Values are on
-/// the GreenScore comparison basis: per year where the impact recurs (carbon, electricity, and everything for
+/// Current vs. alternative bars per key metric, with range whiskers and a "% better" chip (spec §7), then one line
+/// for each other metric the swap changes, so every change the card counts is on screen. Values are on the
+/// GreenScore comparison basis: per year where the impact recurs (carbon, electricity, and everything for
 /// consumables), else for the item as made. A food swap for a barcoded pack is put on that pack's size and packs a
 /// week (`Alternative.onBasis`), so both bars are the same amount of food. Metrics a swap leaves unchanged are left out.
 struct ComparisonChart: View {
@@ -35,21 +36,62 @@ struct ComparisonChart: View {
     }
 
     private var metricComparisons: some View {
-        let metrics = SwapMath.keyMetrics(component, alternative)
+        let metrics = SwapMath.shownMetrics(component, alternative)
         return VStack(alignment: .leading, spacing: 16) {
             if metrics.isEmpty {
                 Text("No shared metrics to compare yet.").font(.footnote).foregroundStyle(.secondary)
             }
-            ForEach(metrics, id: \.self) { metric in
+            ForEach(metrics.prefix(SwapMath.chartLimit), id: \.self) { metric in
                 if let values = SwapMath.comparison(metric, component, alternative) {
-                    MetricComparison(metric: metric,
-                                     title: values.annualized ? "\(metric.displayName) per year" : metric.displayName,
+                    MetricComparison(metric: metric, title: title(metric, annualized: values.annualized),
                                      systemImage: metric.systemImage, current: values.current,
                                      alternative: values.swap, perYear: values.annualized)
                 }
             }
+            if metrics.count > SwapMath.chartLimit {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(metrics.dropFirst(SwapMath.chartLimit), id: \.self) { metric in
+                        if let values = SwapMath.comparison(metric, component, alternative) {
+                            MetricChangeLine(metric: metric, title: title(metric, annualized: values.annualized),
+                                             current: values.current, alternative: values.swap,
+                                             perYear: values.annualized)
+                        }
+                    }
+                }
+            }
         }
     }
+
+    private func title(_ metric: MetricKey, annualized: Bool) -> String {
+        annualized ? "\(metric.displayName) per year" : metric.displayName
+    }
+}
+
+/// One metric's change without a chart: name, the two values and the chip.
+private struct MetricChangeLine: View {
+    let metric: MetricKey
+    let title: String
+    let current: Measured
+    let alternative: Measured
+    var perYear = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .firstTextBaseline) {
+                Label(title, systemImage: metric.systemImage).font(.caption.weight(.semibold))
+                Spacer()
+                if let change = SwapMath.change(metric, current: current, alternative: alternative) {
+                    BetterChip(change: change)
+                }
+            }
+            Text("\(current.formatted)\(suffix) → \(alternative.formatted)\(suffix)")
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var suffix: String { perYear && current.unit != .kilowattHoursPerYear ? "/yr" : "" }
 }
 
 /// One metric's bar pair.
@@ -71,24 +113,29 @@ private struct MetricComparison: View {
         [Bar(id: "Current", measured: current), Bar(id: "Swap", measured: alternative)]
     }
 
+    /// Round display-unit ticks; the last one ends the axis.
+    private var ticks: [Double] {
+        SwapMath.axisTicks(upTo: max(current.high, alternative.high, current.value, alternative.value), unit: current.unit)
+    }
+
     var body: some View {
+        let ticks = ticks
+        let axisEnd = ticks.last ?? 1
+        // A bar this short still shows its color, so a value near zero is not just a whisker tick.
+        let shortest = axisEnd * 0.015
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
                 Label(title, systemImage: systemImage).font(.subheadline.weight(.semibold))
                 Spacer()
-                if let percent = SwapMath.percentBetter(metric, current: current, alternative: alternative) {
-                    // "0% better" says nothing; the bars still show the values.
-                    if Int(percent.rounded()) != 0 { BetterChip(percent: percent) }
-                } else if alternative.value > current.value {
-                    // Up from zero: no percentage, so the chip only says which way it went.
-                    BetterChip(percent: metric.higherIsBetter ? .infinity : -.infinity)
+                if let change = SwapMath.change(metric, current: current, alternative: alternative) {
+                    BetterChip(change: change)
                 }
             }
             Text("\(current.formatted)\(suffix) → \(alternative.formatted)\(suffix)")
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
             Chart(bars) { bar in
-                BarMark(x: .value(title, bar.measured.value), y: .value("Option", bar.id), height: 18)
+                BarMark(x: .value(title, max(bar.measured.value, shortest)), y: .value("Option", bar.id), height: 18)
                     .foregroundStyle(by: .value("Option", bar.id))
                     .cornerRadius(6)
                 RuleMark(xStart: .value("Low", bar.measured.low), xEnd: .value("High", bar.measured.high),
@@ -101,8 +148,9 @@ private struct MetricComparison: View {
                         .symbol { Capsule().fill(Color.primary.opacity(0.7)).frame(width: 1.5, height: 10) }
                 }
             }
+            .chartXScale(domain: 0...axisEnd)
             .chartXAxis {
-                AxisMarks(values: .automatic(desiredCount: 4)) { value in
+                AxisMarks(values: ticks) { value in
                     AxisGridLine()
                     AxisValueLabel {
                         if let number = value.as(Double.self) { Text(Measured.format(DisplayUnits.value(number, current.unit))) }
@@ -124,14 +172,13 @@ private struct MetricComparison: View {
     private var suffix: String { perYear && current.unit != .kilowattHoursPerYear ? "/yr" : "" }
 }
 
-/// Glass capsule with the relative improvement; an infinite percent (a rise from zero) reads "Worse".
+/// Glass capsule with a metric's change as `SwapMath.change` words it ("64% better", "+87 pts", "12× worse").
 struct BetterChip: View {
-    let percent: Double
+    let change: SwapMath.MetricChange
 
     var body: some View {
-        let better = percent >= 0
-        Text(!percent.isFinite ? (better ? "Better" : "Worse")
-             : better ? "\(Int(percent.rounded()))% better" : "\(Int((-percent).rounded()))% worse")
+        let better = change.isBetter
+        Text(change.label)
             .font(.caption.weight(.bold).monospacedDigit())
             .padding(.horizontal, 10)
             .padding(.vertical, 4)

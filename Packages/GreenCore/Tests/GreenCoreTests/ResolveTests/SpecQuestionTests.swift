@@ -73,15 +73,17 @@ struct SpecQuestionTests {
     }
 
     @Test func atMostThreeQuestionsBiggestCarbonFirst() async throws {
-        let shirts = (1...5).map { index in
-            IdentifiedComponent(name: "Shirt \(index)", category: .clothing, boundingBox: .full,
-                                quantities: Quantities(massKg: 0.3), estimates: Self.est(Double(index)))
+        // Five kinds of shirt ("Shirt 1"… would be one kind: a number is a printed size, not a kind).
+        let kinds = ["Polo", "Dress", "Flannel", "Linen", "Denim"]
+        let shirts = kinds.enumerated().map { index, kind in
+            IdentifiedComponent(name: "\(kind) shirt", category: .clothing, boundingBox: .full,
+                                quantities: Quantities(massKg: 0.3), estimates: Self.est(Double(index + 1)))
         }
         let pipeline = pipeline(shirts)
         let result = try await pipeline.run(image: Data([1]), hints: .none, mode: .photo)
         let questions = await pipeline.specQuestions(for: result.components)
         #expect(questions.count == ScanPipeline.maxSpecQuestions)
-        #expect(questions.map(\.componentName) == ["Shirt 5", "Shirt 4", "Shirt 3"])
+        #expect(questions.map(\.componentName) == ["Denim shirt", "Linen shirt", "Flannel shirt"])
     }
 
     @Test func itemsAlreadyOnTheFactorModelAreNotAsked() async throws {
