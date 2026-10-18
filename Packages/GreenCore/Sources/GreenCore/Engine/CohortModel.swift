@@ -8,10 +8,12 @@ import Foundation
 public struct CohortModel: Sendable {
     /// Metrics a scanned footprint keeps.
     public static let comparedMetrics: [MetricKey] = [.carbon, .water, .land, .yearlyElectricity]
-    /// Metrics on the leaderboard and percentile cards. Water is left out because its baseline is national
-    /// withdrawals (power-plant cooling and irrigation included). Land is left out because it is one world
-    /// farmland average for every country. Neither is a per-person number a profile can place.
-    public static let leaderboardMetrics: [MetricKey] = [.carbon, .yearlyElectricity]
+    /// Metrics on the leaderboard and percentile cards: every metric with a per-capita baseline. Carbon is the
+    /// whole footprint. Water, land and electricity count only the consumption categories' shares of the
+    /// per-capita figure, because national withdrawals, farmland (one world average) and demand also cover
+    /// industry, commerce and power-plant cooling that no profile places. Water and land come last so friends'
+    /// carbon and electricity draws stay as they were.
+    public static let leaderboardMetrics: [MetricKey] = [.carbon, .yearlyElectricity, .water, .land]
 
     public let profile: UserProfile
     public let baseline: PerCapitaBaseline
@@ -80,8 +82,8 @@ public struct CohortModel: Sendable {
     }
 
     /// Per-person yearly footprint of the region's people, before any profile adjustment: the whole carbon
-    /// footprint, or home electricity (the electronics and household shares of per-capita demand, which also
-    /// covers industry and commerce). Nil for metrics not on the leaderboard.
+    /// footprint, or the consumption categories' shares of per-capita water, land or electricity (home
+    /// electricity is the electronics and household shares). Nil for metrics not on the leaderboard.
     public func regionalDistribution(for metric: MetricKey) -> LogNormal? {
         guard Self.leaderboardMetrics.contains(metric), let total = baseline.medians[metric],
               let sigma = baseline.sigmas[metric] else { return nil }

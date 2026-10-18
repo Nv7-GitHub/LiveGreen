@@ -1,6 +1,6 @@
 import Foundation
 
-/// A seeded "friend" sampled from the region's distribution. Always labeled as a simulated network (spec §9).
+/// A seeded "friend" sampled from the region's distribution (spec §9).
 public struct SimulatedFriend: Sendable, Hashable, Identifiable {
     public var id: Int
     public var name: String
@@ -35,7 +35,7 @@ extension CohortModel {
     /// you, so your profile decides where you land. Draws are stratified: each friend gets their own slice of
     /// the distribution (jittered within it), so the nine span it like a real circle of people instead of
     /// bunching by chance. A shared lifestyle factor orders the slices across metrics (correlation ≈ 0.8),
-    /// so a low-carbon friend tends to use less electricity too.
+    /// so a low-carbon friend tends to use less water, land and electricity too.
     public func simulatedFriends(count: Int = friendNames.count) -> [SimulatedFriend] {
         var generator = Xoshiro256StarStar(seed: Self.networkSeed ^ StableHash.fnv1a(baseline.region))
         // Names are dealt in a shuffled order, so who lands where on the board is random but stable.
