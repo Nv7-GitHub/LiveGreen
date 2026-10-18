@@ -80,18 +80,23 @@ final class LiveGreenTourTests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Desk setup"].waitForExistence(timeout: 30))
     }
 
+    /// Questions never open over the fresh results; they wait behind the banner under the headline.
     @MainActor
     private func answerQuestionsIfOffered(_ app: XCUIApplication) {
         let banner = app.descendants(matching: .any)["questionsBanner"]
+        guard banner.waitForExistence(timeout: 3) else { return }
+        for _ in 0..<3 where !banner.isHittable { app.swipeUp() }
+        banner.tap()
         let apply = app.buttons["applyAnswers"]
-        if !apply.waitForExistence(timeout: 2), banner.exists { banner.tap() }
-        guard apply.waitForExistence(timeout: 3) else { return }
+        XCTAssertTrue(apply.waitForExistence(timeout: 3), "The banner opens the questions")
         snap("04-questions")
         // The desk monitor asks for hours per day; answer it and re-run the engine locally.
         let chip = app.buttons["~6 h"]
         if chip.exists { chip.tap() }
         if apply.isEnabled { apply.tap() } else { app.buttons["useEstimate"].tap() }
         XCTAssertTrue(app.navigationBars["Desk setup"].waitForExistence(timeout: 10))
+        // Back to the photo and its hotspots.
+        for _ in 0..<3 { app.swipeDown() }
     }
 
     @MainActor

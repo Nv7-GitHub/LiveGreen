@@ -34,6 +34,8 @@ final class AppModel {
     @ObservationIgnored private var store: ScanStore { ScanStore(context: container.mainContext) }
     /// Notes the user left on scans; new scans send a few to identify as weak hints.
     @ObservationIgnored private(set) lazy var feedback = FeedbackStore(context: container.mainContext)
+    /// How often the user has each kind of item, by their answers; new scans start from these rates.
+    @ObservationIgnored private(set) lazy var usageMemory = UsageMemoryStore(context: container.mainContext)
 
     init(container: ModelContainer, launch: LaunchArguments = LaunchArguments(), secrets: Secrets = Secrets()) {
         let flags = FeatureFlags.load(arguments: launch)
@@ -78,6 +80,7 @@ final class AppModel {
         deletedScanIDs = []
         perform { try store.deleteAll() }
         perform { try feedback.deleteAll() }
+        perform { try usageMemory.deleteAll() }
         plugs.removeAll()
         for key in SecretKey.allCases { try? secrets.setOverride(nil, for: key) }
         if let domain = Bundle.main.bundleIdentifier { defaults.removePersistentDomain(forName: domain) }
@@ -127,7 +130,13 @@ final class AppModel {
         let services = scene.map { self.services.replaying($0) } ?? self.services
         return ScanCoordinator(services: services, profile: profile, mode: mode ?? flags.scanMode,
                                cache: services.isDemo ? nil : ScanCache(container: container),
-                               feedback: feedback.identifyHints)
+                               feedback: feedback.identifyHints, rememberedUsage: usageMemory.rates)
+    }
+
+    /// Remembers the rates the user gave between `base` and `updated` (a usage answer or slider), by kind of item, so
+    /// later scans of it start from them instead of the typical week.
+    func rememberUsage(from base: ScanResult, to updated: ScanResult) {
+        perform { try usageMemory.remember(answersIn: updated, since: base, reference: services.reference) }
     }
 
     func refreshServices() {

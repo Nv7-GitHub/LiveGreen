@@ -12,6 +12,10 @@ struct ComponentDetailView: View {
     var plugAction: (() -> Void)?
     /// Called when the user changes a usage field; nil hides the usage editor.
     var onUsageChange: ((UsageField, Double) -> Void)?
+    /// Under the usage editor: where the rate comes from and what else it changes.
+    var usageNote: String?
+    /// Takes back the quick-details answer that refined the item; nil hides the answer card.
+    var onUndoAnswer: (() -> Void)?
 
     @State private var flowMetric: MetricKey?
 
@@ -28,6 +32,9 @@ struct ComponentDetailView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             header
+            if let answer = component.detailAnswer, let onUndoAnswer {
+                answerCard(answer, undo: onUndoAnswer)
+            }
             if let metric = activeFlowMetric, let measured = component.displayable(metric) {
                 GlassCard {
                     VStack(alignment: .leading, spacing: 12) {
@@ -38,6 +45,14 @@ struct ComponentDetailView: View {
             }
             if let onUsageChange {
                 UsageEditorCard(component: component, onChange: onUsageChange)
+                if let usageNote, !ImpactEngine().editableUsage(for: component).isEmpty {
+                    Text(usageNote)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.top, -8)
+                        .accessibilityIdentifier("usageNote")
+                }
             }
             if let candidate = component.plugCandidate, let plugAction {
                 GlassCard(tint: Theme.mint.opacity(0.2)) {
@@ -60,6 +75,26 @@ struct ComponentDetailView: View {
             }
         }
         .accessibilityElement(children: .combine)
+    }
+
+    /// The quick-details answer behind the numbers, with a way back to the estimate: one tap on the wrong chip used
+    /// to stick for good.
+    private func answerCard(_ answer: DetailAnswer, undo: @escaping () -> Void) -> some View {
+        GlassCard {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Label("Your answer: \(answer.label)", systemImage: "checkmark.bubble")
+                        .font(.subheadline.weight(.semibold))
+                    Text("These numbers use it in place of the AI's estimate.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 8)
+                Button("Undo", systemImage: "arrow.uturn.backward", action: undo)
+                    .buttonStyle(.glass)
+                    .accessibilityIdentifier("undoDetailAnswer")
+            }
+        }
     }
 
     private var identityLine: String {
