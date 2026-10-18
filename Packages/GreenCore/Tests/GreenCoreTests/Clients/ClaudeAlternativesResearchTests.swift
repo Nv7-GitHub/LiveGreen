@@ -47,6 +47,7 @@ struct ClaudeAlternativesResearchTests {
         #expect(burgerAlternatives[1].practicality.effort == .easy, "case-insensitive enums")
         #expect(burgerAlternatives[1].usage == Self.burger.usage, "missing usage inherits the original's")
 
+        #expect(burgerAlternatives[0].looksDifferent == nil, "left out: judged from the swap itself")
         let monitorSwap = try #require(suggestions[1].alternatives.first)
         #expect(monitorSwap.identifiers.model == "P2425H")
         #expect(monitorSwap.kind == .product)
@@ -62,6 +63,7 @@ struct ClaudeAlternativesResearchTests {
             "alternatives": [[
                 "name": "Steel tumbler", "category": "packaging", "rationale": "Reused for years.",
                 "cost": "higher", "effort": "easy", "condition": "new", "reusable": true, "lifespan_years": 4,
+                "looks_different": true,
                 "identifiers": ["brand": nil, "model": nil, "gtin": nil,
                                 "materials": [["material": "stainless_steel", "percent": 100]]],
                 "quantities": ["mass_kg": 0.3], "usage": nil,
@@ -75,6 +77,7 @@ struct ClaudeAlternativesResearchTests {
         #expect(swap.lifespanYears == 4)
         #expect(swap.fallbackEstimates[.lifespan]?.value == 4, "kept as a household metric")
         #expect(swap.usage == cup.usage)
+        #expect(swap.looksDifferent == true)
     }
 
     @Test func conditionFromTheName() {

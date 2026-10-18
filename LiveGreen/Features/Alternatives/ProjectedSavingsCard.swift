@@ -26,7 +26,7 @@ struct ProjectedSavingsCard: View {
                         EquivalenceCallout(metric: highlight.metric, amount: highlight.amount,
                                            context: "\(context)|\(highlight.metric.rawValue)", framing: .saving)
                     }
-                    Text("From \(swapCount) swap\(swapCount == 1 ? "" : "s"), using your usage answers. \"Once\" is the saving from making the item; ranges carry each value's uncertainty.")
+                    Text("From \(swapCount) swap\(swapCount == 1 ? "" : "s"), at the usage shown for each item. \"Once\" is saved when the item is made, and again each time you re-buy something that gets used up, like a spray or a refill. Ranges carry each value's uncertainty.")
                         .font(.caption2).foregroundStyle(.secondary)
                 }
             }

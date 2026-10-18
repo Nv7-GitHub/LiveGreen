@@ -15,7 +15,7 @@ enum PromptParts {
 
     static func basis(of metric: MetricKey) -> String {
         switch metric {
-        case .carbon: "cradle-to-grave footprint of ONE item as pictured (one unit or one serving), excluding use-phase electricity, which the app computes from power and the local grid"
+        case .carbon: "cradle-to-grave footprint of ONE item as pictured (one unit or one serving), excluding use-phase electricity and a vehicle's fuel, which the app computes from power or distance and the local grid"
         case .water: "blue (consumptive) freshwater for one item/serving, liters"
         case .land: "land occupation for one item/serving, m²·year"
         case .powerOn: "electrical draw while on/in use, watts"

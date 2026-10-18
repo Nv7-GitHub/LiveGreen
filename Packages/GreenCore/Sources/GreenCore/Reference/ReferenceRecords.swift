@@ -30,6 +30,61 @@ public struct DeviceProfile: Codable, Sendable, Hashable {
     /// Screen size the typical figures refer to; on-power scales with screen area.
     public var referenceScreenInches: Double?
     public var verified: Bool
+    /// Seasonal appliances (air conditioners, space heaters): days a year it runs; usage hours are per day in season.
+    /// Nil for year-round devices.
+    public var activeDaysPerYear: Double?
+}
+
+/// Typical service life of an unpowered household durable (`household_lifespans.json`): a bicycle, a table.
+public struct HouseholdLifespan: Sendable, Hashable {
+    public var kind: String
+    public var lifespanYears: Double
+    public var citation: Source
+}
+
+/// Light-vehicle factors (`vehicle_factors.json`), for `VehicleModel`.
+public struct VehicleFactors: Sendable, Hashable {
+    /// Curb mass assumed when identify gave none.
+    public var defaultMassKg: Double
+    /// Production of everything but the traction battery, per kg.
+    public var gliderKgCO2ePerKg: Double
+    /// Split of production carbon across stages; driving is the use stage the model adds.
+    public var productionStageShares: [LifecycleStage: Double]
+    public var gliderCitation: Source
+    public var batteryKgCO2ePerKWh: Double
+    /// Pack mass per kWh, to take the battery out of the curb mass.
+    public var batteryKgPerKWh: Double
+    public var batteryCitation: Source
+    public var lifespanYears: Double
+    public var lifespanCitation: Source
+    public var kmPerYear: Double
+    public var distanceCitation: Source
+    public var recyclablePercent: Double
+    /// Plastics and composites as a share of curb mass, when identify gave no materials.
+    public var plasticMassShare: Double
+    public var endOfLifeCitation: Source
+    public var powertrains: [Powertrain: PowertrainFactors]
+}
+
+/// Driving and battery figures for one powertrain. Per-km figures grow with curb mass, which is most of what
+/// separates a hatchback from a pickup on the same fuel.
+public struct PowertrainFactors: Sendable, Hashable {
+    /// Well-to-wheel fuel carbon per km: base + per tonne of curb mass.
+    public var fuelKgCO2ePerKm: Double
+    public var fuelKgCO2ePerKmPerTonne: Double
+    /// Wall electricity per km, charging losses included: base + per tonne.
+    public var kWhPerKm: Double
+    public var kWhPerKmPerTonne: Double
+    /// Share of the distance driven on grid electricity (1 for an EV, about 0.4 for a plug-in hybrid).
+    public var electricShare: Double
+    /// Traction battery: base + per tonne (an EV's pack grows with the car).
+    public var batteryKWh: Double
+    public var batteryKWhPerTonne: Double
+    public var citation: Source
+
+    public func fuelKgCO2e(perKmAt tonnes: Double) -> Double { fuelKgCO2ePerKm + fuelKgCO2ePerKmPerTonne * tonnes }
+    public func wallKWh(perKmAt tonnes: Double) -> Double { kWhPerKm + kWhPerKmPerTonne * tonnes }
+    public func tractionBatteryKWh(at tonnes: Double) -> Double { batteryKWh + batteryKWhPerTonne * tonnes }
 }
 
 /// Garment-making overhead added to fiber impacts per kg of garment.

@@ -97,6 +97,10 @@ public struct FakeAlternativeSuggester: AlternativeSuggester {
         case .household, .personalCare:
             ("Refillable \(inline(component.name))",
              "Refills cut packaging and transport.", Practicality(cost: .similar, effort: .moderate))
+        case .vehicle:
+            ("Used electric \(inline(component.name))",
+             "Driving on electricity cuts tailpipe emissions; buying used avoids making a new car.",
+             Practicality(cost: .similar, effort: .hard))
         }
     }
 }

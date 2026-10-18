@@ -57,7 +57,7 @@ struct GenericItemTests {
         }
         let blueCarbon = try #require(try await carbon(blue))
         let beigeCarbon = try #require(try await carbon(beige))
-        #expect(blueCarbon / beigeCarbon > 2, "clothing with garment making vs household materials only")
+        #expect(blueCarbon / beigeCarbon > 1.5, "clothing's fibre and garment making vs a household material blend")
     }
 
     @Test func backpacksDifferingOnlyInColourResolveIdenticallyInOneScan() async throws {

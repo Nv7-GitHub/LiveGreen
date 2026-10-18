@@ -12,6 +12,8 @@ public struct ScanPipeline: Sendable {
     public var profile: UserProfile
     /// Notes the user left on earlier scans; identify gets the few most relevant as weak hints.
     public var feedback: [ScanFeedback] = []
+    /// The user's earlier rates a week by kind of item (`UsageDefaults.kindKey`), used in place of the typical week.
+    public var rememberedUsage: [String: Double] = [:]
 
     /// The ladder phases and the progress step each one reports.
     static let phases: [(step: PipelineStep, tiers: ClosedRange<Tier>)] = [
@@ -41,9 +43,14 @@ public struct ScanPipeline: Sendable {
         let (response, records) = try await identify(image: image, hints: hints, emit: emit)
         // A barcode scan has no frame; the record's front-of-pack photo stands in for one.
         async let productPhoto: Data? = image.isEmpty ? productPhoto(records) : nil
-        let identified = prepared(response.components, hints: hints)
+        let scene = Self.sceneContext(of: response, hints: hints)
+        let (identified, photo) = Self.croppedToPhoto(prepared(response.components, hints: hints), image: image,
+                                                      region: response.photoRegion, scene: scene, hints: hints)
         // Component ids derive from the scan id, so a scan's seeded Monte Carlo ranges are reproducible.
-        var components = identified.enumerated().map { $1.makeComponent(id: Self.componentID(scan: id, index: $0)) }
+        var components = identified.enumerated().map {
+            $1.makeComponent(id: Self.componentID(scan: id, index: $0), scene: scene)
+        }
+        components = Self.linkingContainers(components)
         let deferrable = Dictionary(uniqueKeysWithValues: zip(components.map(\.id), identified.map(\.deferrableLoad)))
         emit(.componentsIdentified(components))
         emit(.stepFinished(.identifying))
@@ -56,7 +63,8 @@ public struct ScanPipeline: Sendable {
         // A cache hit skips the ladder, so the same identifier always gives the same numbers.
         var cachedIDs = Set<UUID>()
         for index in components.indices {
-            if let hit = await ladder.cached(components[index], acceptingEstimates: false) {
+            if let hit = await ladder.cached(components[index], acceptingEstimates: false),
+               Self.acceptsCached(hit, for: components[index]) {
                 components[index] = hit
                 cachedIDs.insert(hit.id)
             }
@@ -69,7 +77,7 @@ public struct ScanPipeline: Sendable {
         // A generic item that still only has an estimate takes the one cached for its kind, so it reads the same.
         for index in components.indices where !cachedIDs.contains(components[index].id)
             && components[index].metrics[.carbon]?.tier == .estimate {
-            if let hit = await ladder.cached(components[index]) {
+            if let hit = await ladder.cached(components[index]), Self.acceptsCached(hit, for: components[index]) {
                 components[index] = hit
                 cachedIDs.insert(hit.id)
             }
@@ -80,35 +88,23 @@ public struct ScanPipeline: Sendable {
         }
 
         components = components.map { completed($0, deferrable: deferrable[$0.id] ?? nil) }
-        let pending = QuestionGate.pendingQuestions(for: components)
+        // Typical weeks once the food groups are final (a pack basis can change one), in place of identify's guesses.
+        components = Self.askingFrequency(withDefaultUsage(components))
+        // Questions are only about items the results add up, never a stranger's car or store stock.
+        let asked = components.filter(\.isTotaled)
+        let pending = QuestionGate.pendingQuestions(for: asked, engine: engine)
         if !pending.isEmpty { emit(.questionsNeeded(pending)) }
-        // Items still on a T4 estimate get a few plain detail questions before the results (`refining`).
-        let details = await specQuestions(for: components)
+        // Items still on a T4 estimate, and foods of an uncertain group, get a few plain detail questions before the
+        // results (`refining`).
+        let details = await specQuestions(for: asked)
         if !details.isEmpty { emit(.specQuestionsNeeded(details)) }
 
-        // Identify had the full photo; the result keeps a smaller copy (`ScanPhoto`).
+        // Identify had the full photo; the result keeps a smaller copy (`ScanPhoto`), a screenshot's cropped to its photo.
         var result = ScanResult(id: id, date: date, title: response.sceneTitle ?? components.first?.name ?? "Scan",
-                                mode: mode, photo: image.isEmpty ? await productPhoto : ScanPhoto.stored(image),
-                                components: components)
+                                mode: mode, photo: image.isEmpty ? await productPhoto : ScanPhoto.stored(photo),
+                                components: components, sceneContext: scene)
         result.updateTotals(engine: engine)
         return result
-    }
-
-    /// Re-runs the engine after question answers (spec §5.5), locally with no network call.
-    public func applying(_ answers: [(componentID: UUID, option: AnswerOption)], to result: ScanResult) -> ScanResult {
-        var updated = result
-        for answer in answers {
-            guard let index = updated.components.firstIndex(where: { $0.id == answer.componentID }) else { continue }
-            var component = engine.applyingAnswer(answer.option, to: updated.components[index], profile: profile)
-            if var candidate = component.plugCandidate, let kWh = component.metrics[.yearlyElectricity] {
-                candidate.dailyKWh = kWh.value / ImpactEngine.daysPerYear
-                candidate.estimatedSavings = plugSavings(for: candidate)
-                component.plugCandidate = candidate
-            }
-            updated.components[index] = component
-        }
-        updated.updateTotals(engine: engine)
-        return updated
     }
 
     // MARK: - Steps
@@ -249,7 +245,9 @@ public struct ScanPipeline: Sendable {
     }
 
     private func plugCandidate(for component: Component, deferrable: DeferrableLoadType?) -> PlugCandidate? {
-        let device = engine.store?.deviceProfile(deviceType: component.quantities.deviceType ?? component.name)
+        // A plug-in vehicle charges through a home charger, not at an unknown device's 100 W.
+        let device = component.category == .vehicle ? engine.store?.deviceProfile(deviceType: "ev_charger")
+            : engine.store?.deviceProfile(for: component)
         // An explicit deferrable load from identify (a power bank, a phone charger) always qualifies; loads
         // inferred from device defaults must use enough electricity for scheduling to matter.
         guard let load = deferrable ?? device?.deferrableLoad, let kWh = component.metrics[.yearlyElectricity]?.value,
@@ -273,6 +271,7 @@ extension Alternative {
 
     /// The locally added plug alternative (spec §7): the same device, so every metric matches; its saving
     /// comes from the component's plug candidate because scheduling changes when it charges, not what it is.
+    /// It costs more: the plug is bought, and moving charging to cleaner hours uses no less electricity.
     /// The id is derived from the component id so a re-run keeps the user's pick.
     public static func smartPlugScheduling(for component: Component) -> Alternative {
         let load = component.plugCandidate?.loadType.displayName.lowercased() ?? "charger"
@@ -283,6 +282,6 @@ extension Alternative {
                            category: component.category, identifiers: component.identifiers,
                            quantities: component.quantities, usage: component.usage,
                            rationale: "Keep your \(load), but let a plug switch it on only during the cleanest grid hours.",
-                           practicality: Practicality(cost: .lower, effort: .easy), metrics: component.metrics)
+                           practicality: Practicality(cost: .higher, effort: .easy), metrics: component.metrics)
     }
 }

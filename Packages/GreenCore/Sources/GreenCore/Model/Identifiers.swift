@@ -98,7 +98,7 @@ extension Identifiers {
     /// Categories whose factor-model numbers rest on the AI's guessed mass and materials, which vary from call
     /// to call. Food is left out because colour words can name a different food (brown rice, green beans) and
     /// the portion shown matters; electronics come from device tables, scaled by screen size and usage.
-    static let genericKeyCategories: Set<Category> = [.clothing, .household, .packaging, .personalCare]
+    static let genericKeyCategories: Set<Category> = [.clothing, .household, .packaging, .personalCare, .vehicle]
 
     /// Words that describe how an item looks rather than what it is. Metal colours are kept: they can be the material.
     static let appearanceWords: Set<String> = [
@@ -152,7 +152,7 @@ extension Identifiers {
 
     /// Categories whose kind includes the brand: two makers' bicycles or SUVs are not one product, while packaging
     /// of one kind is alike whoever printed it.
-    static let brandedKindCategories: Set<Category> = [.clothing, .household, .personalCare]
+    static let brandedKindCategories: Set<Category> = [.clothing, .household, .personalCare, .vehicle]
 
     /// Categories without line keys: a line of food or packaging spans portions and pack sizes.
     static let lineKeyExcludedCategories: Set<Category> = [.food, .packaging]
@@ -181,9 +181,12 @@ extension Identifiers {
     /// "plastic cup with lid"). Left out: text in brackets or after a comma or spaced dash ("(partially visible)",
     /// ", 22 fl oz"), colour and finish words, where the item sits ("background", "left"), size words and printed
     /// sizes ("compact", "16 oz"), and how a lid closes. A brand leads the key outside packaging ("kia|suv"), so two
-    /// makers' cars never share numbers. Nil outside `genericKeyCategories` or when no word is left.
-    public static func genericKey(name: String, category: Category, brand: String? = nil) -> String? {
+    /// makers' cars never share numbers. Identify's `kind` ("backpack" for "JanSport backpack, partly visible"), when
+    /// given, is keyed instead of the name by the same rules, so the kind does not hang on how the name was worded.
+    /// Nil outside `genericKeyCategories` or when no word is left.
+    public static func genericKey(name: String, category: Category, brand: String? = nil, kind: String? = nil) -> String? {
         guard genericKeyCategories.contains(category) else { return nil }
+        if let kind, let key = genericKey(name: kind, category: category, brand: brand) { return key }
         let brandWords = brandedKindCategories.contains(category) ? brand.flatMap(brandWords) : nil
         let words = kindWords(descriptorFree(name), brandWords: brandWords ?? [])
             ?? kindWords(bracketFree(name), brandWords: brandWords ?? [])

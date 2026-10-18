@@ -74,12 +74,30 @@ struct ReferenceIntegrityTests {
             #expect(d.recyclablePercent.map { (0...100).contains($0) } ?? true)
             #expect(abs(d.stageShares.values.reduce(0, +) - 1) < 0.01)
             #expect(d.stageShares[.use] == nil, "\(info.key): embodied split must not include use")
+            #expect(device.activeDaysPerYear.map { (1...365).contains($0) } ?? true, "\(info.key): days a year")
         }
         for load in DeferrableLoadType.allCases {
             let hasDevice = store.recordInfo.contains { info in
                 info.table == "device_defaults" && store.deviceProfile(deviceType: info.key)?.deferrableLoad == load
             }
             #expect(hasDevice, "No device type for deferrable load \(load)")
+        }
+    }
+
+    @Test func vehicleAndHouseholdRowsAreSane() throws {
+        let vehicles = try #require(store.vehicles)
+        #expect(Set(vehicles.powertrains.keys) == Set(Powertrain.allCases))
+        #expect(vehicles.gliderKgCO2ePerKg > 0 && vehicles.batteryKgCO2ePerKWh > 0 && vehicles.lifespanYears > 0)
+        #expect((0...100).contains(vehicles.recyclablePercent) && (0...1).contains(vehicles.plasticMassShare))
+        #expect(abs(vehicles.productionStageShares.values.reduce(0, +) - 1) < 0.01)
+        #expect(vehicles.productionStageShares[.use] == nil, "driving is added by the model")
+        for (powertrain, factors) in vehicles.powertrains {
+            #expect((0...1).contains(factors.electricShare), "\(powertrain)")
+            #expect(factors.fuelKgCO2e(perKmAt: 1.5) >= 0 && factors.wallKWh(perKmAt: 1.5) >= 0)
+            #expect(factors.electricShare == 0 || factors.wallKWh(perKmAt: 1.5) > 0, "\(powertrain) charges with no kWh/km")
+        }
+        for info in store.recordInfo where info.table == "household_lifespans" {
+            #expect((store.householdLifespan(kind: info.key)?.lifespanYears ?? 0) > 0, "\(info.key)")
         }
     }
 

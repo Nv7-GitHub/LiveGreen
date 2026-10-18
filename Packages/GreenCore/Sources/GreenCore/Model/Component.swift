@@ -23,13 +23,29 @@ public struct Component: Codable, Sendable, Hashable, Identifiable {
     public var fallbackEstimates: [MetricKey: EstimateRange]
     /// Share (0–1) of `plasticMass` that is packaging rather than the item itself; nil when unknown.
     public var plasticPackagingShare: Double?
+    /// A point on the item itself from identify, where its pin points (`pinAnchor`); nil uses the box centre.
+    public var anchor: NormalizedPoint?
+    /// Why the scan left the item out of the user's totals (someone else's, background, seen on screen); nil when
+    /// it counts. See `isCounted`.
+    public var exclusion: Exclusion?
+    /// The user's own answer ("Not mine", "Which is yours?"), which overrides `exclusion`; nil until they give one.
+    public var markedOwned: Bool?
+    /// The food this packaging held (its cup, straw or wrapper), set by the scan pipeline from overlapping boxes
+    /// (`ScanPipeline.linkingContainers`). The container is used as often as the food is eaten, and a usage answer for
+    /// either reaches both. Nil for everything else and in scans saved by older builds.
+    public var parentID: UUID?
+    /// The quick-details answer that moved this item to the factor model, with what it was before, so the answer can
+    /// be taken back (`ScanPipeline.undoingDetail`). Nil when none was given.
+    public var detailAnswer: DetailAnswer?
 
     public init(id: UUID = UUID(), name: String, category: Category, boundingBox: NormalizedRect = .full,
                 identifiers: Identifiers = Identifiers(), quantities: Quantities = Quantities(),
                 metrics: [MetricKey: Measured] = [:], usage: UsageProfile? = nil,
                 alternatives: [Alternative] = [], plugCandidate: PlugCandidate? = nil,
                 stageShares: [LifecycleStage: Double] = [:], questions: [ComponentQuestion] = [],
-                fallbackEstimates: [MetricKey: EstimateRange] = [:], plasticPackagingShare: Double? = nil) {
+                fallbackEstimates: [MetricKey: EstimateRange] = [:], plasticPackagingShare: Double? = nil,
+                anchor: NormalizedPoint? = nil, exclusion: Exclusion? = nil, markedOwned: Bool? = nil,
+                parentID: UUID? = nil, detailAnswer: DetailAnswer? = nil) {
         self.id = id
         self.name = name
         self.category = category
@@ -44,6 +60,11 @@ public struct Component: Codable, Sendable, Hashable, Identifiable {
         self.questions = questions
         self.fallbackEstimates = fallbackEstimates
         self.plasticPackagingShare = plasticPackagingShare
+        self.anchor = anchor
+        self.exclusion = exclusion
+        self.markedOwned = markedOwned
+        self.parentID = parentID
+        self.detailAnswer = detailAnswer
     }
 
     /// Applicable metrics that have not been resolved yet.

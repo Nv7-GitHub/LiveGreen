@@ -4,11 +4,12 @@
   {
    "deviceType": "laptop",
    "aliases": [
-    "notebook",
+    "notebook_computer",
+    "notebook_pc",
     "macbook",
     "ultrabook"
    ],
-   "onWatts": 20,
+   "onWatts": 9,
    "standbyWatts": 0.5,
    "typicalHoursOnPerDay": 6,
    "lifespanYears": 4,
@@ -24,12 +25,44 @@
    },
    "verified": false,
    "citation": {
-    "title": "Dell Product Carbon Footprints",
+    "title": "Dell Product Carbon Footprints; in-use draw of mainstream 13-15 in laptops (~6-12 W)",
     "tier": 3,
     "url": "https://www.dell.com/en-us/dt/corporate/social-impact/advancing-sustainability/climate-action/product-carbon-footprints.htm"
    },
    "deferrable": "laptopCharger",
-   "chargerWatts": 65
+   "chargerWatts": 65,
+   "referenceScreenInches": 14
+  },
+  {
+   "deviceType": "gaming_laptop",
+   "aliases": [
+    "gaming_notebook",
+    "mobile_workstation",
+    "workstation_laptop"
+   ],
+   "onWatts": 45,
+   "standbyWatts": 1.0,
+   "typicalHoursOnPerDay": 4,
+   "lifespanYears": 4,
+   "repairability": 6.0,
+   "embodiedKgCO2e": 350,
+   "plasticMassG": 600,
+   "recyclablePercent": 60,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "ASUS ROG and Dell Alienware product carbon footprints; gaming laptops draw ~30-60 W in light use",
+    "tier": 3,
+    "url": "https://esg.asus.com/"
+   },
+   "deferrable": "laptopCharger",
+   "chargerWatts": 230,
+   "referenceScreenInches": 16
   },
   {
    "deviceType": "laptop_charger",
@@ -44,7 +77,7 @@
    "repairability": 1.0,
    "embodiedKgCO2e": 4,
    "plasticMassG": 120,
-   "recyclablePercent": 30,
+   "recyclablePercent": 15,
    "stageShares": {
     "materials": 0.55,
     "manufacturing": 0.3,
@@ -53,7 +86,7 @@
    },
    "verified": false,
    "citation": {
-    "title": "ENERGY STAR product category data and specifications",
+    "title": "ENERGY STAR product category data and specifications; recycling rate: Global E-waste Monitor 2024 (about 22% of e-waste formally collected and recycled, less for small devices)",
     "tier": 3,
     "url": "https://www.energystar.gov/products"
    },
@@ -158,7 +191,7 @@
    "repairability": 5.0,
    "embodiedKgCO2e": 60,
    "plasticMassG": 15,
-   "recyclablePercent": 70,
+   "recyclablePercent": 20,
    "stageShares": {
     "materials": 0.55,
     "manufacturing": 0.3,
@@ -167,7 +200,7 @@
    },
    "verified": false,
    "citation": {
-    "title": "Apple Product Environmental Reports",
+    "title": "Apple Product Environmental Reports; recycling rate: Global E-waste Monitor 2024 (about 22% of e-waste formally collected and recycled, less for small devices)",
     "tier": 3,
     "url": "https://www.apple.com/environment/"
    },
@@ -186,7 +219,7 @@
    "repairability": 1.0,
    "embodiedKgCO2e": 2,
    "plasticMassG": 40,
-   "recyclablePercent": 30,
+   "recyclablePercent": 15,
    "stageShares": {
     "materials": 0.55,
     "manufacturing": 0.3,
@@ -195,7 +228,7 @@
    },
    "verified": false,
    "citation": {
-    "title": "ENERGY STAR product category data and specifications",
+    "title": "ENERGY STAR product category data and specifications; recycling rate: Global E-waste Monitor 2024 (about 22% of e-waste formally collected and recycled, less for small devices)",
     "tier": 3,
     "url": "https://www.energystar.gov/products"
    },
@@ -213,7 +246,7 @@
    "repairability": 4.0,
    "embodiedKgCO2e": 100,
    "plasticMassG": 30,
-   "recyclablePercent": 70,
+   "recyclablePercent": 20,
    "stageShares": {
     "materials": 0.55,
     "manufacturing": 0.3,
@@ -222,11 +255,43 @@
    },
    "verified": false,
    "citation": {
-    "title": "Apple Product Environmental Reports",
+    "title": "Apple Product Environmental Reports; recycling rate: Global E-waste Monitor 2024 (about 22% of e-waste formally collected and recycled, less for small devices)",
     "tier": 3,
     "url": "https://www.apple.com/environment/"
    },
    "chargerWatts": 20
+  },
+  {
+   "deviceType": "camera",
+   "aliases": [
+    "digital_camera",
+    "mirrorless_camera",
+    "dslr",
+    "compact_camera",
+    "action_camera"
+   ],
+   "onWatts": 4,
+   "standbyWatts": 0.0,
+   "typicalHoursOnPerDay": 0.3,
+   "lifespanYears": 6,
+   "repairability": 4.5,
+   "embodiedKgCO2e": 60,
+   "plasticMassG": 200,
+   "recyclablePercent": 20,
+   "stageShares": {
+    "materials": 0.55,
+    "manufacturing": 0.3,
+    "transport": 0.1,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "citation": {
+    "title": "Camera makers' product environmental data (body ~30-60 kg CO2e plus lens); recycling rate: Global E-waste Monitor 2024 (about 22% of e-waste formally collected and recycled, less for small devices)",
+    "tier": 3,
+    "url": "https://ewastemonitor.info/"
+   },
+   "chargerWatts": 5,
+   "batteryKWh": 0.016
   },
   {
    "deviceType": "smartwatch",
@@ -241,7 +306,7 @@
    "repairability": 2.0,
    "embodiedKgCO2e": 30,
    "plasticMassG": 10,
-   "recyclablePercent": 40,
+   "recyclablePercent": 15,
    "stageShares": {
     "materials": 0.55,
     "manufacturing": 0.3,
@@ -250,7 +315,7 @@
    },
    "verified": false,
    "citation": {
-    "title": "Apple Product Environmental Reports",
+    "title": "Apple Product Environmental Reports; recycling rate: Global E-waste Monitor 2024 (about 22% of e-waste formally collected and recycled, less for small devices)",
     "tier": 3,
     "url": "https://www.apple.com/environment/"
    },
@@ -269,7 +334,7 @@
    "repairability": 2.0,
    "embodiedKgCO2e": 15,
    "plasticMassG": 100,
-   "recyclablePercent": 30,
+   "recyclablePercent": 15,
    "stageShares": {
     "materials": 0.55,
     "manufacturing": 0.3,
@@ -278,7 +343,7 @@
    },
    "verified": false,
    "citation": {
-    "title": "Apple Product Environmental Reports",
+    "title": "Apple Product Environmental Reports; recycling rate: Global E-waste Monitor 2024 (about 22% of e-waste formally collected and recycled, less for small devices)",
     "tier": 3,
     "url": "https://www.apple.com/environment/"
    },
@@ -297,7 +362,7 @@
    "repairability": 1.0,
    "embodiedKgCO2e": 10,
    "plasticMassG": 80,
-   "recyclablePercent": 20,
+   "recyclablePercent": 15,
    "stageShares": {
     "materials": 0.55,
     "manufacturing": 0.3,
@@ -306,7 +371,7 @@
    },
    "verified": false,
    "citation": {
-    "title": "ENERGY STAR product category data and specifications",
+    "title": "ENERGY STAR product category data and specifications; recycling rate: Global E-waste Monitor 2024 (about 22% of e-waste formally collected and recycled, less for small devices)",
     "tier": 3,
     "url": "https://www.energystar.gov/products"
    },
@@ -679,9 +744,9 @@
     "window_ac",
     "room_ac"
    ],
-   "onWatts": 900,
+   "onWatts": 800,
    "standbyWatts": 1.0,
-   "typicalHoursOnPerDay": 3,
+   "typicalHoursOnPerDay": 6,
    "lifespanYears": 10,
    "repairability": 4.0,
    "embodiedKgCO2e": 200,
@@ -695,10 +760,11 @@
    },
    "verified": false,
    "citation": {
-    "title": "ENERGY STAR product category data and specifications",
+    "title": "ENERGY STAR room air conditioners (~750 h/yr test basis); about 100 cooling days a year",
     "tier": 3,
     "url": "https://www.energystar.gov/products"
-   }
+   },
+   "activeDaysPerYear": 100
   },
   {
    "deviceType": "space_heater",
@@ -707,7 +773,7 @@
    ],
    "onWatts": 1500,
    "standbyWatts": 0.5,
-   "typicalHoursOnPerDay": 2,
+   "typicalHoursOnPerDay": 3,
    "lifespanYears": 6,
    "repairability": 3.0,
    "embodiedKgCO2e": 20,
@@ -724,7 +790,8 @@
     "title": "US DOE Energy Saver appliance energy use calculator",
     "tier": 3,
     "url": "https://www.energy.gov/energysaver/estimating-appliance-and-home-electronic-energy-use"
-   }
+   },
+   "activeDaysPerYear": 120
   },
   {
    "deviceType": "led_bulb",
@@ -874,7 +941,7 @@
    "repairability": 2.0,
    "embodiedKgCO2e": 15,
    "plasticMassG": 300,
-   "recyclablePercent": 40,
+   "recyclablePercent": 15,
    "stageShares": {
     "materials": 0.55,
     "manufacturing": 0.3,
@@ -883,7 +950,7 @@
    },
    "verified": false,
    "citation": {
-    "title": "ENERGY STAR product category data and specifications",
+    "title": "ENERGY STAR product category data and specifications; recycling rate: Global E-waste Monitor 2024 (about 22% of e-waste formally collected and recycled, less for small devices)",
     "tier": 3,
     "url": "https://www.energystar.gov/products"
    }
@@ -980,7 +1047,7 @@
    "repairability": 2.0,
    "embodiedKgCO2e": 5,
    "plasticMassG": 80,
-   "recyclablePercent": 20,
+   "recyclablePercent": 10,
    "stageShares": {
     "materials": 0.55,
     "manufacturing": 0.3,
@@ -989,7 +1056,7 @@
    },
    "verified": false,
    "citation": {
-    "title": "ENERGY STAR product category data and specifications",
+    "title": "ENERGY STAR product category data and specifications; recycling rate: Global E-waste Monitor 2024 (about 22% of e-waste formally collected and recycled, less for small devices)",
     "tier": 3,
     "url": "https://www.energystar.gov/products"
    }
@@ -1035,7 +1102,7 @@
    "repairability": 2.0,
    "embodiedKgCO2e": 15,
    "plasticMassG": 200,
-   "recyclablePercent": 40,
+   "recyclablePercent": 15,
    "stageShares": {
     "materials": 0.55,
     "manufacturing": 0.3,
@@ -1044,7 +1111,7 @@
    },
    "verified": false,
    "citation": {
-    "title": "ENERGY STAR product category data and specifications",
+    "title": "ENERGY STAR product category data and specifications; recycling rate: Global E-waste Monitor 2024 (about 22% of e-waste formally collected and recycled, less for small devices)",
     "tier": 3,
     "url": "https://www.energystar.gov/products"
    }
@@ -1097,7 +1164,8 @@
     "title": "ENERGY STAR product category data and specifications",
     "tier": 3,
     "url": "https://www.energystar.gov/products"
-   }
+   },
+   "activeDaysPerYear": 150
   },
   {
    "deviceType": "induction_cooktop",

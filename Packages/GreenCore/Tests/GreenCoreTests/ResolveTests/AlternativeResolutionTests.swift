@@ -118,7 +118,7 @@ struct AlternativeResolutionTests {
         #expect(swap.category == .household)
         let carbon = try #require(swap.metrics[.carbon])
         #expect(carbon.tier == .factorModel, "made from its own materials, not the per-use estimate")
-        let embodied = 0.25 * (0.85 * 0.85 + 0.15 * 2.0)
+        let embodied = 0.25 * (0.85 * 0.85 + 0.15 * 2.0) / FactorModelResolver.materialsShare
         let engine = ImpactEngine(reference: Self.store)
         let washing = 3 * 52 * 5 * ImpactEngine.useCarbon(kWh: ImpactEngine.washKWhPerUse,
                                                           gramsPerKWh: engine.gridGramsPerKWh(for: .default))

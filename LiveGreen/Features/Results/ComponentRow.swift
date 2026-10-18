@@ -15,6 +15,9 @@ struct ComponentRow: View {
     let assumption: String?
     let tint: Color
     let isSelected: Bool
+    /// Why the scan does not count the item ("Probably not yours"); shown in place of its share, and its value is
+    /// greyed. Nil for counted items.
+    var notCountedReason: String? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -33,6 +36,7 @@ struct ComponentRow: View {
                     if let yearly, !yearly.isEffectivelyZero {
                         Text(yearly.formattedPerYear)
                             .font(.subheadline.weight(.semibold).monospacedDigit())
+                            .foregroundStyle(notCountedReason == nil ? .primary : .secondary)
                             .lineLimit(1)
                             .fixedSize()
                     }
@@ -69,8 +73,10 @@ struct ComponentRow: View {
         .accessibilityIdentifier("componentRow.\(component.name)")
     }
 
-    /// Share of the selected metric's year (or the metric count for "All"), then what the year assumes.
+    /// Share of the selected metric's year (or the metric count for "All"), then what the year assumes. A not-counted
+    /// item says why instead of a share.
     private var subtitle: String {
+        if let notCountedReason { return [notCountedReason, assumption].compactMap(\.self).joined(separator: " · ") }
         let shareText = share > 0 && share < 0.005 ? "<1%" : "\(Int((share * 100).rounded()))%"
         let count = component.displayableMetrics.count
         let lead = filter != .all ? shareText : count == 1 ? "1 metric" : "\(count) metrics"

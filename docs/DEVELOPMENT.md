@@ -121,7 +121,9 @@ docs/                             this file, the spec, screenshots
    identifiers, quantities, default usage, deferrable load, one fallback carbon estimate and optional
    questions. The call streams, and `.identifyProgress` events carry item names as they appear.
 3. **Evidence ladder** per component and metric, first source that answers wins, tier recorded:
-   - T1 exact record: Open Food Facts (GTIN), ENERGY STAR (brand + model), bundled ASUS PCF figures
+   - T1 exact record: Open Food Facts (GTIN; branded food without one is searched by brand and name on
+     search.openfoodfacts.org and used only on a confident brand, name and variant match, at ±30%, marked
+     "matched by brand and name"), ENERGY STAR (brand + model), bundled ASUS PCF figures
    - T2 researched spec: AI web search; a value is kept only if it cites a page the search returned
    - T3 factor model: bundled tables × quantities
    - T4 estimate: the AI's fallback, widened to at least ±50%
@@ -143,15 +145,35 @@ docs/                             this file, the spec, screenshots
    packaging, and not at all when the size is unknown, so a 43" and a 65" TV of one line never share numbers.
 4. **Computing**: `ImpactEngine` derives yearly electricity, use-phase carbon from the local grid, yearly
    totals, lifecycle stage splits, with a seeded 2,000-sample Monte Carlo for ranges.
-5. **Questions**: shown only if the AI asked and the metric's range is wide (high/low > 1.6) and it is a
-   top-two carbon contributor (`QuestionGate`). Answers re-run the engine locally.
-6. **Quick details** (before the results): items whose carbon is still T4 get at most one plain multiple-choice
-   question each, three per scan, one per kind (`SpecQuestionCatalog`, generated locally). Only answers that
-   really move the item to the factor model are offered; `ScanPipeline.refining` applies them. Skip keeps the
-   estimates.
+5. **Questions**: shown only if the AI asked and the metric's range is wide (high/low > 1.6) and it is one of
+   the top two items by yearly carbon (`QuestionGate`); questions about a typical-week rate skip the spread rule,
+   and LiveGreen adds its own frequency question when identify asked none. They open only from the banner (never
+   by themselves), and each shows the current value ("Now: 3 a week"). Answers re-run the engine locally and
+   reach linked items and items of the same kind (`ScanPipeline.reach`): a drink's rate reaches its cup.
+   Options that set nothing are dropped. Only items the results add up are asked about.
+6. **Quick details** (before the results): items whose carbon is still T4, and T3 foods whose group swings
+   (dairy vs plant milk, the main protein), get at most one plain multiple-choice question each, three per scan,
+   one per kind (`SpecQuestionCatalog`, generated locally). Composite items (two materials ≥15%, >100 kg or an
+   estimate >1 t), non-textiles (no fibre questions for eyewear, helmets, watches, footwear), vehicles and
+   background items are never asked what they are made of, and material or size options landing more than 3×
+   from the AI estimate are dropped. `ScanPipeline.refining` applies answers; each is kept on
+   `Component.detailAnswer` and can be undone from the detail sheet. Skip keeps the estimates.
 7. **Swaps** are prefetched in the background as soon as a scan is saved (`SwapPrefetcher`), along with the
-   greener image for scenes with more than two items, so the swaps screen opens instantly.
-8. **Feedback**: the results screen has an optional note field ("the TV was actually a monitor"). Notes are
+   greener image for scenes with more than two items, so the swaps screen opens instantly. An item marked
+   "It's mine" later gets its own swaps (`SwapPrefetcher.fetchNewlyCounted`).
+8. **Ownership and scene**: identify returns `scene_context` (own / store_display / street / screenshot) and per
+   item optional `likely_owned`, `background`, `anchor` (a point on the item for its pin) and `kind` (preferred
+   over the name for generic keys), grouped in `ReportComponentsTool+Extras` and decoded leniently.
+   `Component.exclusion` (notOwned / background / onScreen) leaves strangers' cars, store stock and background
+   items out of the totals, swaps, questions and the leaderboard (`isCounted` for the footprint, `isTotaled` for
+   the scan); `markedOwned` holds the user's "Not mine" / "It's mine" (row menu, detail sheet, AR sheet). Store
+   and street scans ask "Which is yours?" before results. Excluded items are listed under "Not counted" with grey
+   pins. Eyewear, helmets, watches, jewellery and umbrellas are never clothing (`ScanPipeline.reclassified`).
+9. **Screenshots** are detected from the picked file before `CapturedImage` re-encodes it (library subtype if
+   photo access was already granted, else the "Screenshot" EXIF/TIFF/IPTC mark; no camera EXIF plus a screen
+   shape is only a hint), cropped to identify's `photo_region`, and framed "seen on screen" / "per year if
+   bought": not in the footprint unless the user taps "I bought it", and no greener image.
+10. **Feedback**: the results screen has an optional note field ("the TV was actually a monitor"). Notes are
    stored in SwiftData (`StoredFeedback`, `FeedbackStore`) with the scan's id, item names and categories, and
    managed in Settings → Scan feedback ("Erase all data" clears them too). Each identify call gets up to five relevant notes
    (`ScanFeedback.relevant`: shared words with the OCR text or a hinted category first, then newest) as a
@@ -208,8 +230,13 @@ items. A bundled detector (Apple's YOLOv3-Tiny Core ML, 8.9 MB) was considered a
 
 `POST https://api.x.ai/v1/images/edits`, model `grok-imagine-image-2.0`, body
 `{model, prompt, image: {url: "data:image/jpeg;base64,…", type: "image_url"}}`; the response has
-`data[0].url` or `b64_json` (both handled). About 10 s per edit; it keeps the scene and changes only what the
-prompt names. Output is 1024×1024.
+`data[0].url` or `b64_json` (both handled). About 10 s per edit. Output is 1024×1024. The prompt
+(`GreenerImagePrompt`) asks for in-place edits of the named items only, each located by its box, and keeps
+labels, logos, people, portions and on-screen text; used items are drawn clean, lidded items with the lid.
+Only swaps that would show in a photo are painted (`Alternative.changesTheLook`, the schema's
+`looks_different`); with none, no image is made. `GreenerImageFit` redraws the edit onto the photo's frame so
+before and after line up, and the slider wipes from the original to just left of the swapped items. The button
+reads "Regenerate greener setup" once a picture exists.
 
 ### Claude (Anthropic Messages API)
 
@@ -299,9 +326,30 @@ Measured on the desk photo (Sonnet 5.5, Oct 2026):
 - Swap cards (`GreenCore.SwapMath`): the header is carbon per year; the headline is "Better on N metrics, worse
   on M", counted from the metrics shown; every changed metric appears (4 charts, then a line each); shares and
   scores change in points ("+87 pts"), "100% better" only for a true zero; the default pick never adds carbon;
-  cards are sorted by yearly carbon saving.
+  cards are sorted by yearly carbon saving. Items offered the same swaps share one card; items without one are
+  listed under "No lower-impact option found", after one retry call for skipped items and the top yearly-carbon
+  item that says why earlier swaps were turned down.
+- Swap text is cleaned before it is shown (`SwapText`): no sizes or "(e.g. …)" asides in names, no model or
+  prompt talk or restated profile in rationales, and no rationale sentence the swap's own comparison
+  contradicts. Second-hand safety gear (helmets, child and car seats, cribs, harnesses, life jackets, alarms) is
+  never suggested. The smart plug is tagged "One-time cost"; buying a replacement for an owned durable reads
+  "Cheaper than new".
 - The metric picker only offers metrics that apply to at least one item in the scan, and the list drops
   items without the selected metric.
+- Vehicles are their own category (`Category.vehicle`, car icon), modelled by `VehicleModel` and
+  `vehicle_factors.json`: production (glider kg × 5 kg CO2e/kg + battery kWh × 75) plus yearly driving by
+  powertrain (identify `powertrain`; EVs and plug-ins at the user's grid) over a 15-year life, with the user's
+  distance (`UsageProfile.kmPerWeek`, default 18,500 km a year). No water or decomposition. Researched or
+  estimated vehicle carbon counts as production with driving added; a scanned car replaces the onboarding car
+  travel on the leaderboard. A household or electronic item with a vehicle word or powertrain and ≥150 kg is
+  reclassified as a vehicle.
+- Household carbon = materials plus the processing of what is made from them (÷ 0.55), with a computed stage
+  split and no use stage; `household_lifespans.json` gives common unpowered durables their lives (bicycle 10 yr,
+  helmet 5, child seat 7…). Device rows are looked up by explicit `deviceType`, or by name only for electronics
+  (`Component.deviceLookupKey`), so a spiral notebook is not a laptop. New rows: `camera`, `gaming_laptop`;
+  laptop 9 W scaled by screen area; seasonal appliances have `activeDaysPerYear`; small electronics use e-waste
+  recycling rates; electronics take plastic from their own materials and mass when given. Clothing
+  decomposition is mass-weighted.
 - Coffee's factor is per kg of beans; a brewed drink counts only ~6% of its mass as grounds
   (`FoodServing.dryIngredientShare`). Without this a cup read ~10 kg CO2e.
 - Mixed drinks and desserts have their own rows per kg as served, ice included (tea, milk_tea, latte, smoothie,
@@ -340,6 +388,14 @@ Measured on the desk photo (Sonnet 5.5, Oct 2026):
   0–21 servings or charges a week, 0–14 packs a week in steps of 0.05, 0–365 wears a year, 0–50 uses a week).
 - Item detail has a "Your usage" card (`UsageEditorCard`) built from
   `ImpactEngine.editableUsage(for:)`, which falls back to the engine's defaults when nothing was stored.
+- Consumables' rates come from `UsageDefaults`, a labelled-assumption table (servings a week by food group; 3
+  uses a week for drink containers and household consumables, 2 for other packaging, 1 for personal care), or
+  from the user's remembered rate for that kind (`StoredUsageAnswer`, keyed `food:<group>` or
+  `<category>:<resolutionKey>`, cleared by "Erase all data"). Identify's usage guess is ignored for them, so a
+  rescan gives the same year. `UsageProfile.source` says typical, remembered or answered, and the detail sheet
+  shows it. Packaging overlapping a food gets `Component.parentID` and follows the food's servings or packs.
+- Household consumables (`Quantities.consumable`, identify `consumable` / `uses_per_container`) count items a year
+  as uses a week × 52 ÷ uses per item (default 50); uses a week is editable.
 - The default typical use for smartphones in `device_defaults.json` is 3 h/day. For battery devices
   (`batteryKWh` set), changing hours also sets charges per week at one charge per 6 h of use
   (`ImpactEngine.usageEdits`); phones currently have no `batteryKWh`, so their electricity is power × hours.
@@ -455,7 +511,7 @@ monospaced caption), like the tag beside a pressed flower.
 
 ## 13. Testing
 
-- Core logic: `cd Packages/GreenCore && swift test` (~370 tests, under 1 s, Mac host).
+- Core logic: `cd Packages/GreenCore && swift test` (~470 tests, under 1 s, Mac host).
 - App, default scheme `LiveGreen`: only the critical UI test (`LiveGreenSmokeTests/testDemoScanShowsResults`),
   about 12 s plus build.
 - Full UI tours: scheme `LiveGreenFullUITests` (about 3 minutes; includes the 90 s full demo tour).
@@ -487,7 +543,9 @@ monospaced caption), like the tag beside a pressed flower.
 - Image QA run 1 (`testing_images/testing_images_buglist1.md`, untracked) was fixed in batches, one PR each:
   #3 generic keys, units, Sankey, analyzing card (K2, L4, L5, L7); #4 swap scoring and cards (R5, S1–S9,
   S8b); #5 per-year results screen, pins, callout, privacy blur (R1–R4, L1–L3, L6, L8); #6 food factors,
-  packaging and materials (F1–F8, P1–P6).
+  packaging and materials (F1–F8, P1–P6); #8 missing swaps, swap copy, greener image, OFF name search (S10, S11,
+  G1–G3, C4); #9 questions and typical usage (Q1–Q4, K1); #10 ownership, scene context, screenshots, identify
+  (C1, C2, C3, C5); #11 vehicles, household goods and devices (D1–D7).
 
 - `main` holds everything. Work happened in stages (scaffold → engine → clients → ladder → UI → AR →
   swaps → onboarding/compare → plugs → QA), then the Grok provider, EIA grid data, the results redesign,

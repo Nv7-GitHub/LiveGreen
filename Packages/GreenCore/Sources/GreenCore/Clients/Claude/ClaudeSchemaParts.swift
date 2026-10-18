@@ -98,7 +98,19 @@ enum SchemaParts {
         "food_group": nullableString("Food only: reference food-group key for the food as served (see list in instructions)."),
         "device_type": nullableString("Electronics/appliances: reference device-type key (see list in instructions)."),
         "cooked": nullableBoolean("Food only: true when cooked from a dry grain, pasta or pulse (boiled rice, pasta, porridge, cooked or canned beans), so the mass includes absorbed water; else null."),
-    ], required: ["mass_kg"])
+    ].merging(durableQuantities) { _, durable in durable }, required: ["mass_kg"])
+
+    // MARK: Vehicles and household consumables
+
+    /// Optional quantities for the vehicle model (`powertrain`) and for household consumables (`consumable`,
+    /// `uses_per_container`), so other items spend no output on them.
+    static let durableQuantities: [String: JSONValue] = [
+        "powertrain": enumeration(Powertrain.allCases.map(\.rawValue),
+            "Vehicles only: what drives it, from badges and design cues (no grille or tailpipe, a charge port); null otherwise.",
+            nullable: true),
+        "consumable": nullableBoolean("Household goods only: true when used up and replaced (cleaner, detergent, paper notebook, sponge, candle); else null."),
+        "uses_per_container": nullableNumber("Consumables only: about how many uses one item lasts (sprays or treatments in a bottle, writing sessions in a notebook)."),
+    ]
 
     static let usage = object([
         "hours_on_per_day": nullableNumber("Hours per day actively on/in use."),

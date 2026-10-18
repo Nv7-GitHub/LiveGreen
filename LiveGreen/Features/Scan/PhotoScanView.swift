@@ -13,6 +13,8 @@ struct PhotoScanView: View {
     @State private var availability: CameraAvailability = .checking
     @State private var selection: PhotosPickerItem?
     @State private var still: UIImage?
+    /// The picked image is a screenshot: shown inset, so its own status bar does not sit under the phone's.
+    @State private var stillIsScreenshot = false
     @State private var isReading = false
     @State private var errorMessage: String?
     @Namespace private var controls
@@ -63,7 +65,27 @@ struct PhotoScanView: View {
     // MARK: - Background
 
     @ViewBuilder private var background: some View {
-        if let still {
+        if let still, stillIsScreenshot {
+            // Full-bleed, a screenshot's clock and battery drew under the phone's own and its tab bar under the
+            // analyzing card; inset, it reads as the picture it is.
+            Color.black.ignoresSafeArea().overlay(alignment: .top) {
+                VStack(spacing: 8) {
+                    Label("Screenshot", systemImage: "iphone")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.85))
+                    Image(uiImage: still)
+                        .resizable()
+                        .scaledToFit()
+                        .clipShape(.rect(cornerRadius: 18))
+                        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.white.opacity(0.25)))
+                }
+                .padding(.horizontal, 48)
+                .padding(.top, 8)
+                .padding(.bottom, bottomClearance + 40)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Picked screenshot")
+        } else if let still {
             Color.black.overlay {
                 Image(uiImage: still)
                     .resizable()
@@ -158,7 +180,10 @@ struct PhotoScanView: View {
     }
 
     @ViewBuilder private func libraryPicker(compact: Bool) -> some View {
-        let picker = PhotosPicker(selection: $selection, matching: .images) {
+        // The shared library gives the item its asset id (for the screenshot subtype) and the current encoding keeps the
+        // file's metadata; neither asks for photo access.
+        let picker = PhotosPicker(selection: $selection, matching: .images, preferredItemEncoding: .current,
+                                  photoLibrary: .shared()) {
             if compact {
                 Image(systemName: "photo.on.rectangle").font(.title3).frame(width: 52, height: 52)
             } else {
@@ -194,28 +219,36 @@ struct PhotoScanView: View {
                 return
             }
             camera.stop()
-            await process(data)
+            let identifier = item.itemIdentifier
+            let screenshot = await Task.detached {
+                CapturedImage.screenshotSignal(in: data, assetIdentifier: identifier)
+            }.value
+            await process(data, screenshot: screenshot)
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
-    /// Normalizes the image, shows it full-bleed, runs the Vision pre-pass, then hands off.
-    private func process(_ raw: Data) async {
+    /// Normalizes the image, shows it (full-bleed, or inset for a screenshot), runs the Vision pre-pass, then hands
+    /// off. `screenshot` comes from the picked file; camera captures have none.
+    private func process(_ raw: Data, screenshot: ScreenshotSignal? = nil) async {
         guard let jpeg = await Task.detached(operation: { CapturedImage.normalizedJPEG(from: raw) }).value,
               let image = UIImage(data: jpeg) else {
             errorMessage = "That image format is not supported."
             return
         }
         still = image
+        stillIsScreenshot = screenshot != nil
         isReading = true
-        let hints = await VisionOCR.hints(for: jpeg)
+        var hints = await VisionOCR.hints(for: jpeg)
+        hints.screenshot = screenshot
         isReading = false
         onCapture(jpeg, hints)
     }
 
     private func retake() {
         still = nil
+        stillIsScreenshot = false
         errorMessage = nil
         Task { availability = await camera.start() }
     }

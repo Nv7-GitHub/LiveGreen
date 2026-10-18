@@ -21,9 +21,32 @@ extension ImpactEngine {
             return .unitsPerYear((usage?.servingsPerWeek ?? FoodServing.defaultServingsPerWeek) * Self.weeksPerYear)
         case .packaging, .personalCare:
             return .unitsPerYear((usage?.usesPerWeek ?? 1) * Self.weeksPerYear)
-        case .electronic, .clothing, .household:
+        case .household where component.quantities.consumable == true:
+            return .unitsPerYear(consumablesPerYear(of: component))
+        case .electronic, .clothing, .household, .vehicle:
             return .lifetime(lifespan: lifespan(of: component))
         }
+    }
+
+    /// Uses one household consumable lasts when identify did not say.
+    public static let defaultUsesPerContainer = 50.0
+
+    /// How many uses one consumable lasts: identify's figure, else `defaultUsesPerContainer`.
+    public func usesPerContainer(of component: Component) -> Double {
+        component.quantities.usesPerContainer.flatMap { $0 > 0 ? $0 : nil } ?? Self.defaultUsesPerContainer
+    }
+
+    /// Household consumables used up a year: uses a week × 52 ÷ uses one lasts (a spray used 3 times a week, 80
+    /// treatments a bottle, is about 2 bottles a year).
+    public func consumablesPerYear(of component: Component) -> Double {
+        (component.usage?.usesPerWeek ?? 1) * Self.weeksPerYear / usesPerContainer(of: component)
+    }
+
+    /// A household durable's service life by its kind or name; nil for consumables and other categories.
+    func householdLifespan(of component: Component) -> HouseholdLifespan? {
+        guard component.category == .household, component.quantities.consumable != true, let store else { return nil }
+        return component.identifiers.genericKey.flatMap(store.householdLifespan(kind:))
+            ?? store.householdLifespan(kind: component.name)
     }
 
     /// The component's lifespan metric, else the reference default for its type, else 5 years (±40%).
@@ -33,9 +56,17 @@ extension ImpactEngine {
             return Measured(value: garment.lifespanYears, relativeRange: 0.4, unit: .years, tier: .factorModel,
                             sources: [garment.lifespanCitation])
         }
-        if let defaults = reference.deviceDefaults(deviceType: component.quantities.deviceType ?? component.name) {
+        if let vehicle = vehicleModel(for: component) {
+            return Measured(value: vehicle.factors.lifespanYears, relativeRange: 0.25, unit: .years, tier: .factorModel,
+                            sources: [vehicle.factors.lifespanCitation])
+        }
+        if let defaults = component.deviceLookupKey.flatMap(reference.deviceDefaults(deviceType:)) {
             return Measured(value: defaults.lifespanYears, relativeRange: 0.3, unit: .years, tier: .factorModel,
                             sources: [defaults.citation])
+        }
+        if let household = householdLifespan(of: component) {
+            return Measured(value: household.lifespanYears, relativeRange: 0.4, unit: .years, tier: .factorModel,
+                            sources: [household.citation])
         }
         return Measured(value: Self.defaultLifespanYears, relativeRange: 0.4, unit: .years, tier: .estimate)
     }

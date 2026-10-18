@@ -51,12 +51,16 @@ struct EvidenceLadderTests {
 
 @Suite("Question gate")
 struct QuestionGateTests {
-    private func component(_ name: String, carbon: Double, low: Double, high: Double, question: Bool) -> Component {
+    private static let hours = [AnswerOption(label: "~2 h", field: .hoursOnPerDay, value: 2),
+                                AnswerOption(label: "~8 h", field: .hoursOnPerDay, value: 8)]
+
+    private func component(_ name: String, carbon: Double, low: Double, high: Double, question: Bool,
+                           options: [AnswerOption] = hours) -> Component {
         var c = Component(name: name, category: .electronic)
         c.metrics[.carbon] = Measured(value: carbon, low: low, high: high, unit: .kgCO2e, tier: .estimate)
         if question {
             c.questions = [ComponentQuestion(id: "q", question: "Hours?", whyItMatters: "Use phase",
-                                             affectedMetrics: [.carbon], options: [])]
+                                             affectedMetrics: [.carbon], options: options)]
         }
         return c
     }
@@ -67,13 +71,48 @@ struct QuestionGateTests {
         let small = component("Small", carbon: 5, low: 1, high: 20, question: true)
         let pending = QuestionGate.pendingQuestions(for: [small, narrow, big])
         #expect(pending.map(\.componentName) == ["Big"])
+        // The sheet shows what the numbers use now: the device table's typical hours without a stated usage.
+        #expect(pending.first?.currentValue == 4)
     }
 
     @Test func settledQuestionsStopAsking() {
         let big = component("Big", carbon: 400, low: 200, high: 650, question: true)
         let pending = QuestionGate.pendingQuestions(for: [big])
+        #expect(pending.count == 1)
         let settled = QuestionGate.settling(pending, in: [big])
         #expect(QuestionGate.pendingQuestions(for: settled).isEmpty)
         #expect(settled[0].metrics == big.metrics)
+    }
+
+    /// Identify once asked what dumplings were filled with, with options that set no usage field: answering changed
+    /// nothing. Such options, and options for a field that does not move the item's numbers, are never offered.
+    @Test func optionsThatChangeNothingAreDropped() {
+        let filling = [AnswerOption(label: "Vegetable"), AnswerOption(label: "Pork")]
+        let inert = component("Dumplings", carbon: 400, low: 200, high: 650, question: true, options: filling)
+        #expect(QuestionGate.pendingQuestions(for: [inert]).isEmpty)
+        let wearsOnly = [AnswerOption(label: "Rarely", field: .wearsPerYear, value: 5),
+                         AnswerOption(label: "Often", field: .wearsPerYear, value: 100)]
+        let wrongField = component("Laptop", carbon: 400, low: 200, high: 650, question: true, options: wearsOnly)
+        #expect(QuestionGate.pendingQuestions(for: [wrongField]).isEmpty)
+        let mixed = component("Monitor", carbon: 400, low: 200, high: 650, question: true,
+                              options: Self.hours + [AnswerOption(label: "Not sure")])
+        #expect(QuestionGate.pendingQuestions(for: [mixed]).first?.question.options == Self.hours)
+    }
+
+    /// Per year a daily latte outweighs a laptop's share of its making, so the latte's question is the one shown.
+    @Test func topContributorsAreRankedPerYear() {
+        let laptop = component("Laptop", carbon: 250, low: 120, high: 400, question: true)
+        var latte = Component(name: "Iced latte", category: .food, quantities: Quantities(volumeLiters: 0.45, foodGroup: "latte"),
+                              usage: UsageProfile(servingsPerWeek: 7, source: .answered))
+        latte.metrics[.carbon] = Measured(value: 0.8, low: 0.4, high: 1.6, unit: .kgCO2e, tier: .factorModel)
+        latte.questions = [ComponentQuestion(id: "servings", question: "How often?", whyItMatters: "Frequency",
+                                             affectedMetrics: [.carbon],
+                                             options: [AnswerOption(label: "Weekly", field: .servingsPerWeek, value: 1),
+                                                       AnswerOption(label: "Daily", field: .servingsPerWeek, value: 7)])]
+        var mouse = component("Mouse", carbon: 10, low: 5, high: 20, question: false)
+        mouse.metrics[.lifespan] = .exact(5, unit: .years, tier: .factorModel)
+        let pending = QuestionGate.pendingQuestions(for: [laptop, latte, mouse])
+        #expect(Set(pending.map(\.componentName)) == ["Laptop", "Iced latte"])
+        #expect(pending.first { $0.componentName == "Iced latte" }?.currentValue == 7)
     }
 }

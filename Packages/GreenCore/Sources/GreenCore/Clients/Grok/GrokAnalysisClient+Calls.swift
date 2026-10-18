@@ -33,8 +33,14 @@ extension GrokAnalysisClient: VisionIdentifier {
 extension GrokAnalysisClient: AlternativeSuggester {
     /// Spec §7, with the same prompt and schema as `ClaudeClient.suggestAlternatives`.
     public func suggestAlternatives(for components: [Component], profile: UserProfile) async throws -> [AlternativeSuggestion] {
+        try await suggestAlternatives(for: components, profile: profile, retrying: [:])
+    }
+
+    /// The same call, with notes on swaps already turned down when it is a second try.
+    public func suggestAlternatives(for components: [Component], profile: UserProfile,
+                                    retrying notes: [UUID: String]) async throws -> [AlternativeSuggestion] {
         guard !components.isEmpty else { return [] }
-        let text = try ClaudeClient.alternativesUserText(components: components, profile: profile)
+        let text = try ClaudeClient.alternativesUserText(components: components, profile: profile, retrying: notes)
         return try await respond(instructions: ClaudeClient.alternativesSystemPrompt(vocabulary: configuration.vocabulary),
                                  content: [["type": "input_text", "text": .string(text)]],
                                  schemaName: SuggestAlternativesTool.name,

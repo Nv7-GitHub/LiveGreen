@@ -30,14 +30,20 @@ final class AppModel {
     /// save it back or start fetching its swaps; every new scan gets a fresh id, so nothing else is affected.
     @ObservationIgnored private var deletedScanIDs: Set<UUID> = []
 
+    /// `-SkipOnboarding` (UI tests, previews) also skips the name prompt.
+    @ObservationIgnored private let skipsNamePrompt: Bool
+
     @ObservationIgnored let container: ModelContainer
     @ObservationIgnored private var store: ScanStore { ScanStore(context: container.mainContext) }
     /// Notes the user left on scans; new scans send a few to identify as weak hints.
     @ObservationIgnored private(set) lazy var feedback = FeedbackStore(context: container.mainContext)
+    /// How often the user has each kind of item, by their answers; new scans start from these rates.
+    @ObservationIgnored private(set) lazy var usageMemory = UsageMemoryStore(context: container.mainContext)
 
     init(container: ModelContainer, launch: LaunchArguments = LaunchArguments(), secrets: Secrets = Secrets()) {
         let flags = FeatureFlags.load(arguments: launch)
         self.container = container
+        self.skipsNamePrompt = launch.skipOnboarding
         self.secrets = secrets
         self.flags = flags
         self.services = ServiceContainer.make(flags: flags, secrets: secrets)
@@ -55,7 +61,28 @@ final class AppModel {
         return model
     }
 
-    var needsOnboarding: Bool { !profile.onboardingCompleted }
+    /// With the name prompt standing in for onboarding, installs that finished the questionnaire before it
+    /// existed are asked for a name too.
+    var needsOnboarding: Bool {
+        !profile.onboardingCompleted || (!Self.usesFullOnboarding && displayName.isEmpty && !skipsNamePrompt)
+    }
+
+    /// The full lifestyle questionnaire is temporarily replaced by a name prompt (`NameEntryView`); flip this back
+    /// to restore `OnboardingFlow` at first launch. Settings can still edit the profile either way.
+    static let usesFullOnboarding = false
+
+    static let displayNameKey = "LiveGreen.displayName"
+
+    /// The name asked for at first launch, shown on the Leaderboard. Empty until entered.
+    var displayName: String = UserDefaults.standard.string(forKey: AppModel.displayNameKey) ?? "" {
+        didSet { UserDefaults.standard.set(displayName, forKey: Self.displayNameKey) }
+    }
+
+    /// Finishes the pretend sign-up: keeps the current profile answers and records the display name.
+    func completeOnboarding(withName name: String) {
+        displayName = name
+        completeOnboarding(with: profile)
+    }
 
     func completeOnboarding(with profile: UserProfile) {
         var completed = profile
@@ -78,12 +105,14 @@ final class AppModel {
         deletedScanIDs = []
         perform { try store.deleteAll() }
         perform { try feedback.deleteAll() }
+        perform { try usageMemory.deleteAll() }
         plugs.removeAll()
         for key in SecretKey.allCases { try? secrets.setOverride(nil, for: key) }
         if let domain = Bundle.main.bundleIdentifier { defaults.removePersistentDomain(forName: domain) }
         // Removing the domain doesn't notify @AppStorage, so clear the units key directly as well.
         defaults.removeObject(forKey: DisplayUnits.defaultsKey)
         flags = FeatureFlags.load(defaults: defaults)
+        displayName = ""
         refreshServices()
         selectedTab = .scan
         updateProfile(.default)
@@ -96,6 +125,7 @@ final class AppModel {
 
     func save(_ result: ScanResult) {
         guard !deletedScanIDs.contains(result.id) else { return }
+        let before = scans.first { $0.id == result.id }
         if let index = scans.firstIndex(where: { $0.id == result.id }) {
             scans[index] = result
         } else {
@@ -103,6 +133,8 @@ final class AppModel {
         }
         perform { try store.save(result) }
         prefetchSwaps(for: result)
+        // An item marked "It's mine" after the swaps came back was left out of them.
+        if let before { swapPrefetch.fetchNewlyCounted(result, since: before, app: self) }
     }
 
     /// Starts fetching a scan's greener swaps in the background, with no UI, unless the saved copy has them or a
@@ -127,7 +159,13 @@ final class AppModel {
         let services = scene.map { self.services.replaying($0) } ?? self.services
         return ScanCoordinator(services: services, profile: profile, mode: mode ?? flags.scanMode,
                                cache: services.isDemo ? nil : ScanCache(container: container),
-                               feedback: feedback.identifyHints)
+                               feedback: feedback.identifyHints, rememberedUsage: usageMemory.rates)
+    }
+
+    /// Remembers the rates the user gave between `base` and `updated` (a usage answer or slider), by kind of item, so
+    /// later scans of it start from them instead of the typical week.
+    func rememberUsage(from base: ScanResult, to updated: ScanResult) {
+        perform { try usageMemory.remember(answersIn: updated, since: base, reference: services.reference) }
     }
 
     func refreshServices() {

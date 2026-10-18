@@ -55,6 +55,12 @@ struct ARScanView: View {
         .onAppear { session.run() }
         .onDisappear { session.pause() }
         .onChange(of: anchoredResult?.id, initial: true) { anchorIfNeeded() }
+        .onChange(of: anchoredResult.map { Set($0.notCountedComponents.map(\.id)) }) {
+            // Pin colours follow "Not mine" / "It's mine" from the detail sheet.
+            guard session.anchoredResultID != nil, snapshot?.camera != nil else { return }
+            session.clearAnchors()
+            anchorIfNeeded()
+        }
         .sheet(item: $selected) { component in
             if let anchored = anchoredResult {
                 ARComponentDetailSheet(component: component, result: anchored, onOpenResult: onOpenResult)
@@ -114,7 +120,8 @@ struct ARScanView: View {
                 Divider()
             }
             ForEach(anchored.components) { component in
-                Button(component.name, systemImage: component.category.systemImage) { select(component) }
+                Button(component.isTotaled ? component.name : "\(component.name) · not counted",
+                       systemImage: component.category.systemImage) { select(component) }
             }
         } label: {
             Label("Items", systemImage: "list.bullet")
@@ -150,8 +157,10 @@ struct ARScanView: View {
     private func anchorIfNeeded() {
         guard let anchored = anchoredResult, session.anchoredResultID != anchored.id,
               let camera = snapshot?.camera else { return }
-        let total = anchored.components.compactMap { $0.metrics[.carbon]?.value }.reduce(0, +)
+        // Items the scan does not count get grey pins and no share, as on the results screen.
+        let total = anchored.totaledComponents.compactMap { $0.metrics[.carbon]?.value }.reduce(0, +)
         let tints = Dictionary(uniqueKeysWithValues: anchored.components.map { component in
+            guard component.isTotaled else { return (component.id, UIColor.systemGray) }
             let share = total > 0 ? (component.metrics[.carbon]?.value ?? 0) / total : 0
             return (component.id, UIColor(Theme.carbonShareTint(share)))
         })

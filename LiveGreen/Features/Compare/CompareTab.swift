@@ -23,7 +23,7 @@ struct CompareTab: View {
 
     /// Recompute whenever scans, plug schedules or the profile change.
     private var inputs: [AnyHashable] {
-        [model.scans.map(\.id), model.scans.map(\.date), model.profile, plugSavingsKg]
+        [model.scans.map(\.id), model.scans.map(\.date), model.profile, plugSavingsKg, model.displayName]
     }
 
     var body: some View {
@@ -31,6 +31,9 @@ struct CompareTab: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
+                    if !model.displayName.isEmpty {
+                        AccountCard(name: model.displayName, overall: isLoaded ? analysis.overall : [])
+                    }
                     if !isLoaded {
                         ProgressView().padding(.top, 40)
                     } else if analysis.cohort == nil {
@@ -62,8 +65,9 @@ struct CompareTab: View {
         let scans = model.scans
         let profile = model.profile
         let plugSavingsKg = plugSavingsKg
+        let userName = model.displayName.isEmpty ? "You" : model.displayName
         analysis = await Task.detached(priority: .userInitiated) {
-            CompareAnalysis(scans: scans, profile: profile, plugSavingsKg: plugSavingsKg)
+            CompareAnalysis(scans: scans, profile: profile, plugSavingsKg: plugSavingsKg, userName: userName)
         }.value
         isLoaded = true
     }

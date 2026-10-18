@@ -6,8 +6,11 @@ import Foundation
 /// - food: per serving, a year being `servingsPerWeek × 52` servings; or, for a barcoded pack whose net quantity is
 ///   on record, per whole pack, a year being `packsPerWeek × 52` packs (`FoodServing.basis`).
 /// - packaging, personal care: per unit consumed; a year is `usesPerWeek × 52` units.
+/// - household consumables (`Quantities.consumable`: a cleaner, a paper notebook): per item; a year is
+///   `usesPerWeek × 52 ÷ usesPerContainer` items (`consumablesPerYear(of:)`).
 /// - electronic, clothing, household (durables): per item over its whole life; carbon includes the use phase
 ///   (embodied + yearly use × lifespan), so a year is the lifetime value ÷ lifespan.
+/// - vehicle: likewise per vehicle over its life, the use phase being driving (`VehicleModel`).
 /// `yearlyElectricity` is already yearly.
 public struct ImpactEngine: Sendable {
     public static let daysPerYear = 365.0
@@ -28,10 +31,11 @@ public struct ImpactEngine: Sendable {
 
     // MARK: Formulas
 
-    /// kWh/yr = (powerOn × hoursOn + standby × standbyHours) × 365 / 1000.
-    public static func yearlyElectricity(powerOnW: Double, hoursOnPerDay: Double,
-                                         standbyW: Double, standbyHoursPerDay: Double) -> Double {
-        (powerOnW * hoursOnPerDay + standbyW * standbyHoursPerDay) * daysPerYear / 1000
+    /// kWh/yr = (powerOn × hoursOn + standby × standbyHours) × days in use / 1000; a seasonal appliance runs (and is
+    /// plugged in) only `daysInUse` days a year.
+    public static func yearlyElectricity(powerOnW: Double, hoursOnPerDay: Double, standbyW: Double,
+                                         standbyHoursPerDay: Double, daysInUse: Double = daysPerYear) -> Double {
+        (powerOnW * hoursOnPerDay + standbyW * standbyHoursPerDay) * min(max(daysInUse, 0), daysPerYear) / 1000
     }
 
     /// kWh/yr drawn from the wall to charge a battery `chargesPerWeek` times.
@@ -90,7 +94,11 @@ public struct ImpactEngine: Sendable {
     /// Yearly electricity from power metrics and usage: battery charging when the device has a battery and
     /// `chargesPerWeek` is known, else on/standby power × hours. Nil when power or hours are unknown.
     public func derivedYearlyElectricity(for component: Component) -> Measured? {
-        let profile = store?.deviceProfile(deviceType: component.quantities.deviceType ?? component.name)
+        // A vehicle's electricity is its charging for the distance driven, nil when it never plugs in.
+        if let vehicle = vehicleModel(for: component) {
+            return vehicle.yearlyElectricity(component.usage, seed: component.stableSeed)
+        }
+        let profile = store?.deviceProfile(for: component)
         let usage = component.usage
         let mc = MonteCarlo(seed: component.stableSeed)
         if let battery = profile?.batteryKWh, let charges = usage?.chargesPerWeek {
@@ -102,8 +110,26 @@ public struct ImpactEngine: Sendable {
               let hoursOn = usage?.hoursOnPerDay ?? profile?.defaults.typicalHoursOnPerDay else { return nil }
         let standby = component.metrics[.standbyPower] ?? Measured.exact(0, unit: .watts, tier: powerOn.tier)
         let standbyHours = usage?.standbyHoursPerDay ?? max(0, 24 - hoursOn)
+        let days = profile?.activeDaysPerYear ?? Self.daysPerYear
         return mc.propagate([powerOn, standby], unit: .kilowattHoursPerYear, salt: "kwh") {
-            Self.yearlyElectricity(powerOnW: $0[0], hoursOnPerDay: hoursOn, standbyW: $0[1], standbyHoursPerDay: standbyHours)
+            Self.yearlyElectricity(powerOnW: $0[0], hoursOnPerDay: hoursOn, standbyW: $0[1], standbyHoursPerDay: standbyHours,
+                                   daysInUse: days)
         }
+    }
+}
+
+extension Component {
+    /// What the device table is searched by: the item's device type, else the name of an electronic. Nothing else
+    /// is matched by name, so a paper "spiral notebook" never gets a laptop's lifespan and citation.
+    public var deviceLookupKey: String? {
+        if let type = quantities.deviceType?.trimmingCharacters(in: .whitespacesAndNewlines), !type.isEmpty { return type }
+        return category == .electronic ? name : nil
+    }
+}
+
+extension ReferenceStore {
+    /// The component's device profile under `Component.deviceLookupKey`.
+    public func deviceProfile(for component: Component) -> DeviceProfile? {
+        component.deviceLookupKey.flatMap(deviceProfile(deviceType:))
     }
 }

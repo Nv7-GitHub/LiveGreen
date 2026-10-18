@@ -78,6 +78,31 @@ final class SwapPrefetcher {
         return entry.fetched
     }
 
+    /// Items the user counted ("It's mine") after the scan's swaps were fetched were left out of that request: asks for
+    /// theirs alone and saves them into the latest copy of the scan. `before` is the copy saved until now; items that
+    /// were already counted then, or have swaps, are not asked again, so a saved answer never repeats the call.
+    func fetchNewlyCounted(_ result: ScanResult, since before: ScanResult, app: AppModel) {
+        guard result.hasAlternatives else { return }
+        let ids = Set(result.totaledComponents.filter { component in
+            component.alternatives.isEmpty && before.component(withID: component.id).map { !$0.isTotaled } == true
+        }.map(\.id))
+        guard !ids.isEmpty else { return }
+        let coordinator = app.makeScanCoordinator(mode: result.mode)
+        Task { [weak app] in
+            guard let fetched = try? await coordinator.suggestAlternatives(forItems: ids, in: result),
+                  let app, var latest = app.scans.first(where: { $0.id == result.id }) else { return }
+            var changed = false
+            for id in ids {
+                guard let swaps = fetched.component(withID: id)?.alternatives, !swaps.isEmpty,
+                      let index = latest.components.firstIndex(where: { $0.id == id }),
+                      latest.components[index].alternatives.isEmpty else { continue }
+                latest.components[index].alternatives = swaps
+                changed = true
+            }
+            if changed { app.save(latest) }
+        }
+    }
+
     /// The swaps for a scan: the finished or running fetch for its items, else a new one.
     func swaps(for result: ScanResult, app: AppModel) async throws -> ScanResult {
         prefetch(result, app: app)

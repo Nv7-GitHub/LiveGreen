@@ -53,7 +53,7 @@ public struct CohortModel: Sendable {
                 value *= heatingModifier
             }
             return value
-        case .packaging, .personalCare:
+        case .packaging, .personalCare, .vehicle:
             return 1
         }
     }
@@ -119,7 +119,12 @@ public struct CohortModel: Sendable {
         }
         if metric == .carbon {
             let shares = Category.allCases.reduce(0) { $0 + reference.share(of: $1, for: .carbon) }
-            value += profile.commuteKmPerWeekByMode.reduce(0) { $0 + (LifestyleEstimate.kgPerKm[$1.key] ?? 0) * $1.value * 52 }
+            let travel = profile.commuteKmPerWeekByMode.map { (mode: $0.key, kg: (LifestyleEstimate.kgPerKm[$0.key] ?? 0) * $0.value * 52) }
+            // A scanned vehicle (counted above) already includes its driving, so it stands in for the profile's car
+            // travel up to that amount instead of counting the same car twice.
+            let driving = travel.filter { $0.mode == .car || $0.mode == .electricCar }.reduce(0) { $0 + $1.kg }
+            let otherTravel = travel.reduce(0) { $0 + $1.kg } - driving
+            value += otherTravel + max(0, driving - (scanned.byCategory[.vehicle]?[.carbon] ?? 0))
             value += max(0, total * (1 - shares - LifestyleEstimate.averageTravelShare))
             value = max(value - scanned.scheduledSavingsKg, 0)
         }

@@ -19,6 +19,10 @@ struct ScanTab: View {
     @State private var specPrompt: SpecPrompt?
     /// What to open once the sheet is gone (the estimate, or the refined result), so the push follows the dismissal.
     @State private var resultAfterPrompt: ScanResult?
+    /// A finished store or street scan waiting on "Which is yours?".
+    @State private var ownershipPrompt: ScanResult?
+    /// The scan to continue with once that sheet is gone: as identify guessed, or as the user sorted it.
+    @State private var resultAfterOwnership: ScanResult?
     @Namespace private var glass
 
     struct Capture {
@@ -71,6 +75,12 @@ struct ScanTab: View {
             .toolbarTitleDisplayMode(.inline)
             .settingsToolbarButton()
             .navigationDestination(for: ScanResult.self) { ScanResultView(result: $0) }
+            .sheet(item: $ownershipPrompt, onDismiss: continueAfterOwnership) { result in
+                WhichIsYoursSheet(result: result) { owned in
+                    resultAfterOwnership = coordinator?.markingOwned(only: owned, in: result) ?? result
+                    ownershipPrompt = nil
+                }
+            }
             .sheet(item: $specPrompt, onDismiss: openResultAfterPrompt) { prompt in
                 SpecQuestionsSheet(questions: prompt.questions,
                                    onApply: { refine(prompt.result, with: $0) },
@@ -141,12 +151,29 @@ struct ScanTab: View {
         phase = .analyzing
     }
 
-    /// Items still on a T4 estimate get the detail questions sheet first; everything else opens straight away.
+    /// A store or street scan first asks which items are the user's; then items still on a T4 estimate get the detail
+    /// questions sheet; everything else opens straight away.
     private func finish(_ result: ScanResult) {
-        guard !specQuestions.isEmpty else { return show(result) }
-        resultAfterPrompt = result
-        specPrompt = SpecPrompt(result: result, questions: specQuestions)
+        guard result.asksWhichIsYours else { return askDetails(result) }
+        resultAfterOwnership = result
+        ownershipPrompt = result
+    }
+
+    private func continueAfterOwnership() {
+        guard let result = resultAfterOwnership else { return }
+        resultAfterOwnership = nil
+        askDetails(result)
+    }
+
+    /// Detail questions only about items the results count: none about a stranger's car or the store's stock.
+    private func askDetails(_ result: ScanResult) {
+        let questions = specQuestions.filter { question in
+            result.component(withID: question.componentID).map(result.isTotaled) ?? false
+        }
         specQuestions = []
+        guard !questions.isEmpty else { return show(result) }
+        resultAfterPrompt = result
+        specPrompt = SpecPrompt(result: result, questions: questions)
     }
 
     /// Re-resolves the answered items on-device, then closes the sheet; the dismissal opens the refined result.

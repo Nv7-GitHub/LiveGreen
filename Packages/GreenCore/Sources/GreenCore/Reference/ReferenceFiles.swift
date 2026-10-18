@@ -108,6 +108,7 @@ struct DeviceRecordFile: Decodable {
     var referenceScreenInches: Double?
     var verified: Bool
     var citation: Source
+    var activeDaysPerYear: Double?
 
     var profile: DeviceProfile {
         DeviceProfile(
@@ -117,7 +118,97 @@ struct DeviceRecordFile: Decodable {
                                      recyclablePercent: recyclablePercent, typicalHoursOnPerDay: typicalHoursOnPerDay,
                                      stageShares: stageShares, citation: citation),
             deferrableLoad: deferrable, chargerWatts: chargerWatts, batteryKWh: batteryKWh,
-            referenceScreenInches: referenceScreenInches, verified: verified)
+            referenceScreenInches: referenceScreenInches, verified: verified, activeDaysPerYear: activeDaysPerYear)
+    }
+}
+
+struct HouseholdLifespanRecordFile: Decodable {
+    var kind: String
+    var aliases: [String]
+    var lifespanYears: Double
+    var verified: Bool
+    var citation: Source
+
+    var lifespan: HouseholdLifespan { HouseholdLifespan(kind: kind, lifespanYears: lifespanYears, citation: citation) }
+}
+
+struct VehicleFile: Decodable {
+    struct Glider: Decodable {
+        var kgCO2ePerKg: Double
+        var productionStageShares: [LifecycleStage: Double]
+        var verified: Bool
+        var citation: Source
+    }
+    struct Battery: Decodable {
+        var kgCO2ePerKWh: Double
+        var kgPerKWh: Double
+        var verified: Bool
+        var citation: Source
+    }
+    struct Lifespan: Decodable {
+        var years: Double
+        var verified: Bool
+        var citation: Source
+    }
+    struct Distance: Decodable {
+        var kmPerYear: Double
+        var verified: Bool
+        var citation: Source
+    }
+    struct EndOfLife: Decodable {
+        var recyclablePercent: Double
+        var plasticMassShare: Double
+        var verified: Bool
+        var citation: Source
+    }
+    struct Record: Decodable {
+        var powertrain: Powertrain
+        var fuelKgCO2ePerKm: Double
+        var fuelKgCO2ePerKmPerTonne: Double
+        var kWhPerKm: Double
+        var kWhPerKmPerTonne: Double
+        var electricShare: Double
+        var batteryKWh: Double
+        var batteryKWhPerTonne: Double
+        var verified: Bool
+        var citation: Source
+
+        var factors: PowertrainFactors {
+            PowertrainFactors(fuelKgCO2ePerKm: fuelKgCO2ePerKm, fuelKgCO2ePerKmPerTonne: fuelKgCO2ePerKmPerTonne,
+                              kWhPerKm: kWhPerKm, kWhPerKmPerTonne: kWhPerKmPerTonne, electricShare: electricShare,
+                              batteryKWh: batteryKWh, batteryKWhPerTonne: batteryKWhPerTonne, citation: citation)
+        }
+    }
+    var defaultMassKg: Double
+    var glider: Glider
+    var battery: Battery
+    var lifespan: Lifespan
+    var distance: Distance
+    var endOfLife: EndOfLife
+    var records: [Record]
+
+    var factors: VehicleFactors {
+        VehicleFactors(defaultMassKg: defaultMassKg, gliderKgCO2ePerKg: glider.kgCO2ePerKg,
+                       productionStageShares: glider.productionStageShares, gliderCitation: glider.citation,
+                       batteryKgCO2ePerKWh: battery.kgCO2ePerKWh, batteryKgPerKWh: battery.kgPerKWh,
+                       batteryCitation: battery.citation, lifespanYears: lifespan.years, lifespanCitation: lifespan.citation,
+                       kmPerYear: distance.kmPerYear, distanceCitation: distance.citation,
+                       recyclablePercent: endOfLife.recyclablePercent, plasticMassShare: endOfLife.plasticMassShare,
+                       endOfLifeCitation: endOfLife.citation,
+                       powertrains: Dictionary(records.map { ($0.powertrain, $0.factors) }, uniquingKeysWith: { first, _ in first }))
+    }
+
+    var info: [ReferenceRecordInfo] {
+        let table = "vehicle_factors"
+        return [
+            ReferenceRecordInfo(table: table, key: "glider", verified: glider.verified, citation: glider.citation),
+            ReferenceRecordInfo(table: table, key: "battery", verified: battery.verified, citation: battery.citation),
+            ReferenceRecordInfo(table: table, key: "lifespan", verified: lifespan.verified, citation: lifespan.citation),
+            ReferenceRecordInfo(table: table, key: "distance", verified: distance.verified, citation: distance.citation),
+            ReferenceRecordInfo(table: table, key: "endOfLife", verified: endOfLife.verified, citation: endOfLife.citation),
+        ] + records.map {
+            ReferenceRecordInfo(table: table, key: "powertrain:\($0.powertrain.rawValue)", verified: $0.verified, citation: $0.citation)
+        }
     }
 }
 

@@ -69,6 +69,8 @@ public struct EvidenceLadder: Sendable {
               let hit = await cache.cachedResolution(forKey: key), let carbon = hit.metrics[.carbon],
               hit.packNetKg == component.quantities.packNetKg else { return nil }
         if !acceptingEstimates, component.identifiers.cacheKey == nil, carbon.tier == .estimate { return nil }
+        // A vehicle cached as something else (household, before vehicles had their own model) has no driving in it.
+        if component.category == .vehicle, let category = hit.category, category != .vehicle { return nil }
         var result = component
         if let category = hit.category { result.category = category }
         result.metrics.merge(hit.metrics) { _, cached in cached }

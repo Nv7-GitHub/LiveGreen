@@ -32,7 +32,11 @@ struct RootView: View {
         }
         .tabBarMinimizeBehavior(.onScrollDown)
         .fullScreenCover(isPresented: .constant(model.needsOnboarding)) {
-            OnboardingFlow(initialProfile: model.profile) { model.completeOnboarding(with: $0) }
+            if AppModel.usesFullOnboarding {
+                OnboardingFlow(initialProfile: model.profile) { model.completeOnboarding(with: $0) }
+            } else {
+                NameEntryView(initialName: model.displayName) { model.completeOnboarding(withName: $0) }
+            }
         }
         .onChange(of: model.flags.plugFeaturesEnabled) { _, enabled in
             if !enabled, model.selectedTab == .plugs { model.selectedTab = .scan }

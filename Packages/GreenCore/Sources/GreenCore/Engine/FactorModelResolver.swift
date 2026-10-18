@@ -19,6 +19,7 @@ public struct FactorModelResolver: MetricResolver {
         case .packaging: packaging(request.component)
         case .household: household(request.component)
         case .personalCare: personalCare(request.component)
+        case .vehicle: vehicle(request.component, profile: request.profile)
         }
         return ResolverOutput(metrics: output.metrics.filter { request.metrics.contains($0.key) },
                               stageShares: output.stageShares, plasticPackagingShare: output.plasticPackagingShare)

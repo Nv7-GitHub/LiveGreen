@@ -2,12 +2,14 @@ import SwiftUI
 import GreenCore
 
 /// Glass label floating over an anchored component: name, headline metric and its tier. The whole label is
-/// the tap target (at least 44 pt tall).
+/// the tap target (at least 44 pt tall). An item the scan does not count (not the user's, background, removed) is
+/// grey and says so, as on the results screen.
 struct ARComponentLabel: View {
     let component: Component
     /// Share of the scan's carbon (0–1), shown as the glass tint.
     let carbonShare: Double
     var isSelected = false
+    var isCounted = true
     let action: () -> Void
 
     private var shape: RoundedRectangle { .rect(cornerRadius: Theme.hotspotCornerRadius) }
@@ -21,13 +23,17 @@ struct ARComponentLabel: View {
                     Text(component.name)
                         .font(.subheadline.weight(.semibold))
                         .lineLimit(1)
-                    if let carbon = component.metrics[.carbon] {
+                    if !isCounted {
+                        Text("Not counted")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else if let carbon = component.metrics[.carbon] {
                         Text(carbon.formatted)
                             .font(.caption.monospacedDigit())
                             .foregroundStyle(.secondary)
                     }
                 }
-                if let tier = component.metrics[.carbon]?.tier {
+                if isCounted, let tier = component.metrics[.carbon]?.tier {
                     TierBadge(tier: tier)
                 }
             }
@@ -39,13 +45,16 @@ struct ARComponentLabel: View {
             .contentShape(shape)
         }
         .buttonStyle(.plain)
-        .glassEffect(.regular.tint(Theme.carbonShareTint(carbonShare).opacity(isSelected ? 0.6 : 0.35)).interactive(),
-                     in: shape)
+        .glassEffect(.regular.tint(tint.opacity(isSelected ? 0.6 : 0.35)).interactive(), in: shape)
+        .opacity(isCounted || isSelected ? 1 : 0.8)
         .overlay {
             if isSelected { shape.strokeBorder(.white.opacity(0.9), lineWidth: 2).allowsHitTesting(false) }
         }
-        .accessibilityLabel("\(component.name), \(component.metrics[.carbon]?.formatted ?? "no carbon value yet")")
+        .accessibilityLabel(isCounted ? "\(component.name), \(component.metrics[.carbon]?.formatted ?? "no carbon value yet")"
+                                      : "\(component.name), not counted")
         .accessibilityHint("Opens details")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
+
+    private var tint: Color { isCounted ? Theme.carbonShareTint(carbonShare) : .gray }
 }
