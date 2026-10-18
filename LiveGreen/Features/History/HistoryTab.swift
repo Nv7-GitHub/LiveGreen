@@ -1,7 +1,8 @@
 import SwiftUI
 import GreenCore
 
-/// Past scans from the SwiftData store, filterable by the search-role tab's text; swipe to delete.
+/// Past scans from the SwiftData store, filterable by the search-role tab's text. Swipe a row or long-press it to
+/// delete; an opened scan has Delete in its toolbar menu (`HistoryScanDetail`).
 /// Expects to be hosted in a `NavigationStack` (RootView provides one per tab).
 struct HistoryTab: View {
     /// Read in `body` so converted numbers refresh when Settings switches units.
@@ -23,24 +24,27 @@ struct HistoryTab: View {
                 NavigationLink(value: HistoryRoute(scanID: scan.id)) {
                     HistoryRow(scan: scan)
                 }
+                .accessibilityIdentifier("historyRow.\(scan.title)")
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    Button("Delete", systemImage: "trash", role: .destructive) {
-                        withAnimation { model.deleteScan(id: scan.id) }
-                    }
+                    Button("Delete", systemImage: "trash", role: .destructive) { delete(scan) }
+                        .accessibilityIdentifier("history.delete")
+                }
+                .contextMenu {
+                    Button("Delete", systemImage: "trash", role: .destructive) { delete(scan) }
+                        .accessibilityIdentifier("history.contextDelete")
                 }
             }
         }
         .listStyle(.insetGrouped)
         .overlay { emptyState }
         .navigationTitle(query.isEmpty ? "History" : "Search")
-        .navigationDestination(for: HistoryRoute.self) { route in
-            if let scan = model.scans.first(where: { $0.id == route.scanID }) {
-                ScanResultView(result: scan)
-            } else {
-                ContentUnavailableView("Scan deleted", systemImage: "trash")
-            }
-        }
+        .navigationDestination(for: HistoryRoute.self) { HistoryScanDetail(scanID: $0.scanID) }
         .settingsToolbarButton()
+    }
+
+    /// Swipes and the context menu delete straight away, like Mail and Notes; the row animates out.
+    private func delete(_ scan: ScanResult) {
+        withAnimation { model.deleteScan(id: scan.id) }
     }
 
     @ViewBuilder
