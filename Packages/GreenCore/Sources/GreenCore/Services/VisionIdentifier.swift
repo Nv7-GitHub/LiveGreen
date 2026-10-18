@@ -57,11 +57,15 @@ public struct IdentifiedComponent: Codable, Sendable, Hashable {
     /// T4 fallback estimates in canonical units.
     public var estimates: [MetricKey: EstimateRange]
     public var needsQuestion: [ComponentQuestion]
+    /// A point on the item itself, where its pin goes when it lies in or near the box.
+    public var anchor: NormalizedPoint?
+    /// The plain generic noun for what the item is ("backpack"), which its generic key prefers over the name.
+    public var kind: String?
 
     public init(name: String, category: Category, boundingBox: NormalizedRect, identifiers: Identifiers = Identifiers(),
                 quantities: Quantities = Quantities(), defaultUsage: UsageProfile? = nil,
                 deferrableLoad: DeferrableLoadType? = nil, estimates: [MetricKey: EstimateRange] = [:],
-                needsQuestion: [ComponentQuestion] = []) {
+                needsQuestion: [ComponentQuestion] = [], anchor: NormalizedPoint? = nil, kind: String? = nil) {
         self.name = name
         self.category = category
         self.boundingBox = boundingBox
@@ -71,12 +75,14 @@ public struct IdentifiedComponent: Codable, Sendable, Hashable {
         self.deferrableLoad = deferrableLoad
         self.estimates = estimates
         self.needsQuestion = needsQuestion
+        self.anchor = anchor
+        self.kind = kind
     }
 
     /// Converts to an unresolved `Component` (no metrics yet).
     public func makeComponent(id: UUID = UUID()) -> Component {
         Component(id: id, name: name, category: category, boundingBox: boundingBox.clamped,
                   identifiers: identifiers, quantities: quantities, usage: defaultUsage,
-                  questions: needsQuestion, fallbackEstimates: estimates)
+                  questions: needsQuestion, fallbackEstimates: estimates, anchor: anchor?.clamped)
     }
 }

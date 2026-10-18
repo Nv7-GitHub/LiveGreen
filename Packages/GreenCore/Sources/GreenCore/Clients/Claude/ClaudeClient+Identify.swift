@@ -63,7 +63,9 @@ extension ClaudeClient: VisionIdentifier {
         (e.g. cutlery) or omit them. Ignore people, pets, walls and floors.
         - Write `scene_title` first, and start each component object with its `name`, so the app can show \
         items while the answer is still arriving.
-        - A meal is split into its foods and drinks (e.g. burger, fries, cola can), not reported as one plate.
+        - A meal is split into its foods and drinks (e.g. burger, fries, cola can), not reported as one plate. List \
+        every distinct food you can see, including small sides, grains, egg dishes, sauces and dressings, even when \
+        partly out of frame; group only garnishes, or minor ingredients once there are more than 8 items.
         - Report each container once. A food's or drink's own cup, lid, straw, bottle, can or wrapper is part of \
         that item (its packaging_mass_g and packaging_materials), not a separate packaging component. Report \
         packaging on its own only when the food it held is not in the photo (an empty cup, a stack of takeout boxes). \
@@ -72,11 +74,15 @@ extension ClaudeClient: VisionIdentifier {
         \(PromptParts.categoryTable)
         - Anything that plugs in or charges, including kitchen and laundry appliances (dishwasher, washer, \
         kettle), is `electronic`. `household` is for unpowered goods such as furniture, cookware and cleaning supplies. \
-        Shoes, bags and worn accessories are `clothing`.
+        Shoes, bags and fabric accessories (hats, scarves, belts, gloves) are `clothing`; eyewear, helmets, watches, \
+        jewellery and umbrellas are not fabric and are `household`.
 
         Bounding boxes
         - Normalized to the image: x and y are the box's top-left corner as fractions of width and height \
-        (origin top-left), width and height are fractions too. Keep boxes tight around the visible item.
+        (origin top-left), width and height are fractions too. Keep boxes tight around the visible item: one box per \
+        item, around that item only, not the hand holding it, the plate or table under it or the food beside it.
+        - anchor: for every item, a point on the item's own surface near its middle, normalized like the box, where \
+        the app puts its marker. For a thin, angled or partly hidden item it must still land on the item.
 
         Identifiers
         - Identify each item as specifically as the evidence supports. LiveGreen looks up published specs and \
@@ -109,6 +115,8 @@ extension ClaudeClient: VisionIdentifier {
         at medium or high confidence.
         - name: lead with the brand and model line when confidence is medium or high, then what the item is if the \
         line does not say it; at low confidence keep the name plain ("Laptop", "Sneakers").
+        - kind: for items other than food and electronics, the plain noun for what the item is, lowercase and \
+        singular, without brand, colour, size or position ("backpack" for a partly visible blue backpack).
         - gtin: assign a barcode hint to the item it is printed on (if there is a single packaged product, it is \
         that product). Never fabricate digits.
         - materials: the mass split of the item itself (fiber percentages from a care label are exact; otherwise \
@@ -120,6 +128,9 @@ extension ClaudeClient: VisionIdentifier {
         - packaging_materials: for food, drinks and filled household or personal-care products, the split of what is \
         thrown away after use (cup, lid, straw, bottle, can, bag, wrapper, tray), the packaging packaging_mass_g \
         weighs. Clear plastic cups, dome lids and clamshells are pet_thermoform; drink bottles are pet.
+        - Judge materials from what you see, not from what such items are often made of: a mirror shine with \
+        reflections or stamped lettering means metal (such cutlery is stainless_steel, not plastic); wood grain means \
+        wood; thin, flexible or cloudy means plastic.
 
         Quantities
         - Estimate from visible size cues and typical products: mass of one unit or of the portion shown, \
@@ -130,6 +141,9 @@ extension ClaudeClient: VisionIdentifier {
         a 3-4 g lid; 330 mL aluminium can 13-15 g; 500 mL PET bottle 10-20 g; 1.5 L juice bottle 45-60 g; \
         single-serve chip bag 2-3 g, family-size bag 8-10 g; candy wrapper 1-3 g; clamshell 15-30 g; glass jar \
         150-300 g.
+        - Paper sheets: judge the size against the hand or nearby objects, not only the proportions: letter 8.5x11 in \
+        about 4.5 g, half sheet 5.5x8.5 in about 2.3 g (longer and narrower), quarter sheet 4.25x5.5 in about 1.1 g \
+        (letter-shaped but hand-sized), index card 3x5 in about 1.5 g.
         - cooked: true for a portion cooked from a dry grain, pasta or pulse (boiled rice, pasta, noodles, couscous, \
         porridge, cooked or canned beans, lentils and chickpeas), whose mass includes the water it absorbed; else null.
         - Set food_group or device_type using the reference keys so LiveGreen's factor tables apply. Choose the \

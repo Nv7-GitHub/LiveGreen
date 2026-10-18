@@ -93,7 +93,8 @@ extension ScanPipeline {
         var leads: [String: Int] = [:]
         for index in result.indices where result[index].identifiers.cacheKey == nil {
             guard let key = Identifiers.genericKey(name: result[index].name, category: result[index].category,
-                                                   brand: result[index].identifiers.brand) else { continue }
+                                                   brand: result[index].identifiers.brand,
+                                                   kind: result[index].kind) else { continue }
             result[index].identifiers.genericKey = key
             if leads[key].map({ detail(of: result[index]) > detail(of: result[$0]) }) ?? true { leads[key] = index }
         }
@@ -115,12 +116,34 @@ extension ScanPipeline {
 
     /// A `household` item with a known powered device type (dishwasher, kettle…) is an electronic, so it gets
     /// power and electricity metrics, ENERGY STAR records and the smart-plug option.
+    /// A worn accessory that is not fabric (`isNonTextileAccessory`) is household, never clothing.
     func reclassified(_ component: IdentifiedComponent) -> IdentifiedComponent {
+        if component.category == .clothing, Self.isNonTextileAccessory(component) {
+            var copy = component
+            copy.category = .household
+            return copy
+        }
         guard component.category == .household, let type = component.quantities.deviceType,
               engine.store?.deviceProfile(deviceType: type) != nil else { return component }
         var copy = component
         copy.category = .electronic
         return copy
+    }
+
+    /// Words (singular) for worn things that are not fabric: eyewear, helmets, watches, jewellery, umbrellas. As
+    /// clothing they got fibre questions and fibre factors, and a helmet answered as "cotton" became its scene's top
+    /// water item.
+    static let nonTextileAccessoryWords: Set<String> = [
+        "glass", "eyeglass", "sunglass", "spectacle", "goggle", "eyewear", "helmet", "watch", "wristwatch",
+        "jewelry", "jewellery", "necklace", "bracelet", "earring", "umbrella",
+    ]
+
+    /// True when the item's kind or name names a non-textile accessory.
+    static func isNonTextileAccessory(_ component: IdentifiedComponent) -> Bool {
+        [component.kind, component.name].compactMap(\.self).contains { text in
+            ReferenceKey.normalize(text).split(separator: "_")
+                .contains { nonTextileAccessoryWords.contains(Identifiers.singular(String($0))) }
+        }
     }
 
     /// Fills identifiers the model left empty from hints that can only belong to one component: a single GTIN

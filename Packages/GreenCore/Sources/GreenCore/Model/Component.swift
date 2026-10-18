@@ -23,13 +23,16 @@ public struct Component: Codable, Sendable, Hashable, Identifiable {
     public var fallbackEstimates: [MetricKey: EstimateRange]
     /// Share (0–1) of `plasticMass` that is packaging rather than the item itself; nil when unknown.
     public var plasticPackagingShare: Double?
+    /// A point on the item itself from identify, where its pin points (`pinAnchor`); nil uses the box centre.
+    public var anchor: NormalizedPoint?
 
     public init(id: UUID = UUID(), name: String, category: Category, boundingBox: NormalizedRect = .full,
                 identifiers: Identifiers = Identifiers(), quantities: Quantities = Quantities(),
                 metrics: [MetricKey: Measured] = [:], usage: UsageProfile? = nil,
                 alternatives: [Alternative] = [], plugCandidate: PlugCandidate? = nil,
                 stageShares: [LifecycleStage: Double] = [:], questions: [ComponentQuestion] = [],
-                fallbackEstimates: [MetricKey: EstimateRange] = [:], plasticPackagingShare: Double? = nil) {
+                fallbackEstimates: [MetricKey: EstimateRange] = [:], plasticPackagingShare: Double? = nil,
+                anchor: NormalizedPoint? = nil) {
         self.id = id
         self.name = name
         self.category = category
@@ -44,6 +47,7 @@ public struct Component: Codable, Sendable, Hashable, Identifiable {
         self.questions = questions
         self.fallbackEstimates = fallbackEstimates
         self.plasticPackagingShare = plasticPackagingShare
+        self.anchor = anchor
     }
 
     /// Applicable metrics that have not been resolved yet.

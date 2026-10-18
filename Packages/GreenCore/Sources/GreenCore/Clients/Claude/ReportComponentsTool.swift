@@ -62,8 +62,9 @@ enum ReportComponentsTool {
             nullable: true),
         "fallback_estimates": SchemaParts.estimates,
         "needs_question": SchemaParts.array(of: question, "At most one question, only when the answer changes the footprint a lot."),
-    ], required: ["name", "category", "bounding_box", "identifiers", "quantities", "default_usage",
-                  "deferrable_load", "fallback_estimates", "needs_question"])
+    ].merging(componentExtras) { current, _ in current },
+        required: ["name", "category", "bounding_box", "identifiers", "quantities", "default_usage",
+                   "deferrable_load", "fallback_estimates", "needs_question"])
 
     static let question = SchemaParts.object([
         "id": SchemaParts.string("Stable snake_case id, e.g. 'hours_on', 'servings_per_week'."),
@@ -107,6 +108,8 @@ enum ReportComponentsTool {
         var deferrableLoad: String?
         var fallbackEstimates: [EstimatePayload]?
         var needsQuestion: [ComponentQuestion]?
+        var anchor: Lenient<NormalizedPoint>?
+        var kind: Lenient<String>?
 
         func makeIdentified() throws -> IdentifiedComponent {
             guard let name = name.trimmedNonEmpty else { throw GreenCoreError.invalidModelOutput("component without a name") }
@@ -120,7 +123,9 @@ enum ReportComponentsTool {
                 defaultUsage: defaultUsage,
                 deferrableLoad: deferrableLoad.flatMap(DeferrableLoadType.init(looseRawValue:)),
                 estimates: EstimatePayload.table(fallbackEstimates ?? [], for: category),
-                needsQuestion: (needsQuestion ?? []).filter { !$0.options.isEmpty })
+                needsQuestion: (needsQuestion ?? []).filter { !$0.options.isEmpty },
+                anchor: anchor?.value.flatMap { $0.x.isFinite && $0.y.isFinite ? $0.clamped : nil },
+                kind: kind?.value?.trimmedNonEmpty)
         }
     }
 

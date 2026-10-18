@@ -168,13 +168,13 @@ struct ScanResultView: View {
 
     private static let selectionAnchorID = "selectedItemAnchor"
 
-    /// An invisible point at the selected item's box center, scrolled to when an item is selected.
+    /// An invisible point at the selected item's pin anchor, scrolled to when an item is selected.
     private var selectionAnchor: some View {
         GeometryReader { geometry in
-            let box = selectedComponent?.boundingBox.clamped ?? .full
+            let point = selectedComponent?.pinAnchor ?? NormalizedPoint(x: 0.5, y: 0.5)
             Color.clear
                 .frame(width: 1, height: 1)
-                .position(x: box.midX * geometry.size.width, y: box.midY * geometry.size.height)
+                .position(x: point.x * geometry.size.width, y: point.y * geometry.size.height)
                 .id(Self.selectionAnchorID)
         }
         .allowsHitTesting(false)
