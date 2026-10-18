@@ -113,7 +113,7 @@ final class AlternativesModel {
     }
 
     /// Spec §7 default picks for components without one, unless the user kept the original
-    /// (`SwapMath.defaultPick`: the best GreenScore).
+    /// (`SwapMath.defaultPick`: the best GreenScore among swaps that do not add carbon).
     static func defaultPicks(for result: ScanResult, selection: [UUID: UUID], kept: Set<UUID>,
                              plugFeatures: Bool) -> [UUID: UUID] {
         var picks = selection

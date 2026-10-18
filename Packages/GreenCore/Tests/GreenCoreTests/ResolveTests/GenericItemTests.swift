@@ -37,7 +37,7 @@ struct GenericItemTests {
         #expect(Identifiers.genericKey(name: "Blue backpack", category: .clothing) == "backpack")
         #expect(Identifiers.genericKey(name: "Beige Backpacks", category: .household) == "backpack")
         #expect(Identifiers.genericKey(name: "Pair of dark-grey sneakers", category: .clothing) == "sneaker")
-        #expect(Identifiers.genericKey(name: "Large hiking backpack", category: .clothing) == "large hiking backpack")
+        #expect(Identifiers.genericKey(name: "Large hiking backpack", category: .clothing) == "hiking backpack")
         #expect(Identifiers.genericKey(name: "Glass jar", category: .packaging) == "glass jar")
         // Colour can name a different food, and electronics come from device tables.
         #expect(Identifiers.genericKey(name: "Brown rice", category: .food) == nil)
@@ -133,7 +133,7 @@ struct GenericItemTests {
         branded.identifiers.brand = "Acme"
         branded.identifiers.model = "BP-200"
         let prepared = ScanPipeline.withGenericKeys([blue, hiking, branded])
-        #expect(prepared.map(\.identifiers.genericKey) == ["backpack", "large hiking backpack", nil])
+        #expect(prepared.map(\.identifiers.genericKey) == ["backpack", "hiking backpack", nil])
         #expect(prepared[1].quantities.massKg == 2)
         #expect(prepared[2].quantities.massKg == 1.1)
     }

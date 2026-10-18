@@ -62,12 +62,12 @@ struct SummaryHeader: View {
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.secondary)
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(Measured.format(headline.displayValue))
+                        Text(headline.formattedNumber)
                             .font(.system(size: 52, weight: .bold, design: .rounded).monospacedDigit())
                             .contentTransition(.numericText())
                             .minimumScaleFactor(0.5)
                             .lineLimit(1)
-                        Text(headline.displaySymbol)
+                        Text(headline.displayScale.symbol)
                             .font(.title3.weight(.semibold))
                             .foregroundStyle(.secondary)
                     }
@@ -100,12 +100,12 @@ struct SummaryHeader: View {
             if let lifetime = breakdown.lifetimeTotal(metric, in: counted, seed: result.totalsSeed),
                !lifetime.isEffectivelyZero {
                 stat(consumables.isEmpty ? "Lifetime" : "Durables, lifetime",
-                     Measured.format(lifetime.displayValue), unit: lifetime.displaySymbol)
+                     lifetime.formattedNumber, unit: lifetime.displayScale.symbol)
             }
             if let perUnit = breakdown.consumablesTotal(metric, in: counted, seed: result.totalsSeed),
                !perUnit.isEffectivelyZero {
                 stat(Self.consumablesTitle(consumables, besideDurables: hasDurables),
-                     Measured.format(perUnit.displayValue), unit: perUnit.displaySymbol)
+                     perUnit.formattedNumber, unit: perUnit.displayScale.symbol)
             }
         }
     }
@@ -151,8 +151,8 @@ struct SummaryHeader: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         HStack(alignment: .firstTextBaseline, spacing: 3) {
-                            Text(Measured.format(shown.displayValue)).font(.title3.weight(.bold).monospacedDigit())
-                            Text(shown.displaySymbol).font(.caption).foregroundStyle(.secondary)
+                            Text(shown.formattedNumber).font(.title3.weight(.bold).monospacedDigit())
+                            Text(shown.displayScale.symbol).font(.caption).foregroundStyle(.secondary)
                         }
                         Text("per year")
                             .font(.caption2)

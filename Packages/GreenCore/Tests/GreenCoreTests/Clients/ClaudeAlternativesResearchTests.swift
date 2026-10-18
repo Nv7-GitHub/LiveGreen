@@ -27,7 +27,8 @@ struct ClaudeAlternativesResearchTests {
         #expect(body["system"]?.array?.first?["text"]?.string?.contains("Do not suggest smart plugs") == true)
         let text = try #require(body["messages"]?.array?.first?["content"]?.array?.first?["text"]?.string)
         #expect(text.contains("11111111-1111-1111-1111-111111111111"))
-        #expect(text.contains("\"current_metrics\":{\"carbon\":7.2}"))
+        #expect(!text.contains("current_metrics"), "resolved numbers are not sent, so swaps are not scaled from them")
+        #expect(text.contains("\"food_group\":\"beef\""))
         #expect(transport.requests.first?.timeoutInterval == 45)
     }
 
@@ -49,6 +50,48 @@ struct ClaudeAlternativesResearchTests {
         let monitorSwap = try #require(suggestions[1].alternatives.first)
         #expect(monitorSwap.identifiers.model == "P2425H")
         #expect(monitorSwap.kind == .product)
+        #expect(monitorSwap.condition == .refurbished, "a condition left out is read from the name")
+        #expect(!monitorSwap.isReusable)
+        #expect(monitorSwap.lifespanYears == nil)
+    }
+
+    @Test func reusablesAreFiledAsHouseholdWithTheirLifespan() throws {
+        let cup = Component(id: UUID(), name: "Paper cup", category: .packaging, usage: UsageProfile(usesPerWeek: 5))
+        let input: JSONValue = ["suggestions": [[
+            "component_id": .string(cup.id.uuidString),
+            "alternatives": [[
+                "name": "Steel tumbler", "category": "packaging", "rationale": "Reused for years.",
+                "cost": "higher", "effort": "easy", "condition": "new", "reusable": true, "lifespan_years": 4,
+                "identifiers": ["brand": nil, "model": nil, "gtin": nil,
+                                "materials": [["material": "stainless_steel", "percent": 100]]],
+                "quantities": ["mass_kg": 0.3], "usage": nil,
+                "fallback_estimates": [["metric": "lifespan", "value": 4, "low": 2, "high": 8],
+                                       ["metric": "carbon", "value": 2, "low": 1, "high": 3]],
+            ]],
+        ]]]
+        let swap = try #require(try SuggestAlternativesTool.parse(input, components: [cup]).first?.alternatives.first)
+        #expect(swap.category == .household, "a reusable is a durable, not 156 cups a year")
+        #expect(swap.isReusable)
+        #expect(swap.lifespanYears == 4)
+        #expect(swap.fallbackEstimates[.lifespan]?.value == 4, "kept as a household metric")
+        #expect(swap.usage == cup.usage)
+    }
+
+    @Test func conditionFromTheName() {
+        #expect(Alternative.Condition(name: "Buy a used compact SUV") == .used)
+        #expect(Alternative.Condition(name: "Second-hand backpack") == .used)
+        #expect(Alternative.Condition(name: "Refurbished Dell monitor") == .refurbished)
+        #expect(Alternative.Condition(name: "Window AC used an hour less a day") == .new)
+        #expect(Alternative.Condition(name: "Reusable glass jar") == .new)
+    }
+
+    @Test func swapsSavedBeforeTheNewFieldsDecode() throws {
+        let saved = Alternative(name: "Lentil burger", category: .food, rationale: "Plant protein.")
+        var json = try #require(try JSONSerialization.jsonObject(with: JSONEncoder().encode(saved)) as? [String: Any])
+        json["condition"] = nil
+        json["isReusable"] = nil
+        let decoded = try JSONDecoder().decode(Alternative.self, from: JSONSerialization.data(withJSONObject: json))
+        #expect(decoded == saved)
     }
 
     @Test func noComponentsSkipsTheCall() async throws {
