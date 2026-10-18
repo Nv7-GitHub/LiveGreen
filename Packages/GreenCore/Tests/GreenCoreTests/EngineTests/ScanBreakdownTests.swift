@@ -7,7 +7,8 @@ struct ScanBreakdownTests {
     /// A laptop kept 4 years: 286 kg CO2e over its life, 71.5 kg a year.
     private let laptop = Component(name: "Laptop", category: .electronic,
                                    metrics: [.carbon: .exact(286, unit: .kgCO2e, tier: .factorModel),
-                                             .yearlyElectricity: .exact(37, unit: .kilowattHoursPerYear, tier: .exactRecord),
+                                             .yearlyElectricity: .exact(37, unit: .kilowattHoursPerYear,
+                                                                        tier: .exactRecord),
                                              .lifespan: .exact(4, unit: .years, tier: .factorModel)])
     /// A blended coffee twice a week: 1.48 kg CO2e a serving, ≈ 154 kg a year.
     private let drink = Component(name: "Blended coffee", category: .food,

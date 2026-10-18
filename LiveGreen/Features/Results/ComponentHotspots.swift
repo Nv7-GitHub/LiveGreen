@@ -149,7 +149,8 @@ struct ComponentHotspots: View {
         let metric = filter.shareMetric
         let share = breakdown.share(of: component, metric: metric, in: components)
         let value = breakdown.yearly(metric, of: component).map { "\($0.formattedPerYear), " } ?? ""
-        return "\(number). \(component.name), \(value)\(Int((share * 100).rounded()))% of \(metric.displayName.lowercased()) per year"
+        let percent = Int((share * 100).rounded())
+        return "\(number). \(component.name), \(value)\(percent)% of \(metric.displayName.lowercased()) per year"
     }
 
     /// Pops the pins in one after another so the container morphs them into place.

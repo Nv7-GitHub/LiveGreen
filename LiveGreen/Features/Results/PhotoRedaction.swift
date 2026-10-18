@@ -25,8 +25,8 @@ nonisolated enum PhotoRedaction {
         if let cached = cache[data] { return cached }
         let image = await Task.detached(priority: .userInitiated) { redact(data) }.value
         let outcome: Outcome = image.map { .image($0) } ?? .none
-        // A handful of photos are open in one session; drop them all rather than track recency.
-        if cache.count >= 12 { cache.removeAll() }
+        // A redacted copy is a full decoded bitmap, so keep only the last few photos rather than track recency.
+        if cache.count >= 4 { cache.removeAll() }
         cache[data] = outcome
         return outcome
     }

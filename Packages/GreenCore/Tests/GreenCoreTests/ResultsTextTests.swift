@@ -16,7 +16,8 @@ struct ResultsTextTests {
         // "100% food organic" read as an organic claim (05, 12, 13, 22).
         #expect(MaterialNames.summary([MaterialShare(material: "food_organic", percent: 100)], category: .food) == nil)
         let pints = [MaterialShare(material: "food_organic", percent: 85),
-                     MaterialShare(material: "poly_coated_paperboard", percent: 14), MaterialShare(material: "pp", percent: 1)]
+                     MaterialShare(material: "poly_coated_paperboard", percent: 14),
+                     MaterialShare(material: "pp", percent: 1)]
         #expect(MaterialNames.summary(pints, category: .food) == "Packed in plastic-lined paperboard, polypropylene")
         // Outside food the key is spelled out rather than hidden, so a mis-tagged spray stays visible.
         let spray = [MaterialShare(material: "food_organic", percent: 85), MaterialShare(material: "hdpe", percent: 12)]

@@ -30,7 +30,7 @@ enum Theme {
     static func impactTint(_ level: ImpactLevel?) -> Color {
         switch level {
         case .low: leaf
-        case .moderate: Color(red: 0.80, green: 0.58, blue: 0.02)
+        case .moderate: Color(red: 0.76, green: 0.53, blue: 0.0)
         case .high: Color(red: 0.91, green: 0.44, blue: 0.10)
         case .veryHigh: danger
         case nil: .gray

@@ -75,7 +75,9 @@ nonisolated enum ResultInsights {
             let text = "\(span(packs)) \(plural("pack", packs)) a week"
             parts.append(servings.isEmpty ? named("food", text) : text)
         }
-        if !packaging.isEmpty { parts.append(named("packaging", "\(span(packaging)) \(plural("use", packaging)) a week")) }
+        if !packaging.isEmpty {
+            parts.append(named("packaging", "\(span(packaging)) \(plural("use", packaging)) a week"))
+        }
         if !care.isEmpty { parts.append(named("personal care", "\(span(care)) \(plural("use", care)) a week")) }
         if !lifespans.isEmpty {
             let years = "\(span(lifespans)) \(plural("year", lifespans))"
