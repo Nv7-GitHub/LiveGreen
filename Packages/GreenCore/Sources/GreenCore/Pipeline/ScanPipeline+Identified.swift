@@ -2,17 +2,18 @@ import Foundation
 
 extension ScanPipeline {
     /// Post-processing of the identify output before the ladder runs: plugged-in appliances are scored as
-    /// electronics, model names the labels do not back up are dropped, unambiguous on-device hints become
+    /// electronics, model names the labels do not back up become model lines, unambiguous on-device hints become
     /// identifiers (spec §5.2), and unidentified items get their generic kind.
     func prepared(_ components: [IdentifiedComponent], hints: OCRHints) -> [IdentifiedComponent] {
-        let checked = components.map(reclassified).map { Self.droppingUnreadModel(from: $0, hints: hints) }
+        let checked = components.map(reclassified).map { Self.demotingUnreadModel(from: $0, hints: hints) }
         return Self.withGenericKeys(Self.applyingHints(hints, to: checked))
     }
 
     /// A model the on-device text does not contain and that is not a printed-looking code (one word with a
-    /// digit) was most likely inferred from the item's look, such as a product line guessed from a shoe's shape.
-    /// Looking it up would score the wrong product, so it is dropped; the brand is kept.
-    static func droppingUnreadModel(from component: IdentifiedComponent, hints: OCRHints) -> IdentifiedComponent {
+    /// digit) is a product line recognized from the item's look, such as a laptop line told from its keyboard.
+    /// Looked up as a model number it would match the wrong record, so it moves to the model line (unless one is
+    /// set), which spec research treats as a line; the brand is kept.
+    static func demotingUnreadModel(from component: IdentifiedComponent, hints: OCRHints) -> IdentifiedComponent {
         guard let model = component.identifiers.model?.trimmedNonEmpty else { return component }
         let key = ReferenceKey.modelKey(model)
         let read = !key.isEmpty && (hints.modelNumbers + hints.textLines).contains { ReferenceKey.modelKey($0).contains(key) }
@@ -20,6 +21,7 @@ extension ScanPipeline {
         guard !read, !codeLike else { return component }
         var copy = component
         copy.identifiers.model = nil
+        if copy.identifiers.modelLine?.trimmedNonEmpty == nil { copy.identifiers.modelLine = model }
         return copy
     }
 

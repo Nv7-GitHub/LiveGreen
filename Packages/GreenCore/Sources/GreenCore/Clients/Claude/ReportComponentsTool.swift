@@ -46,7 +46,7 @@ enum ReportComponentsTool {
     }()
 
     static let component = SchemaParts.object([
-        "name": SchemaParts.string("Plain item name, e.g. '27-inch monitor', 'Beef burger', 'Cotton T-shirt'; with a brand only when identifiers.brand is set."),
+        "name": SchemaParts.string("Item name, as specific as the identification: brand and model line first when confidence is medium or high, else a plain name such as '27-inch monitor', 'Beef burger', 'Cotton T-shirt'."),
         "category": SchemaParts.enumeration(SchemaParts.categories, "Category; decides which metrics apply."),
         "bounding_box": SchemaParts.object([
             "x": SchemaParts.number("Left edge, fraction of image width (0-1)."),
@@ -54,7 +54,7 @@ enum ReportComponentsTool {
             "width": SchemaParts.number("Width, fraction of image width."),
             "height": SchemaParts.number("Height, fraction of image height."),
         ], required: ["x", "y", "width", "height"], description: "Tight box around the item in normalized image coordinates."),
-        "identifiers": SchemaParts.identifiersSchema(brand: SchemaParts.legibleBrand),
+        "identifiers": SchemaParts.identifyIdentifiers,
         "quantities": SchemaParts.quantities,
         "default_usage": SchemaParts.usage,
         "deferrable_load": SchemaParts.enumeration(DeferrableLoadType.allCases.map(\.rawValue),
@@ -127,13 +127,29 @@ enum ReportComponentsTool {
     struct IdentifiersPayload: Decodable {
         var brand: String?
         var model: String?
+        var modelLine: String?
+        var confidence: String?
+        var appearanceCues: String?
         var gtin: String?
         var materials: [MaterialShare]?
         var visibleText: String?
 
         var identifiers: Identifiers {
-            Identifiers(gtin: gtin.flatMap(GTINDigits.normalized), brand: brand?.trimmedNonEmpty, model: model?.trimmedNonEmpty,
-                        materials: (materials ?? []).filter { $0.percent > 0 }, ocrText: visibleText?.trimmedNonEmpty)
+            let brand = brand?.trimmedNonEmpty
+            return Identifiers(gtin: gtin.flatMap(GTINDigits.normalized), brand: brand, model: model?.trimmedNonEmpty,
+                               modelLine: modelLine.flatMap { Self.line($0, brand: brand) },
+                               confidence: confidence?.trimmedNonEmpty.flatMap { IdentificationConfidence(rawValue: $0.lowercased()) },
+                               appearanceCues: appearanceCues?.trimmedNonEmpty,
+                               materials: (materials ?? []).filter { $0.percent > 0 }, ocrText: visibleText?.trimmedNonEmpty)
+        }
+
+        /// The model line without a leading brand ("Apple MacBook Air" → "MacBook Air"), so one line always gives
+        /// the same line key whether or not the answer repeated the brand.
+        static func line(_ raw: String, brand: String?) -> String? {
+            guard let line = raw.trimmedNonEmpty else { return nil }
+            guard let brand, line.count > brand.count, line.lowercased().hasPrefix(brand.lowercased()),
+                  line.dropFirst(brand.count).first?.isWhitespace == true else { return line }
+            return line.dropFirst(brand.count).trimmingCharacters(in: .whitespaces).trimmedNonEmpty
         }
     }
 }

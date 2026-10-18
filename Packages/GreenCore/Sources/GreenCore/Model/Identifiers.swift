@@ -10,22 +10,45 @@ public struct MaterialShare: Codable, Sendable, Hashable {
     }
 }
 
+/// How sure identify was of an item's most specific identifier (model, else model line, else brand).
+public enum IdentificationConfidence: String, Codable, Sendable, Hashable, CaseIterable {
+    /// Printed on the item or in the OCR text, or a design only that line has.
+    case high
+    /// Strong design cues pointing to one maker and line; the size or generation could differ.
+    case medium
+    /// A best guess from general styling.
+    case low
+}
+
 /// What identifies a component: barcodes, brand/model, materials and raw OCR text.
 public struct Identifiers: Codable, Sendable, Hashable {
     public var gtin: String?
     public var brand: String?
+    /// An exact model number read off the item or the OCR text; exact-record lookups (ENERGY STAR, ASUS PCF) use it.
     public var model: String?
+    /// The product line with the variant that changes specs, e.g. "MacBook Pro 14-inch (M-series)", when the item
+    /// was recognized by its design or a printed line name rather than a model number. Spec research and line-level
+    /// records use it; it is never looked up as a model number.
+    public var modelLine: String?
+    /// Confidence in the most specific of `model`, `modelLine` and `brand`; nil when identify did not say.
+    public var confidence: IdentificationConfidence?
+    /// What the identification rests on, in a few words (legible text, design cues).
+    public var appearanceCues: String?
     public var materials: [MaterialShare]
     public var ocrText: String?
     /// The kind of item when nothing more specific identifies it (see `genericKey(name:category:)`). Set by
     /// the scan pipeline, never by the AI, so the same kind of item resolves to the same numbers.
     public var genericKey: String?
 
-    public init(gtin: String? = nil, brand: String? = nil, model: String? = nil,
+    public init(gtin: String? = nil, brand: String? = nil, model: String? = nil, modelLine: String? = nil,
+                confidence: IdentificationConfidence? = nil, appearanceCues: String? = nil,
                 materials: [MaterialShare] = [], ocrText: String? = nil, genericKey: String? = nil) {
         self.gtin = gtin
         self.brand = brand
         self.model = model
+        self.modelLine = modelLine
+        self.confidence = confidence
+        self.appearanceCues = appearanceCues
         self.materials = materials
         self.ocrText = ocrText
         self.genericKey = genericKey
@@ -38,9 +61,23 @@ public struct Identifiers: Codable, Sendable, Hashable {
         return "bm:\(brand.lowercased())|\(model.lowercased())"
     }
 
-    /// Key for the resolution cache and Monte Carlo seeds: `cacheKey`, else the generic item key.
+    /// The model line unless it was only a low-confidence guess: what line-level spec research and records use.
+    public var confidentModelLine: String? {
+        guard confidence != .low, let line = modelLine?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !line.isEmpty else { return nil }
+        return line
+    }
+
+    /// `brand|model line` lowercased for an item identified to its line but with no GTIN or model number, so a
+    /// rescan of the same line gives the same numbers; nil otherwise.
+    public var lineKey: String? {
+        guard cacheKey == nil, let brand, !brand.isEmpty, let line = confidentModelLine else { return nil }
+        return "bl:\(brand.lowercased())|\(line.lowercased())"
+    }
+
+    /// Key for the resolution cache and Monte Carlo seeds: `cacheKey`, else the line key, else the generic item key.
     public var resolutionKey: String? {
-        cacheKey ?? genericKey.map { "item:\($0)" }
+        cacheKey ?? lineKey ?? genericKey.map { "item:\($0)" }
     }
 }
 

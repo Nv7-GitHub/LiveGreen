@@ -4,7 +4,7 @@ import Foundation
 /// a forced `report_components` tool, temperature 0). Reports identifiers and quantities, not impacts.
 public protocol VisionIdentifier: Sendable {
     /// - Parameters:
-    ///   - image: JPEG, long edge ≤ 1568 px.
+    ///   - image: JPEG within `IdentifyImage` limits (long edge ≤ 2576 px, ~3.7 MP).
     ///   - hints: On-device OCR/barcode pre-pass output.
     ///   - profile: User context for default usage assumptions.
     func identify(image: Data, hints: OCRHints, profile: UserProfile) async throws -> IdentifyResponse
