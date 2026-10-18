@@ -1,7 +1,7 @@
 import SwiftUI
 import GreenCore
 
-/// Country and ZIP / postal code; previews the resolved state and grid zone.
+/// Country and ZIP / postal code over a map that flies to them; previews the resolved state and grid zone.
 struct LocationStepView: View {
     @Binding var region: Region
     @FocusState private var postalFocused: Bool
@@ -10,6 +10,8 @@ struct LocationStepView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            RegionMap(region: resolved)
+
             // A menu with a full-width label: a menu-style Picker only took taps on its short text, not the capsule.
             Menu {
                 Picker("Country", selection: $region.countryCode) {

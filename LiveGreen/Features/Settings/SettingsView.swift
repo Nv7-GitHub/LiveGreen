@@ -134,10 +134,10 @@ private struct ProfileSummaryRow: View {
                 .foregroundStyle(Theme.leaf)
             VStack(alignment: .leading, spacing: 2) {
                 Text(location).font(.headline)
-                Text("\(profile.householdSize) in household · \(profile.diet.profileLabel) · \(profile.commuteModes.map(\.profileLabel).joined(separator: " + "))")
+                Text("\(profile.householdSize) in household · \(profile.diet.profileLabel) · \(travel)")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                Text("\(profile.homeType.profileLabel) · \(profile.heating.profileLabel)")
+                Text("\(profile.homeType.profileLabel), \(FloorAreaFormat.text(m2: profile.shownFloorAreaM2)) · \(profile.heatingLabel)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -145,6 +145,10 @@ private struct ProfileSummaryRow: View {
             Text("Edit").font(.subheadline).foregroundStyle(Theme.accent)
         }
         .padding(.vertical, 2)
+    }
+
+    private var travel: String {
+        profile.commuteModes.isEmpty ? "No car or transit" : profile.commuteModes.map(\.profileLabel).joined(separator: " + ")
     }
 
     private var location: String {

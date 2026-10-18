@@ -1517,14 +1517,28 @@
    "url": "https://wir2022.wid.world/chapter-6/"
   }
  },
- "dietModifiers": {
+ "plantBasedFoodShares": {
   "values": {
-   "omnivore": 1.0,
-   "flexitarian": 0.83,
-   "vegetarian": 0.68,
-   "vegan": 0.51
+   "carbon": 0.51,
+   "land": 0.24,
+   "water": 0.81
   },
   "appliesTo": "food",
+  "note": "Share of the average diet's food footprint left on a diet without animal products. Poore & Nemecek find dropping animal products cuts food's GHG emissions by 49%, land use by 76% and freshwater withdrawals by 19%; carbon also matches Scarborough et al.'s vegan-to-meat-eater ratio (0.51).",
+  "verified": false,
+  "citation": {
+   "title": "Poore & Nemecek (2018), Reducing food's environmental impacts through producers and consumers, Science 360:987",
+   "tier": 3,
+   "url": "https://doi.org/10.1126/science.aaq0216"
+  }
+ },
+ "mealCarbon": {
+  "values": {
+   "meat": 1.8,
+   "dairy": 0.45
+  },
+  "appliesTo": "food",
+  "note": "kg CO2e a meal adds over a plant-based meal when meat (poultry, fish) or dairy is an important component. Meat: medium meat-eaters (5.63 kg CO2e/day, about one meat meal a day) minus vegetarians (3.81). Dairy: vegetarians minus vegans (2.89), spread over about two dairy meals a day. Only the meat-to-dairy ratio enters the modifier.",
   "verified": false,
   "citation": {
    "title": "Scarborough et al. (2014), Dietary greenhouse gas emissions of meat-eaters, fish-eaters, vegetarians and vegans in the UK, Climatic Change 125:179",
@@ -1532,18 +1546,59 @@
    "url": "https://doi.org/10.1007/s10584-014-1169-1"
   }
  },
- "clothingModifiers": {
+ "averageMealsPerWeek": {
   "values": {
-   "mostlyNew": 1.25,
-   "mixed": 1.0,
-   "mostlySecondHand": 0.6
+   "meat": 9,
+   "dairy": 10
   },
-  "appliesTo": "clothing",
+  "appliesTo": "food",
+  "note": "The average diet the per-capita food share stands for: US loss-adjusted availability of about 140 g of meat, poultry and fish a day (nine ~110 g portions a week) and about 1.5 cup-equivalents of dairy a day (about ten dairy-centred meals a week).",
   "verified": false,
   "citation": {
-   "title": "Ivanova et al. (2016), Environmental Impact Assessment of Household Consumption, J. Ind. Ecol. 20:526",
+   "title": "USDA Economic Research Service, Food Availability (Per Capita) Data System: loss-adjusted food availability",
    "tier": 3,
-   "url": "https://doi.org/10.1111/jiec.12371"
+   "url": "https://www.ers.usda.gov/data-products/food-availability-per-capita-data-system/"
+  }
+ },
+ "clothingPurchases": {
+  "values": {
+   "averageNewItemsPerYear": 64,
+   "baseShare": 0.15
+  },
+  "appliesTo": "clothing",
+  "note": "Americans bought 64 garments and 7.5 pairs of shoes per person in 2013. baseShare is the part of clothing carbon that does not scale with new garments (footwear, second-hand finds, upkeep); 7.5 pairs at ~14 kg CO2e a pair (Cheah et al. 2013) is about a seventh.",
+  "verified": false,
+  "citation": {
+   "title": "American Apparel & Footwear Association, ApparelStats 2014 (64 garments per person in 2013)",
+   "tier": 3,
+   "url": "https://www.aafaglobal.org/AAFA/Research/ApparelStats_and_ShoeStats.aspx"
+  }
+ },
+ "typicalFloorAreaM2": {
+  "values": {
+   "apartment": 86.0,
+   "townhouse": 150.0,
+   "detachedHouse": 210.3,
+   "dorm": 23.2
+  },
+  "appliesTo": "electronic, household (electricity and carbon)",
+  "note": "Average total floor area per housing unit, RECS 2020 table HC10.9: single-family detached 2,264 ft², single-family attached 1,615 ft², apartments 926 ft² (unit-weighted 2–4 and 5+ unit buildings). Dorm rooms (250 ft²) are an assumption; RECS does not survey them.",
+  "verified": false,
+  "citation": {
+   "title": "U.S. EIA, Residential Energy Consumption Survey (RECS) 2020, Table HC10.9: Average square footage of U.S. homes",
+   "tier": 3,
+   "url": "https://www.eia.gov/consumption/residential/data/2020/hc/pdf/HC%2010.9.pdf"
+  }
+ },
+ "spaceConditioningShare": {
+  "value": 0.52,
+  "appliesTo": "electronic, household (electricity and carbon)",
+  "note": "Space heating and air conditioning were 52% of household energy in 2020; that part scales with floor area against a typical home of the same type, the rest (water heating, appliances, lighting) does not.",
+  "verified": true,
+  "citation": {
+   "title": "U.S. EIA, Energy Explained: Use of energy in homes (RECS 2020)",
+   "tier": 3,
+   "url": "https://www.eia.gov/energyexplained/use-of-energy/homes.php"
   }
  },
  "commuteModifiers": {
@@ -1551,10 +1606,7 @@
    "car": 1.1,
    "electricCar": 1.0,
    "transit": 0.95,
-   "bike": 0.9,
-   "eBike": 0.9,
-   "walk": 0.9,
-   "remote": 0.92
+   "eBike": 0.9
   },
   "appliesTo": "whole footprint",
   "verified": false,
@@ -1600,7 +1652,7 @@
    "none": 0.9
   },
   "appliesTo": "electronic, household (electricity)",
-  "note": "Household electricity use by main space-heating fuel relative to the U.S. household average: electrically heated homes draw more, fuel-heated homes less.",
+  "note": "Household electricity use by main space-heating fuel relative to the U.S. household average: electrically heated homes draw more, fuel-heated homes less. A home with several sources averages theirs evenly.",
   "verified": false,
   "citation": {
    "title": "U.S. EIA, Residential Energy Consumption Survey (RECS) 2020: household electricity consumption by main space-heating fuel",
