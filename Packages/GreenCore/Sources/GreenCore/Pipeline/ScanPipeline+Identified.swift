@@ -40,7 +40,8 @@ extension ScanPipeline {
         var result = components
         var leads: [String: Int] = [:]
         for index in result.indices where result[index].identifiers.cacheKey == nil {
-            guard let key = Identifiers.genericKey(name: result[index].name, category: result[index].category) else { continue }
+            guard let key = Identifiers.genericKey(name: result[index].name, category: result[index].category,
+                                                   brand: result[index].identifiers.brand) else { continue }
             result[index].identifiers.genericKey = key
             if leads[key].map({ detail(of: result[index]) > detail(of: result[$0]) }) ?? true { leads[key] = index }
         }
