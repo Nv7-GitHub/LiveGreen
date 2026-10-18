@@ -1,3 +1,5 @@
+import Foundation
+
 /// A material and its share of an item's mass.
 public struct MaterialShare: Codable, Sendable, Hashable {
     public var material: String
@@ -61,23 +63,28 @@ public struct Identifiers: Codable, Sendable, Hashable {
         return "bm:\(brand.lowercased())|\(model.lowercased())"
     }
 
-    /// The model line unless it was only a low-confidence guess: what line-level spec research and records use.
+    /// The model line when identify was sure of it (high or medium confidence): what line-level spec research and
+    /// records use. A low-confidence guess is not, and neither is a line whose confidence identify left out.
     public var confidentModelLine: String? {
-        guard confidence != .low, let line = modelLine?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !line.isEmpty else { return nil }
+        guard confidence == .high || confidence == .medium,
+              let line = modelLine?.trimmingCharacters(in: .whitespacesAndNewlines), !line.isEmpty else { return nil }
         return line
     }
 
-    /// `brand|model line` lowercased for an item identified to its line but with no GTIN or model number, so a
-    /// rescan of the same line gives the same numbers; nil otherwise.
-    public var lineKey: String? {
-        guard cacheKey == nil, let brand, !brand.isEmpty, let line = confidentModelLine else { return nil }
-        return "bl:\(brand.lowercased())|\(line.lowercased())"
+    /// `category|brand|model line|size` for an item identified to its line but with no GTIN or model number, so a
+    /// rescan of the same product gives the same numbers; nil otherwise. One line spans sizes whose numbers differ (a
+    /// TV line from 43" to 85"), so the key holds the size (`sizeKey`) and there is none without it. Food and
+    /// packaging never get one: as for their generic kinds, the portion or pack shown matters (a can and a 2 L bottle
+    /// of one drink).
+    public func lineKey(category: Category, quantities: Quantities) -> String? {
+        guard cacheKey == nil, !Self.lineKeyExcludedCategories.contains(category), let brand = brand?.trimmedNonEmpty,
+              let line = confidentModelLine, let size = Self.sizeKey(quantities) else { return nil }
+        return "bl:\(category.rawValue)|\(brand.lowercased())|\(line.lowercased())|\(size)"
     }
 
     /// Key for the resolution cache and Monte Carlo seeds: `cacheKey`, else the line key, else the generic item key.
-    public var resolutionKey: String? {
-        cacheKey ?? lineKey ?? genericKey.map { "item:\($0)" }
+    public func resolutionKey(category: Category, quantities: Quantities) -> String? {
+        cacheKey ?? lineKey(category: category, quantities: quantities) ?? genericKey.map { "item:\($0)" }
     }
 }
 
@@ -96,6 +103,28 @@ extension Identifiers {
         "striped", "patterned", "plaid", "floral", "matte", "glossy", "shiny", "clear", "transparent",
         "a", "an", "the", "of", "pair",
     ]
+
+    /// Categories without line keys: a line of food or packaging spans portions and pack sizes.
+    static let lineKeyExcludedCategories: Set<Category> = [.food, .packaging]
+
+    /// The size that scales an item's numbers, rounded so one product reads alike across scans: the screen diagonal
+    /// to the inch, else the mass to two significant figures; nil when neither is known.
+    static func sizeKey(_ quantities: Quantities) -> String? {
+        if let inches = quantities.screenSizeInches, inches > 0 { return "\(Int(inches.rounded()))in" }
+        if let kg = quantities.massKg, kg > 0 { return String(format: "%.2gkg", kg) }
+        return nil
+    }
+
+    /// A model line without a leading brand ("Apple MacBook Air" → "MacBook Air"), so one line always gives the same
+    /// line key whether or not the brand was repeated; nil when nothing but the brand is left.
+    public static func modelLine(_ raw: String, brand: String?) -> String? {
+        guard let line = raw.trimmedNonEmpty else { return nil }
+        guard let brand = brand?.trimmedNonEmpty else { return line }
+        if line.caseInsensitiveCompare(brand) == .orderedSame { return nil }
+        guard line.count > brand.count, line.lowercased().hasPrefix(brand.lowercased()),
+              line.dropFirst(brand.count).first?.isWhitespace == true else { return line }
+        return line.dropFirst(brand.count).trimmingCharacters(in: .whitespaces).trimmedNonEmpty
+    }
 
     /// The item's kind: its name lowercased, without colour or finish words, each word singular ("Blue backpack"
     /// and "Beige backpacks" → "backpack"). Nil outside `genericKeyCategories` or when no word is left.

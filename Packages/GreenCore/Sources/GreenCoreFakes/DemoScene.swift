@@ -44,7 +44,8 @@ enum DemoFixtures {
         IdentifiedComponent(
             name: "ASUS Zenbook 14 laptop", category: .electronic,
             boundingBox: NormalizedRect(x: 0.30, y: 0.45, width: 0.40, height: 0.32),
-            identifiers: Identifiers(brand: "ASUS", model: "UX3405MA"),
+            identifiers: Identifiers(brand: "ASUS", model: "UX3405MA", confidence: .high,
+                                     ocrText: "ASUS Zenbook UX3405MA"),
             quantities: Quantities(massKg: 1.2, screenSizeInches: 14, ratedPowerW: 65, deviceType: "laptop"),
             defaultUsage: UsageProfile(hoursOnPerDay: 8, standbyHoursPerDay: 16),
             deferrableLoad: .laptopCharger,
@@ -54,7 +55,7 @@ enum DemoFixtures {
         IdentifiedComponent(
             name: "27-inch monitor", category: .electronic,
             boundingBox: NormalizedRect(x: 0.25, y: 0.08, width: 0.50, height: 0.34),
-            identifiers: Identifiers(brand: "Dell", model: "S2721H"),
+            identifiers: Identifiers(brand: "Dell", model: "S2721H", confidence: .high, ocrText: "DELL S2721H"),
             quantities: Quantities(massKg: 3.6, screenSizeInches: 27, deviceType: "monitor"),
             defaultUsage: UsageProfile(hoursOnPerDay: 8, standbyHoursPerDay: 16),
             estimates: [.carbon: est(400, 250, 650), .powerOn: est(25, 15, 40), .standbyPower: est(0.3, 0.2, 0.5),

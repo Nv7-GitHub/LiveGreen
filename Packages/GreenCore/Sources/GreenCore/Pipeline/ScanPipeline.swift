@@ -78,8 +78,10 @@ public struct ScanPipeline: Sendable {
         let details = await specQuestions(for: components)
         if !details.isEmpty { emit(.specQuestionsNeeded(details)) }
 
+        // Identify had the full photo; the result keeps a smaller copy (`ScanPhoto`).
         var result = ScanResult(id: id, date: date, title: response.sceneTitle ?? components.first?.name ?? "Scan",
-                                mode: mode, photo: image.isEmpty ? await productPhoto : image, components: components)
+                                mode: mode, photo: image.isEmpty ? await productPhoto : ScanPhoto.stored(image),
+                                components: components)
         result.updateTotals(engine: engine)
         return result
     }

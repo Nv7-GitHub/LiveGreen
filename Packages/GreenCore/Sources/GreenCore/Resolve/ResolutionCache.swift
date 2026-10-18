@@ -15,7 +15,7 @@ public struct CachedResolution: Codable, Sendable, Hashable {
     }
 }
 
-/// Resolution cache keyed by `Identifiers.resolutionKey` (GTIN, brand|model, brand|model line or generic item
+/// Resolution cache keyed by `Component.resolutionKey` (GTIN, brand|model, sized brand|model line or generic item
 /// kind). The app backs it with SwiftData.
 public protocol ResolutionCache: Sendable {
     func cachedResolution(forKey key: String) async -> CachedResolution?

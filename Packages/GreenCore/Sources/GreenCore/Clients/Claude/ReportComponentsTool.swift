@@ -137,19 +137,10 @@ enum ReportComponentsTool {
         var identifiers: Identifiers {
             let brand = brand?.trimmedNonEmpty
             return Identifiers(gtin: gtin.flatMap(GTINDigits.normalized), brand: brand, model: model?.trimmedNonEmpty,
-                               modelLine: modelLine.flatMap { Self.line($0, brand: brand) },
+                               modelLine: modelLine.flatMap { Identifiers.modelLine($0, brand: brand) },
                                confidence: confidence?.trimmedNonEmpty.flatMap { IdentificationConfidence(rawValue: $0.lowercased()) },
                                appearanceCues: appearanceCues?.trimmedNonEmpty,
                                materials: (materials ?? []).filter { $0.percent > 0 }, ocrText: visibleText?.trimmedNonEmpty)
-        }
-
-        /// The model line without a leading brand ("Apple MacBook Air" → "MacBook Air"), so one line always gives
-        /// the same line key whether or not the answer repeated the brand.
-        static func line(_ raw: String, brand: String?) -> String? {
-            guard let line = raw.trimmedNonEmpty else { return nil }
-            guard let brand, line.count > brand.count, line.lowercased().hasPrefix(brand.lowercased()),
-                  line.dropFirst(brand.count).first?.isWhitespace == true else { return line }
-            return line.dropFirst(brand.count).trimmingCharacters(in: .whitespaces).trimmedNonEmpty
         }
     }
 }

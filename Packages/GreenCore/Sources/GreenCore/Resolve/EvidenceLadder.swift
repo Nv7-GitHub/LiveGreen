@@ -1,7 +1,7 @@
 /// Runs resolvers in tier order per component, stopping per metric at the first value (spec §5.4).
 /// Values from different tiers are kept per metric, so one component can mix tiers. With a cache, a
-/// component whose GTIN, brand|model, brand|model line or generic item kind was resolved before skips the resolvers
-/// entirely.
+/// component whose GTIN, brand|model, sized brand|model line or generic item kind was resolved before skips the
+/// resolvers entirely.
 public struct EvidenceLadder: Sendable {
     public let resolvers: [any MetricResolver]
     public let cache: (any ResolutionCache)?
@@ -64,7 +64,7 @@ public struct EvidenceLadder: Sendable {
     /// false, a generic kind's entry whose carbon is only a T4 estimate is skipped, so an item of that kind whose own
     /// details reach a better tier is not held at the estimate.
     public func cached(_ component: Component, acceptingEstimates: Bool = true) async -> Component? {
-        guard let cache, let key = component.identifiers.resolutionKey,
+        guard let cache, let key = component.resolutionKey,
               let hit = await cache.cachedResolution(forKey: key), let carbon = hit.metrics[.carbon] else { return nil }
         if !acceptingEstimates, component.identifiers.cacheKey == nil, carbon.tier == .estimate { return nil }
         var result = component
@@ -78,7 +78,7 @@ public struct EvidenceLadder: Sendable {
     /// Stores a resolved component under its identifier key. A resolution without carbon is incomplete (the
     /// item was not recognized well enough), so it is not kept; a rescan gets another chance.
     public func remember(_ component: Component) async {
-        guard let cache, let key = component.identifiers.resolutionKey, component.metrics[.carbon] != nil else { return }
+        guard let cache, let key = component.resolutionKey, component.metrics[.carbon] != nil else { return }
         await cache.store(CachedResolution(metrics: component.metrics, stageShares: component.stageShares,
                                            plasticPackagingShare: component.plasticPackagingShare,
                                            category: component.category), forKey: key)

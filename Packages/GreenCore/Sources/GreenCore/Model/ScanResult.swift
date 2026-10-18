@@ -21,7 +21,7 @@ public struct ScanResult: Codable, Sendable, Hashable, Identifiable {
     public var date: Date
     public var title: String
     public var mode: ScanMode
-    /// JPEG of the captured frame.
+    /// JPEG of the captured frame, in the smaller copy kept with the scan (`ScanPhoto`).
     public var photo: Data?
     public var components: [Component]
     /// Per-unit totals of what is pictured: one serving or unit of consumables, whole-life for durables.
