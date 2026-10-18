@@ -1,3 +1,4 @@
+import Foundation
 import GreenCore
 
 /// Human-readable labels for profile answers. Named `profileLabel` / `profileSymbol` so they never collide
@@ -33,10 +34,7 @@ extension CommuteMode: ProfileOption {
         case .car: "Car"
         case .electricCar: "Electric car"
         case .transit: "Transit"
-        case .bike: "Bike"
         case .eBike: "E-bike"
-        case .walk: "Walk"
-        case .remote: "Work from home"
         }
     }
 
@@ -45,10 +43,7 @@ extension CommuteMode: ProfileOption {
         case .car: "car"
         case .electricCar: "bolt.car"
         case .transit: "tram"
-        case .bike: "bicycle"
         case .eBike: "bicycle.circle"
-        case .walk: "figure.walk"
-        case .remote: "house"
         }
     }
 }
@@ -97,21 +92,32 @@ extension HeatingSource: ProfileOption {
     }
 }
 
-extension ClothingHabit: ProfileOption {
-    var profileLabel: String {
-        switch self {
-        case .mostlyNew: "Mostly new"
-        case .mixed: "A mix"
-        case .mostlySecondHand: "Mostly second-hand"
-        }
+extension HomeType {
+    /// Average floor area for this type of home (EIA RECS 2020), m².
+    var typicalFloorAreaM2: Double {
+        ReferenceStore.bundled.cohort.homeSize.typicalFloorAreaM2[self] ?? 100
     }
+}
 
-    var profileSymbol: String {
-        switch self {
-        case .mostlyNew: "bag"
-        case .mixed: "arrow.triangle.2.circlepath"
-        case .mostlySecondHand: "arrow.3.trianglepath"
+extension UserProfile {
+    /// The answered floor area, or the typical one for the home type until it is answered.
+    var shownFloorAreaM2: Double { floorAreaM2 ?? homeType.typicalFloorAreaM2 }
+
+    /// "Natural gas + Heat pump", or "No heating".
+    var heatingLabel: String {
+        let sources = orderedHeatingSources
+        return sources.isEmpty ? HeatingSource.none.profileLabel : sources.map(\.profileLabel).joined(separator: " + ")
+    }
+}
+
+/// Floor areas in ft² (imperial) or m², rounded to a sensible step.
+enum FloorAreaFormat {
+    static func text(m2: Double) -> String {
+        if DisplayUnits.system == .imperial {
+            let squareFeet = (m2 * DisplayUnits.squareFeetPerSquareMeter / 50).rounded() * 50
+            return "\(Int(squareFeet).formatted()) ft²"
         }
+        return "\(Int((m2 / 5).rounded() * 5).formatted()) m²"
     }
 }
 

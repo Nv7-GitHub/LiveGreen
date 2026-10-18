@@ -2,8 +2,9 @@ import Foundation
 
 /// A rough yearly carbon estimate for an onboarding profile, itemized so each answer's effect is visible.
 /// Food, home energy and clothing are the region's per-capita carbon × each category's share × the same
-/// profile modifiers the cohort model uses; getting around is computed from the weekly distance per mode;
-/// everything else (services, other goods) is the region's remaining share, unmodified.
+/// profile modifiers the cohort model uses (meat and dairy meals, home type, floor area and heating, new
+/// clothes a year); getting around is computed from the weekly distance per mode; everything else
+/// (services, other goods) is the region's remaining share, unmodified.
 public struct LifestyleEstimate: Sendable, Hashable {
     public enum Part: String, CaseIterable, Sendable, Hashable {
         case food, homeEnergy, clothing, travel, everythingElse
@@ -23,9 +24,10 @@ public struct LifestyleEstimate: Sendable, Hashable {
 
     /// Lifecycle kg CO2e per passenger-km. Car: US EPA, 400 g CO2/mi for a typical passenger vehicle
     /// (≈0.25 kg/km); EV: ~0.2 kWh/km at the US average grid (~0.4 kg/kWh); transit: US bus and rail
-    /// average per passenger (FTA/EPA ≈0.1 kg/km); e-bike: ~0.01 kWh/km of charging.
+    /// average per passenger (FTA/EPA ≈0.1 kg/km); e-bike: ~0.01 kWh/km of charging. Walking and cycling
+    /// are zero, so they are not asked about.
     public static let kgPerKm: [CommuteMode: Double] = [
-        .car: 0.25, .electricCar: 0.08, .transit: 0.10, .eBike: 0.005, .bike: 0, .walk: 0, .remote: 0,
+        .car: 0.25, .electricCar: 0.08, .transit: 0.10, .eBike: 0.005,
     ]
 
     public init(profile: UserProfile, store: ReferenceStore = .bundled) {
@@ -41,7 +43,8 @@ public struct LifestyleEstimate: Sendable, Hashable {
         }
         let categoryShare = Category.allCases.reduce(0) { $0 + reference.share(of: $1, for: .carbon) }
         // Heating fuel shifts household energy; electric heating raises it, fuel heating lowers the electric part.
-        let heating = reference.heatingModifiers[profile.heating] ?? 1
+        // Several sources average evenly.
+        let heating = model.heatingModifier
         let travel = profile.commuteKmPerWeekByMode.reduce(0) { $0 + (Self.kgPerKm[$1.key] ?? 0) * $1.value * 52 }
         let packagingAndCare = total * (reference.share(of: .packaging, for: .carbon) + reference.share(of: .personalCare, for: .carbon))
         kgPerYear = [

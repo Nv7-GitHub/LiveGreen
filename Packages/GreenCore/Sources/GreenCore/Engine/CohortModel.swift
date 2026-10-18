@@ -33,24 +33,31 @@ public struct CohortModel: Sendable {
     public func modifier(for category: Category, metric: MetricKey = .carbon) -> Double {
         switch category {
         case .food:
-            return baseline.dietModifiers[profile.diet] ?? 1
+            // Meat and dairy meals a week against the average diet; land and water have their own plant shares.
+            return reference.meals.modifier(meatMeals: profile.meatMealsPerWeek, dairyMeals: profile.dairyMealsPerWeek,
+                                            metric: metric)
         case .clothing:
-            return reference.clothingModifiers[profile.clothingHabit] ?? 1
+            return reference.clothing.modifier(newItemsPerYear: profile.newClothesPerYear)
         case .electronic, .household:
             // Shared appliances spread across the household: per-person use scales with size^(exponent − 1).
             var value = pow(Double(max(profile.householdSize, 1)), baseline.householdSizeExponent - 1)
-            // Bigger homes run more appliances; electric heating adds to the electricity bill only.
+            // Bigger homes run more appliances and heat and cool more space; electric heating adds to the
+            // electricity bill only.
             if metric == .carbon || metric == .yearlyElectricity {
                 value *= reference.homeTypeModifiers[profile.homeType] ?? 1
+                value *= reference.homeSize.modifier(areaM2: profile.floorAreaM2, homeType: profile.homeType)
             }
             if metric == .yearlyElectricity {
-                value *= reference.heatingModifiers[profile.heating] ?? 1
+                value *= heatingModifier
             }
             return value
         case .packaging, .personalCare:
             return 1
         }
     }
+
+    /// The profile's heating sources' modifiers, averaged evenly.
+    public var heatingModifier: Double { reference.heatingModifier(for: profile.heatingSources) }
 
     /// Peer median of the per-person yearly sub-footprint for `categories`.
     public func median(for metric: MetricKey, categories: Set<Category>) -> Double {
@@ -67,7 +74,7 @@ public struct CohortModel: Sendable {
     }
 
     /// Whole-footprint median (all categories), with the commute modifier applied to carbon: the
-    /// distance-weighted mix of each mode's modifier (the main mode's when no distances are set).
+    /// distance-weighted mix of each mode's modifier (the main mode's when no distances are set, 1 with no mode).
     public func wholeFootprintMedian(for metric: MetricKey) -> Double {
         let base = baseline.medians[metric] ?? 0
         guard metric == .carbon else { return base }
@@ -75,7 +82,7 @@ public struct CohortModel: Sendable {
         let total = distances.values.reduce(0, +)
         let modifier = total > 0
             ? distances.reduce(0) { $0 + (reference.commuteModifiers[$1.key] ?? 1) * $1.value } / total
-            : reference.commuteModifiers[profile.commuteMode] ?? 1
+            : profile.commuteMode.flatMap { reference.commuteModifiers[$0] } ?? 1
         return base * modifier
     }
 
@@ -96,7 +103,7 @@ public struct CohortModel: Sendable {
     /// scanned it equals `LifestyleEstimate.totalKg`.
     public func estimate(for metric: MetricKey, scanned: ScannedFootprint = .empty) -> Double? {
         guard Self.leaderboardMetrics.contains(metric), let total = baseline.medians[metric] else { return nil }
-        let heating = reference.heatingModifiers[profile.heating] ?? 1
+        let heating = heatingModifier
         var value = Category.allCases.reduce(0.0) { sum, category in
             var typical = total * reference.share(of: category, for: metric) * modifier(for: category, metric: metric)
             // As in `LifestyleEstimate`: the heating fuel shifts home-energy carbon too.

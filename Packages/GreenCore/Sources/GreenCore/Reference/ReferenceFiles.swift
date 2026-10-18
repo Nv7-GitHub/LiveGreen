@@ -181,8 +181,16 @@ struct PerCapitaFile: Decodable {
     var countries: [Country]
     var usStates: States
     var sigmas: CitedValue<[String: Double]>
-    var dietModifiers: CitedValue<[String: Double]>
-    var clothingModifiers: CitedValue<[String: Double]>
+    /// Food: per metric (carbon, land, water).
+    var plantBasedFoodShares: CitedValue<[String: Double]>
+    /// Food: kg CO2e per meal, keyed meat / dairy.
+    var mealCarbon: CitedValue<[String: Double]>
+    /// Food: the average diet's meals a week, keyed meat / dairy.
+    var averageMealsPerWeek: CitedValue<[String: Double]>
+    /// Clothing: averageNewItemsPerYear and baseShare.
+    var clothingPurchases: CitedValue<[String: Double]>
+    var typicalFloorAreaM2: CitedValue<[String: Double]>
+    var spaceConditioningShare: CitedValue<Double>
     var commuteModifiers: CitedValue<[String: Double]>
     var householdSizeExponent: CitedValue<Double>
     var homeTypeModifiers: CitedValue<[String: Double]>

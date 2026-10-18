@@ -36,7 +36,7 @@ public struct ReferenceStore: ReferenceProviding {
         foods = AliasIndex([]); fibers = AliasIndex([]); materials = AliasIndex([]); devices = AliasIndex([])
         grids = [:]; regions = RegionResolver(); countryBaselines = [:]; stateCarbonRatios = [:]; asus = [:]
         materialsByResin = [:]; garment = nil
-        cohort = CohortReference(categoryShares: [:], clothingModifiers: [:], commuteModifiers: [:], citations: [])
+        cohort = CohortReference(categoryShares: [:], commuteModifiers: [:], citations: [])
         recordInfo = []
     }
 

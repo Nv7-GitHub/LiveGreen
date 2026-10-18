@@ -11,19 +11,18 @@ struct OnboardingStepContent: View {
         case .location:
             LocationStepView(region: $profile.region)
         case .household:
-            HouseholdPicker(size: $profile.householdSize)
+            VStack(spacing: 16) {
+                HouseholdArt(size: profile.householdSize)
+                HouseholdPicker(size: $profile.householdSize)
+            }
         case .diet:
-            SingleChoiceChips(selection: $profile.diet)
+            DietStepView(profile: $profile)
         case .commute:
             CommutePlanner(distances: $profile.commuteKmPerWeekByMode)
         case .home:
-            VStack(alignment: .leading, spacing: 16) {
-                SingleChoiceChips(selection: $profile.homeType)
-                Text("Heating").font(.subheadline.weight(.semibold))
-                SingleChoiceChips(selection: $profile.heating)
-            }
+            HomeStepView(profile: $profile)
         case .clothing:
-            SingleChoiceChips(selection: $profile.clothingHabit)
+            ClothingStepView(perYear: $profile.newClothesPerYear)
         case .chargers:
             VStack(alignment: .leading, spacing: 10) {
                 MultiChoiceChips(selection: $profile.chargingItems)
@@ -87,6 +86,7 @@ private struct HouseholdPicker: View {
 struct DistanceSlider: View {
     var title = "Distance per week"
     @Binding var kmPerWeek: Double
+    var identifier: String?
 
     private static let kmPerMile = 1.609_34
     private var imperial: Bool { DisplayUnits.system == .imperial }
@@ -108,6 +108,7 @@ struct DistanceSlider: View {
                 .tint(Theme.leaf)
                 .accessibilityLabel("\(title) per week")
                 .accessibilityValue("\(Int(shown.wrappedValue.rounded())) \(imperial ? "miles" : "kilometers")")
+                .accessibilityIdentifier(identifier ?? "")
         }
     }
 }
