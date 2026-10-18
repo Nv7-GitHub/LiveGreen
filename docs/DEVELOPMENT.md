@@ -301,8 +301,7 @@ Measured on the desk photo (Sonnet 5.5, Oct 2026):
 ## 10. Onboarding and the leaderboard
 
 - Onboarding asks: location (ZIP first; below it a MapKit map, 110–170 pt tall to fit the screen, flies to
-  the state, then the ZIP), household size, meat meals and
-  dairy meals a week (0–21 each), getting around (car, electric car, transit, e-bike with a weekly distance
+  the state, then the ZIP), household size, meat meals and dairy meals a week (0–21 each), getting around (car, electric car, transit, e-bike with a weekly distance
   each; none is a valid answer), home type, floor area and heating sources (multi-select), and new clothes a
   year. Each step has drawn, animated art (plates that fill, a street scene, a house drawn to scale, a rail of
   shirts) in `OnboardingArt` and `LifestyleStepViews`.
