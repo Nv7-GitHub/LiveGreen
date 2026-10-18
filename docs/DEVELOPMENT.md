@@ -125,8 +125,11 @@ docs/                             this file, the spec, screenshots
    - T4 estimate: the AI's fallback, widened to at least ±50%
    Results are cached by GTIN or `brand|model`, so a rescan gives identical numbers. Unbranded clothing,
    household, packaging and personal-care items are cached by their generic kind (`Identifiers.genericKey`:
-   the name without colour words, singular, so "Blue backpack" and "Beige backpack" are both `backpack`), and
-   items of one kind in a scan share the best-informed one's guesses. A kind's cached T4 estimate is only used
+   the name without colour, position, size and lid-type words, bracketed asides, text after a comma or spaced
+   dash and printed amounts, each word singular, "-es" plurals included, so "Blue backpack (background)" and
+   "Beige backpacks" are both `backpack`; clothing, household and personal-care kinds start with the brand,
+   `kia|suv`, so two brands never share numbers), and items of one kind in a scan share the best-informed one's
+   guesses. A kind's cached T4 estimate is only used
    when the new item cannot do better itself. Identify reports a brand from a legible logo or from
    unmistakable design cues (a Mac keyboard's ⌘ keys, ROG styling, an iPhone camera layout), a `model_line`
    ("MacBook Pro 14", "Zenbook 14"), the `appearance_cues` it used and a `confidence`. `model` stays a printed
@@ -265,20 +268,57 @@ Measured on the desk photo (Sonnet 5.5, Oct 2026):
 - GreenCore always computes in metric. `DisplayUnits` converts only for display; imperial is the default
   (lb, gal, ft², oz, mi, °F; grid intensity in lb/MWh), Settings → Units switches to metric. Screens that
   show numbers read the `@AppStorage(DisplayUnits.defaultsKey)` value in `body` so they refresh on change.
-- Carbon is shown per year (purchase amortized over lifespan plus use) with the lifetime total beside it.
-  Electricity is per year. Water, land, plastic and water pollution are shown as what it took to make what
-  is pictured; only consumables (food, cups, packaging) also get a per-year figure. Swap savings are split
-  into "per year" and "once" (`SwapMath.recursYearly`, `SavingSplit`). Land is shown as plain area (m²/ft²).
+- The results screen is per year for every metric (`ScanBreakdown`): consumables × how often they are eaten,
+  bought or used, durables ÷ lifespan, electricity as is. The summary prints the assumed frequencies, rows
+  say what each item's year assumes ("2 servings a week", "4-yr life"), and per-unit values (one serving, a
+  durable's whole life) appear only in the detail sheet. The secondary tiles keep durables ("Lifetime") and
+  one of each consumable apart; they are never added together. Swap savings are split into "per year" and
+  "once" (`SwapMath.recursYearly`, `SavingSplit`). Land reads m²·yr / ft²·yr.
+- `DisplayUnits.scale(for:magnitude:)` picks the unit for an amount's size: carbon and water under 0.1 drop to
+  oz/g CO₂e and fl oz/mL, plastic switches to lb/kg from 1 lb / 1 kg, and anything below 0.01 of the shown
+  unit prints "<0.01". `displayValue`/`displaySymbol` stay in the base unit so charts share one axis. Spaces
+  between a number and its unit are non-breaking. A total over one item is that item's own figure and range
+  (`itemTotals`, `yearlyTotals`, `ScanTotals.sum`), so the summary and the inspector never disagree.
 - One visibility rule (`Component.displayable`): a metric is shown only if it applies, has a value and is not
   effectively zero (0% recyclable and 0/10 repairability still show). Missing metrics are left off, never
   shown as "not resolved". Swaps also hide metrics whose change rounds to 0%.
 - Swaps are ranked by `GreenScore`: the equal-weight mean of per-metric log improvements (clamped to ±ln 4,
-  compared per year of the same job). A swap is rejected if any metric gets more than 40% worse or the score
-  is under ~2%, so no swap trades one metric for another.
+  compared per year of the same job). A swap is rejected if any metric except decomposition gets more than 40%
+  worse, the score is under ~2%, or it is the original food relabelled (`isRelabelledFood`: same food group, no
+  smaller serving, no less packaging). Decomposition is compared per item, only between items of the same kind
+  (never a reusable against the disposables it replaces), capped at 500 years, and never vetoes.
+- Swaps resolve like originals (`ScanPipeline+Alternatives`): records and research first, then the factor model
+  when the swap names a food group, device type or materials + mass; AI estimates only fill gaps, the suggester
+  never sees resolved metrics, and swaps never touch the resolution cache. A food swap that does not say whether
+  it is cooked is prepared like the original. Reusables (`Alternative.isReusable`) are household durables with
+  washing per use (`ImpactEngine.addingWashing`: 0.015 kWh, 0.15 L); used/refurbished swaps carry 20%/30% of
+  production impacts (`ImpactEngine.secondHand`); a durable swap of the same kind keeps the original's lifespan
+  unless it states `lifespanYears`.
+- Swap cards (`GreenCore.SwapMath`): the header is carbon per year; the headline is "Better on N metrics, worse
+  on M", counted from the metrics shown; every changed metric appears (4 charts, then a line each); shares and
+  scores change in points ("+87 pts"), "100% better" only for a true zero; the default pick never adds carbon;
+  cards are sorted by yearly carbon saving.
 - The metric picker only offers metrics that apply to at least one item in the scan, and the list drops
   items without the selected metric.
 - Coffee's factor is per kg of beans; a brewed drink counts only ~6% of its mass as grounds
   (`FoodServing.dryIngredientShare`). Without this a cup read ~10 kg CO2e.
+- Mixed drinks and desserts have their own rows per kg as served, ice included (tea, milk_tea, latte, smoothie,
+  juice, yogurt, ice_cream, baked_goods, candy), as do processed foods (potato_crisps, fries,
+  preserved_vegetables); each row's note gives its recipe. `FoodServing.factorKey` sends a latte, milk tea,
+  smoothie or milkshake filed under milk, coffee, tea or soft_drinks to its own row; chips and fries no longer
+  alias raw potatoes. `Quantities.cooked` (identify `cooked`) divides a portion by `FoodServing.cookedYield`
+  (rice and barley 2.7, pasta 2.3, pulses 2.5, porridge 5); unpackaged rice and pulses count as cooked unless
+  identify says otherwise.
+- Food packaging is modelled from `Identifiers.packagingMaterials` (identify `packaging_materials`), else the
+  item's materials minus food and formula, else `other_plastic`. Unpackaged food has 0 g plastic and no
+  recyclable % or decomposition. `ScanPipeline.countingContainersOnce` drops a packaging item already counted on
+  an overlapping food, and the prompt anchors typical packaging masses (straw 0.5–1 g, cold cup 12–16 g + lid).
+- Materials: `pet_thermoform` (cups, lids, clamshells, ≈4% recycled), `ceramic`, `glass_tableware`,
+  `stainless_steel`, `detergent_formula`. Flags: `inert` (glass, ceramic, stainless steel: no decomposition shown)
+  and `consumed` (food_organic, detergent_formula: never packaging). Decomposition is mass-weighted over what is
+  thrown away. `household()` is contents + the container weighed by `packagingMassG`; outside food,
+  food_organic reads as detergent formula; more than 10% unmodelled material (electronics_mixed) gives no
+  factor-model carbon.
 - Barcoded food is per pack when Open Food Facts gives the net quantity (`ScanPipeline+PackBasis` sets
   `Quantities.packNetKg`; `FoodServing.basis` is `.pack(kg)` or `.serving(kg)`), otherwise per serving.
   Per-pack carbon, water and land are per kg × net mass, and the AI's per-serving carbon, water and land
@@ -347,15 +387,22 @@ Measured on the desk photo (Sonnet 5.5, Oct 2026):
 
 ## 11. Results screen design
 
-Photo first with numbered glass pins (the same numbers as the list); selecting an item shows corner
-brackets and a name label. Then the metric picker (icons, selected one labeled), the summary card (one big
-yearly number, likely range, lifetime / items, a plain-language data-quality line instead of tier codes),
-questions banner, the grouped item list and "See greener swaps". Content has bottom margin so the floating
+Photo first with numbered pins (the same numbers as the list); selecting an item shows corner brackets and a
+dark name label clamped inside the photo. Pin and row numbers rank once by yearly carbon, so they stay fixed
+across metrics; overlapping pins are spread apart (`PinLayout`) with leader lines; colours come from
+`ImpactLevel` (yearly amount as a share of a typical person's year, cut-offs 0.25%, 1%, 3%), not share of the
+scene. Tall photos are capped at about half the screen and selecting an item scrolls it above the sheet.
+Personal text (names, addresses, phones, emails) found by on-device OCR is blurred on the results photo
+(`PersonalText`, `PhotoRedaction`; display only, the stored photo is untouched). Then the metric picker
+(Water pollution included), the summary card (one big yearly number, likely range, assumed frequencies,
+lifetime / one-of-each / items, a data-quality bar that follows the selected metric and weights by yearly
+value), questions banner, the item list and "See greener swaps". The detail header names materials in plain
+words (`MaterialNames`; food lists only its packaging). Content has bottom margin so the floating
 tab bar never covers it. The detail sheet shows the flow (Sankey), usage card, plug card and inspector.
 
 ## 12. Testing
 
-- Core logic: `cd Packages/GreenCore && swift test` (~200 tests, under 1 s, Mac host).
+- Core logic: `cd Packages/GreenCore && swift test` (~370 tests, under 1 s, Mac host).
 - App, default scheme `LiveGreen`: only the critical UI test (`LiveGreenSmokeTests/testDemoScanShowsResults`),
   about 12 s plus build.
 - Full UI tours: scheme `LiveGreenFullUITests` (about 3 minutes; includes the 90 s full demo tour).
@@ -383,6 +430,11 @@ tab bar never covers it. The detail sheet shows the flow (Sankey), usage card, p
   result. It could move behind a preliminary result.
 
 ## 14. History
+
+- Image QA run 1 (`testing_images/testing_images_buglist1.md`, untracked) was fixed in batches, one PR each:
+  #3 generic keys, units, Sankey, analyzing card (K2, L4, L5, L7); #4 swap scoring and cards (R5, S1–S9,
+  S8b); #5 per-year results screen, pins, callout, privacy blur (R1–R4, L1–L3, L6, L8); #6 food factors,
+  packaging and materials (F1–F8, P1–P6).
 
 - `main` holds everything. Work happened in stages (scaffold → engine → clients → ladder → UI → AR →
   swaps → onboarding/compare → plugs → QA), then the Grok provider, EIA grid data, the results redesign,
