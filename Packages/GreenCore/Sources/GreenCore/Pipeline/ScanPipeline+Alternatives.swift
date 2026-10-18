@@ -3,18 +3,30 @@ import Foundation
 extension ScanPipeline {
     /// Asks for greener alternatives and resolves them through the same ladder and engine as the
     /// originals (spec §7), then keeps only swaps without a big trade-off on any metric, best GreenScore
-    /// first; deferrable loads also get the local smart-plug alternative.
+    /// first; deferrable loads also get the local smart-plug alternative. Items the suggester skipped, and the
+    /// biggest item when none of its swaps was kept, get one more try with a note on what was wrong (S10).
     public func suggestAlternatives(for result: ScanResult) async throws -> ScanResult {
         let suggestions = try await alternatives.suggestAlternatives(for: result.components, profile: profile)
         var updated = result
+        var notes: [UUID: String] = [:]
         for suggestion in suggestions {
             guard let index = updated.components.firstIndex(where: { $0.id == suggestion.componentID }) else { continue }
-            let original = updated.components[index]
-            var resolved: [Alternative] = []
-            for alternative in suggestion.alternatives where alternative.kind == .product {
-                resolved.append(await resolve(alternative.onBasis(of: original), replacing: original))
+            let review = await reviewed(suggestion.alternatives, replacing: updated.components[index])
+            updated.components[index].alternatives = review.kept
+            notes[suggestion.componentID] = review.turnedDown
+        }
+        let retry = retryTargets(in: updated, answered: Set(suggestions.map(\.componentID)))
+        if !retry.isEmpty {
+            let retryNotes = Dictionary(uniqueKeysWithValues: retry.map { component in
+                (component.id, notes[component.id].flatMap(\.trimmedNonEmpty).map { "Turned down: \($0)." }
+                    ?? "No swap came back for this item.")
+            })
+            let more = (try? await alternatives.suggestAlternatives(for: retry, profile: profile, retrying: retryNotes)) ?? []
+            for suggestion in more where retryNotes[suggestion.componentID] != nil {
+                guard let index = updated.components.firstIndex(where: { $0.id == suggestion.componentID }) else { continue }
+                let review = await reviewed(suggestion.alternatives, replacing: updated.components[index])
+                if !review.kept.isEmpty { updated.components[index].alternatives = review.kept }
             }
-            updated.components[index].alternatives = GreenScore.ranked(resolved, replacing: original, engine: engine)
         }
         for index in updated.components.indices where updated.components[index].plugCandidate != nil {
             let component = updated.components[index]
@@ -23,6 +35,65 @@ extension ScanPipeline {
             }
         }
         return updated
+    }
+
+    /// At most this many items get the second try, biggest yearly carbon first, so it stays one quick call.
+    static let maxRetries = 4
+
+    /// Suggested swaps made fit to show (S11): names and rationales tidied (`SwapText`), repeats and second-hand safety
+    /// gear dropped, each resolved like the original (`resolve`), its rationale checked against its own comparison,
+    /// then ranked by GreenScore with trade-offs dropped. `turnedDown` says why each dropped swap went, for a retry.
+    func reviewed(_ suggested: [Alternative], replacing original: Component) async -> (kept: [Alternative], turnedDown: String) {
+        var reasons: [String] = []
+        var names = Set<String>()
+        var resolved: [Alternative] = []
+        for alternative in suggested where alternative.kind == .product {
+            var swap = alternative
+            swap.name = SwapText.name(alternative.name)
+            swap.rationale = SwapText.rationale(alternative.rationale)
+            guard names.insert(swap.name.lowercased()).inserted else { continue }
+            if swap.isUnsafeSecondHand(replacing: original) {
+                reasons.append("“\(swap.name)” (second-hand or kept-longer safety gear is never suggested)")
+                continue
+            }
+            var done = await resolve(swap.onBasis(of: original), replacing: original)
+            done.rationale = SwapText.rationale(done.rationale, checkedAgainst: original, alternative: done, engine: engine)
+            resolved.append(done)
+        }
+        let kept = GreenScore.ranked(resolved, replacing: original, engine: engine)
+        for swap in resolved where !kept.contains(where: { $0.id == swap.id }) {
+            reasons.append("“\(swap.name)” (\(Self.rejection(GreenScore.assess(swap, replacing: original, engine: engine))))")
+        }
+        return (kept, reasons.joined(separator: "; "))
+    }
+
+    /// Why GreenScore turned a swap down, in words the suggester can act on.
+    static func rejection(_ assessment: GreenScore.Assessment) -> String {
+        if assessment.isRelabelledFood { return "the same food under another name" }
+        let limit = -log(1 + GreenScore.maxWorsening)
+        if let worst = assessment.changes.filter({ !GreenScore.vetoExempt.contains($0.key) && $0.value < limit })
+            .min(by: { $0.value < $1.value })?.key {
+            return "\(SwapText.phrase(worst)) clearly worse"
+        }
+        return assessment.changes.isEmpty ? "nothing to compare it on" : "too small a gain overall"
+    }
+
+    /// Who gets a second try: items the suggester left out, and the biggest yearly-carbon item when it has no product
+    /// swap left, at most `maxRetries`, biggest first.
+    func retryTargets(in result: ScanResult, answered: Set<UUID>) -> [Component] {
+        let byCarbon = result.components.enumerated().sorted { lhs, rhs in
+            let (a, b) = (yearlyCarbon(lhs.element), yearlyCarbon(rhs.element))
+            return a != b ? a > b : lhs.offset < rhs.offset
+        }.map(\.element)
+        let top = byCarbon.first?.id
+        let targets = byCarbon.filter { component in
+            !component.alternatives.contains { $0.kind == .product } && (!answered.contains(component.id) || component.id == top)
+        }
+        return Array(targets.prefix(Self.maxRetries))
+    }
+
+    private func yearlyCarbon(_ component: Component) -> Double {
+        (component.metrics[.carbon]?.value ?? 0) * GreenScore.yearlyFactor(.carbon, for: component, engine: engine)
     }
 
     /// One swap resolved on the same footing as the item it replaces: filed as household when reusable, kept over the

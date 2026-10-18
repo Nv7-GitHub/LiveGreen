@@ -1,9 +1,12 @@
 import SwiftUI
 import GreenCore
 
-/// One component's 1–3 alternatives and, for the current pick, the comparison chart.
+/// One component's 1–3 alternatives and, for the current pick, the comparison chart. Items offered exactly the same
+/// swaps (four bikes, each "Buy a used bicycle") share one card: `others` take whatever the lead item takes, and the
+/// chart is for one item.
 struct ComponentSwapCard: View {
     let component: Component
+    var others: [Component] = []
     let alternatives: [Alternative]
     let pick: Alternative?
     var charging: SmartPlugAlternative.ChargingCarbon?
@@ -20,14 +23,18 @@ struct ComponentSwapCard: View {
                         Text("\(carbon.formatted)/yr").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                     }
                 }
+                if !others.isEmpty {
+                    Text("Same swap for \(others.map(\.name).joined(separator: ", ")).")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 ForEach(alternatives) { alternative in
                     AlternativeRow(component: component, alternative: alternative,
-                                   isSelected: alternative.id == pick?.id,
+                                   isSelected: alternative.id == pick?.id, itemCount: 1 + others.count,
                                    onSelect: { onSelect(alternative) }, onPair: onPair)
                 }
                 if let pick {
                     Divider()
-                    Text("Current vs. \(pick.kind == .smartPlugScheduling ? "scheduled charging" : pick.name)")
+                    Text("Current vs. \(pick.kind == .smartPlugScheduling ? "scheduled charging" : pick.name)\(others.isEmpty ? "" : ", per item")")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                     if pick.kind == .product, let note = sameFoodNote {
@@ -35,17 +42,22 @@ struct ComponentSwapCard: View {
                     }
                     ComparisonChart(component: component, alternative: pick, charging: charging)
                 } else {
-                    Text("Keeping the original.").font(.caption).foregroundStyle(.secondary)
+                    Text(others.isEmpty ? "Keeping the original." : "Keeping the originals.")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
             }
         }
         .animation(.smooth, value: pick?.id)
     }
 
-    /// The item's carbon per year, the basis of the savings and charts below it (not one serving or the lifetime).
+    /// The items' carbon per year, the basis of the savings and charts below it (not one serving or the lifetime);
+    /// all of them when the card covers several.
     private var yearlyCarbon: Measured? {
-        guard component.displayable(.carbon) != nil else { return nil }
-        return SwapMath.yearlyCarbon(of: component)
+        guard component.displayable(.carbon) != nil, let lead = SwapMath.yearlyCarbon(of: component) else { return nil }
+        return others.compactMap(SwapMath.yearlyCarbon).reduce(lead) { total, next in
+            Measured(value: total.value + next.value, low: total.low + next.low, high: total.high + next.high,
+                     unit: total.unit, tier: max(total.tier, next.tier), sources: total.sources)
+        }
     }
 
     /// A food swap for a per-pack item covers the same amount of food at the same rate (`Alternative.onBasis`).
