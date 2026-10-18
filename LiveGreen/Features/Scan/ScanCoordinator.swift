@@ -55,6 +55,11 @@ final class ScanCoordinator: ScanCoordinating {
         return updated
     }
 
+    /// Swaps for some items only (`ScanPipeline.suggestAlternatives(forItems:in:)`).
+    func suggestAlternatives(forItems ids: Set<UUID>, in result: ScanResult) async throws -> ScanResult {
+        try await pipeline.suggestAlternatives(forItems: ids, in: result)
+    }
+
     /// Re-resolves items whose detail questions were answered before the results (T4 → factor model), on-device.
     func refining(_ result: ScanResult, specAnswers: [SpecAnswer]) async -> ScanResult {
         let refined = await pipeline.refining(result, specAnswers: specAnswers)

@@ -140,6 +140,19 @@ struct OwnershipTests {
         #expect(result.components[1].alternatives.isEmpty)
     }
 
+    @Test func anItemCountedLaterGetsItsOwnSwaps() async throws {
+        let pipeline = pipeline(IdentifyResponse(components: []))
+        var result = ScanResult(title: "Desk", components: [monitor("Mine"), monitor("Bag", exclusion: .background)])
+        result = try await pipeline.suggestAlternatives(for: result)
+        let kept = result.components[0].alternatives
+        // "It's mine" on the bag after the swaps came back: only the bag is asked about.
+        result.markOwned(true, componentID: result.components[1].id, engine: ImpactEngine())
+        let updated = try await pipeline.suggestAlternatives(forItems: [result.components[1].id], in: result)
+        #expect(!updated.components[1].alternatives.isEmpty)
+        #expect(updated.components[0].alternatives == kept, "the other items keep their swaps")
+        #expect(try await pipeline.suggestAlternatives(forItems: [], in: result) == result)
+    }
+
     // MARK: Footprint and results order
 
     @Test func theFootprintCountsOnlyTheUsersOwnItems() {

@@ -53,7 +53,7 @@ struct ARLabelsOverlay: View {
 
     private func label(for component: Component) -> some View {
         ARComponentLabel(component: component, carbonShare: carbonShare(of: component),
-                         isSelected: component.id == selectedID) {
+                         isSelected: component.id == selectedID, isCounted: component.isTotaled) {
             onSelect(component)
         }
         .fixedSize()
@@ -90,9 +90,10 @@ struct ARLabelsOverlay: View {
         }
     }
 
+    /// Share of the counted items' carbon; 0 for an item the scan does not count, so it also loses label priority.
     private func carbonShare(of component: Component) -> Double {
-        let total = components.compactMap { $0.metrics[.carbon]?.value }.reduce(0, +)
-        guard total > 0, let value = component.metrics[.carbon]?.value else { return 0 }
+        let total = components.filter(\.isTotaled).compactMap { $0.metrics[.carbon]?.value }.reduce(0, +)
+        guard component.isTotaled, total > 0, let value = component.metrics[.carbon]?.value else { return 0 }
         return value / total
     }
 }

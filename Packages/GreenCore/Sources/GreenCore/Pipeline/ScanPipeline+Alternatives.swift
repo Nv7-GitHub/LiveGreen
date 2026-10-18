@@ -39,6 +39,21 @@ extension ScanPipeline {
         return updated
     }
 
+    /// Swaps for some items only, the others untouched: an item the user counted ("It's mine") after the scan's swaps
+    /// were fetched was left out of that request.
+    public func suggestAlternatives(forItems ids: Set<UUID>, in result: ScanResult) async throws -> ScanResult {
+        var subset = result
+        subset.components = result.components.filter { ids.contains($0.id) }
+        guard !subset.components.isEmpty else { return result }
+        let fetched = try await suggestAlternatives(for: subset)
+        var updated = result
+        for component in fetched.components {
+            guard let index = updated.components.firstIndex(where: { $0.id == component.id }) else { continue }
+            updated.components[index].alternatives = component.alternatives
+        }
+        return updated
+    }
+
     /// At most this many items get the second try, biggest yearly carbon first, so it stays one quick call.
     static let maxRetries = 4
 
