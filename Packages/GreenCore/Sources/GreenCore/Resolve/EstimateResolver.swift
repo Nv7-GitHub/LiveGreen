@@ -1,5 +1,6 @@
 /// T4: turns the identify call's fallback estimates into `Measured` values with a range of at least ±50%.
-/// The AI estimates food per serving, so a per-pack item's amounts are scaled up to the whole pack.
+/// The AI estimates food per serving and its plastic per package pictured, so a per-pack item's food amounts are
+/// scaled up to the whole pack and its plastic is kept.
 public struct EstimateResolver: MetricResolver {
     public let tier = Tier.estimate
     public let name = "Model estimate"

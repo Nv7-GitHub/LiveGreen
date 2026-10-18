@@ -67,8 +67,9 @@ public enum FoodServing {
     }
 
     /// Amounts that grow with the mass of food: they scale between a serving and a pack. Shares, ratings and
-    /// decomposition time do not.
-    public static let massScaledMetrics: Set<MetricKey> = [.carbon, .water, .land, .plasticMass, .waterPollution]
+    /// decomposition time do not, and neither does plastic: the AI gives it for the whole package pictured
+    /// (`PromptParts.basis`), which for a per-pack item is already the pack's.
+    public static let massScaledMetrics: Set<MetricKey> = [.carbon, .water, .land, .waterPollution]
 
     /// kg eaten per serving: the stated serving, else the record's, else the reference amount for a pack,
     /// else the portion's own mass.
@@ -107,14 +108,24 @@ public enum FoodServing {
 }
 
 extension FoodServing {
+    /// Servings a week when nothing says how often the food is eaten.
+    public static let defaultServingsPerWeek = 1.0
+
     /// Packs a week for a per-pack item from servings a week: servings × serving ÷ pack.
     public static func packsPerWeek(servingsPerWeek: Double, for component: Component) -> Double {
         servingsPerWeek / servingsPerPack(component)
     }
 
+    /// Packs a week of a per-pack item: the stated packs, else its servings a week (or the default) in packs, so an
+    /// unstated rate counts the same food a year as the per-serving default did rather than a whole pack a week.
+    public static func packsPerWeek(of component: Component) -> Double {
+        component.usage?.packsPerWeek
+            ?? packsPerWeek(servingsPerWeek: component.usage?.servingsPerWeek ?? defaultServingsPerWeek, for: component)
+    }
+
     /// The item as one serving, the way identify and the swap suggesters see food: a per-pack item's amounts are
-    /// divided by the servings in its pack, its pack size becomes the item's mass and its packs a week are given as
-    /// servings. Other items are returned unchanged.
+    /// divided by the servings in its pack (its plastic stays the package's), its pack size becomes the item's mass
+    /// and its packs a week are given as servings. Other items are returned unchanged.
     public static func servingView(of component: Component) -> Component {
         guard isPerPack(component) else { return component }
         let servings = servingsPerPack(component)
@@ -126,7 +137,7 @@ extension FoodServing {
             view.metrics[metric] = component.metrics[metric]?.scaled(by: 1 / servings)
         }
         var usage = component.usage ?? UsageProfile()
-        usage.servingsPerWeek = (usage.packsPerWeek ?? 1) * servings
+        usage.servingsPerWeek = packsPerWeek(of: component) * servings
         usage.packsPerWeek = nil
         view.usage = usage
         return view
@@ -136,10 +147,21 @@ extension FoodServing {
 extension Alternative {
     /// The swap on the same basis as the item it replaces. A food swap for a per-pack item covers the same amount of
     /// food, bought as often: one pack of the original's net quantity at its packs a week, so the two are compared
-    /// per kg eaten whatever the swap's own pack size. Other swaps are returned unchanged.
+    /// per kg eaten whatever the swap's own pack size. Its estimates are per serving of the original (the suggesters
+    /// see `FoodServing.servingView`), so without a serving of its own it takes the original's; its packaging, given
+    /// for its own pack, is scaled to the original's pack size as Open Food Facts records are. Other swaps are
+    /// returned unchanged.
     public func onBasis(of original: Component) -> Alternative {
         guard kind == .product, category == .food, case .pack(let kg) = FoodServing.basis(of: original) else { return self }
         var copy = self
+        if (copy.quantities.servingKg ?? 0) <= 0 { copy.quantities.servingKg = FoodServing.servingKg(original) }
+        if let ownPack = quantities.packNetKg ?? quantities.massKg ?? quantities.volumeLiters, ownPack > 0 {
+            let share = kg / ownPack
+            copy.quantities.packagingMassG = quantities.packagingMassG.map { $0 * share }
+            copy.fallbackEstimates[.plasticMass] = fallbackEstimates[.plasticMass].map {
+                EstimateRange(value: $0.value * share, low: $0.low * share, high: $0.high * share)
+            }
+        }
         copy.quantities.packNetKg = kg
         copy.usage = original.usage
         return copy

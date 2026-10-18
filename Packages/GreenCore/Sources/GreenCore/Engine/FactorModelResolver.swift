@@ -46,7 +46,8 @@ public struct FactorModelResolver: MetricResolver {
         }
         var packagingShare: Double?
         if let blend = packagingBlend(component) {
-            // The packaging is the whole pack's; one serving carries its share of the plastic, a pack all of it.
+            // The packaging is the whole pack's; one serving carries its share of the plastic, a pack all of it. A swap's
+            // packaging is already on the original's pack size (`Alternative.onBasis`), as OFF records are scaled.
             var endOfLife = blend.endOfLifeMetrics()
             let share = unitKg.map { FoodServing.packageShare(servingKg: $0, packageKg: FoodServing.packageKg(component)) } ?? 1
             endOfLife[.plasticMass] = endOfLife[.plasticMass]?.scaled(by: share)

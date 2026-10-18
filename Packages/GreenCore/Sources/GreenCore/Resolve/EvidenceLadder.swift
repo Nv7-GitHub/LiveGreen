@@ -81,9 +81,11 @@ public struct EvidenceLadder: Sendable {
     /// item was not recognized well enough), so it is not kept; a rescan gets another chance.
     public func remember(_ component: Component) async {
         guard let cache, let key = component.resolutionKey, component.metrics[.carbon] != nil else { return }
+        let packNetKg = component.quantities.packNetKg
         await cache.store(CachedResolution(metrics: component.metrics, stageShares: component.stageShares,
                                            plasticPackagingShare: component.plasticPackagingShare,
-                                           category: component.category, packNetKg: component.quantities.packNetKg),
+                                           category: component.category, packNetKg: packNetKg,
+                                           servingKg: packNetKg == nil ? nil : component.quantities.servingKg),
                           forKey: key)
     }
 }
