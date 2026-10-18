@@ -5,7 +5,7 @@ extension FactorModelResolver {
 
     func electronic(_ component: Component, profile: UserProfile) -> ResolverOutput {
         let q = component.quantities
-        guard let device = store.deviceProfile(deviceType: q.deviceType ?? component.name) else {
+        guard let device = store.deviceProfile(for: component) else {
             return unknownDevice(component)
         }
         let d = device.defaults
@@ -22,7 +22,12 @@ extension FactorModelResolver {
             .lifespan: FactorRanges.relative(d.lifespanYears, 0.3, unit: .years, sources: sources),
             .repairability: FactorRanges.score(d.repairability, spread: 1.5, sources: sources),
         ]
-        if let plastic = d.plasticMassG {
+        // The item's own materials and mass say more about its plastic than the type's typical figure (a camera body
+        // is not a tablet).
+        if let blend = MaterialBlend(materials: component.identifiers.materials, massG: (q.massKg ?? 0) * 1000, store: store),
+           blend.plasticG > 0 {
+            metrics[.plasticMass] = blend.endOfLifeMetrics()[.plasticMass]
+        } else if let plastic = d.plasticMassG {
             metrics[.plasticMass] = FactorRanges.relative(plastic * scale, 0.4, unit: .grams, sources: sources)
         }
         if let recyclable = d.recyclablePercent {
@@ -115,8 +120,9 @@ extension FactorModelResolver {
             var seenEOL = Set<Source>()
             let eolSources = endOfLife.map(\.eol.citation).filter { seenEOL.insert($0).inserted }
             // Averaged over the fibers with end-of-life data, so a part without it does not read as unrecyclable.
+            // Decomposition is mass-weighted like `MaterialBlend`'s: 5% elastane no longer makes a cotton shirt 200 years.
             let recyclable = endOfLife.reduce(0) { $0 + $1.fraction * $1.eol.recyclablePercent } / covered
-            let decomposition = endOfLife.filter { $0.fraction >= 0.05 }.map(\.eol.decompositionYears).max() ?? 0
+            let decomposition = endOfLife.reduce(0) { $0 + $1.fraction * $1.eol.decompositionYears } / covered
             metrics[.recyclablePercent] = FactorRanges.percent(recyclable, spread: 10, sources: eolSources)
             metrics[.decompositionTime] = FactorRanges.multiplicative(decomposition, factor: 2, unit: .years, sources: eolSources)
         }

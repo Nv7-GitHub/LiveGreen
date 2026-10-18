@@ -31,10 +31,11 @@ public struct ImpactEngine: Sendable {
 
     // MARK: Formulas
 
-    /// kWh/yr = (powerOn × hoursOn + standby × standbyHours) × 365 / 1000.
-    public static func yearlyElectricity(powerOnW: Double, hoursOnPerDay: Double,
-                                         standbyW: Double, standbyHoursPerDay: Double) -> Double {
-        (powerOnW * hoursOnPerDay + standbyW * standbyHoursPerDay) * daysPerYear / 1000
+    /// kWh/yr = (powerOn × hoursOn + standby × standbyHours) × days in use / 1000; a seasonal appliance runs (and is
+    /// plugged in) only `daysInUse` days a year.
+    public static func yearlyElectricity(powerOnW: Double, hoursOnPerDay: Double, standbyW: Double,
+                                         standbyHoursPerDay: Double, daysInUse: Double = daysPerYear) -> Double {
+        (powerOnW * hoursOnPerDay + standbyW * standbyHoursPerDay) * min(max(daysInUse, 0), daysPerYear) / 1000
     }
 
     /// kWh/yr drawn from the wall to charge a battery `chargesPerWeek` times.
@@ -109,8 +110,10 @@ public struct ImpactEngine: Sendable {
               let hoursOn = usage?.hoursOnPerDay ?? profile?.defaults.typicalHoursOnPerDay else { return nil }
         let standby = component.metrics[.standbyPower] ?? Measured.exact(0, unit: .watts, tier: powerOn.tier)
         let standbyHours = usage?.standbyHoursPerDay ?? max(0, 24 - hoursOn)
+        let days = profile?.activeDaysPerYear ?? Self.daysPerYear
         return mc.propagate([powerOn, standby], unit: .kilowattHoursPerYear, salt: "kwh") {
-            Self.yearlyElectricity(powerOnW: $0[0], hoursOnPerDay: hoursOn, standbyW: $0[1], standbyHoursPerDay: standbyHours)
+            Self.yearlyElectricity(powerOnW: $0[0], hoursOnPerDay: hoursOn, standbyW: $0[1], standbyHoursPerDay: standbyHours,
+                                   daysInUse: days)
         }
     }
 }

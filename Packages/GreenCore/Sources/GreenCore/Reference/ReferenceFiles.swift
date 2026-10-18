@@ -108,6 +108,7 @@ struct DeviceRecordFile: Decodable {
     var referenceScreenInches: Double?
     var verified: Bool
     var citation: Source
+    var activeDaysPerYear: Double?
 
     var profile: DeviceProfile {
         DeviceProfile(
@@ -117,7 +118,7 @@ struct DeviceRecordFile: Decodable {
                                      recyclablePercent: recyclablePercent, typicalHoursOnPerDay: typicalHoursOnPerDay,
                                      stageShares: stageShares, citation: citation),
             deferrableLoad: deferrable, chargerWatts: chargerWatts, batteryKWh: batteryKWh,
-            referenceScreenInches: referenceScreenInches, verified: verified)
+            referenceScreenInches: referenceScreenInches, verified: verified, activeDaysPerYear: activeDaysPerYear)
     }
 }
 

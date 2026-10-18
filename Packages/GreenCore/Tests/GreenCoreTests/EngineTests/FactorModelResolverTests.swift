@@ -81,7 +81,18 @@ struct FactorModelResolverTests {
         #expect(abs(try #require(output.metrics[.carbon]).value - 0.2 * (0.6 * 1.8 + 0.4 * 3.4 + 11.0)) < 1e-9)
         #expect(abs(try #require(output.metrics[.plasticMass]).value - 80) < 1e-9)
         #expect(try #require(output.metrics[.lifespan]).value == 3.3)
-        #expect(try #require(output.metrics[.decompositionTime]).value == 200)
+        // Mass-weighted (P5): cotton breaks down in months, polyester in centuries.
+        #expect(abs(try #require(output.metrics[.decompositionTime]).value - (0.6 * 0.4 + 0.4 * 200)) < 1e-9)
+    }
+
+    @Test func aLittleElastaneDoesNotMakeCottonLastCenturies() async throws {
+        let shirt = Component(name: "Stretch T-shirt", category: .clothing,
+                              identifiers: Identifiers(materials: [MaterialShare(material: "cotton", percent: 95),
+                                                                   MaterialShare(material: "elastane", percent: 5)]),
+                              quantities: Quantities(massKg: 0.2))
+        let decomposition = try #require(try await resolve(shirt).metrics[.decompositionTime]).value
+        #expect(abs(decomposition - (0.95 * 0.4 + 0.05 * 200)) < 1e-9)
+        #expect(decomposition < 20)
     }
 
     @Test func clothingEndOfLifeAveragesOverFibersWithData() async throws {

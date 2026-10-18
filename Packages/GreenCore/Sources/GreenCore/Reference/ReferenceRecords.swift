@@ -30,6 +30,9 @@ public struct DeviceProfile: Codable, Sendable, Hashable {
     /// Screen size the typical figures refer to; on-power scales with screen area.
     public var referenceScreenInches: Double?
     public var verified: Bool
+    /// Seasonal appliances (air conditioners, space heaters): days a year it runs; usage hours are per day in season.
+    /// Nil for year-round devices.
+    public var activeDaysPerYear: Double?
 }
 
 /// Typical service life of an unpowered household durable (`household_lifespans.json`): a bicycle, a table.

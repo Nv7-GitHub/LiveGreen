@@ -153,6 +153,8 @@ extension ClaudeClient: VisionIdentifier {
         - consumable: true for household goods that are used up and replaced (cleaning sprays and detergents, paper \
         notebooks and pads, sponges, candles, trash bags), with uses_per_container: about how many uses one lasts \
         (treatments in a spray bottle, loads in a detergent jug, writing sessions in a notebook). Null for durable goods.
+        - Seasonal appliances (air conditioners, space heaters, dehumidifiers): hours_on_per_day is for a day in the \
+        season it runs, not a year-round average.
 
         Default usage
         - Typical usage for this specific user (see their profile): hours on and in standby per day for \
