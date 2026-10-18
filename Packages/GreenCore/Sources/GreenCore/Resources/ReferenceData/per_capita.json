@@ -1660,6 +1660,24 @@
    "url": "https://www.eia.gov/consumption/residential/data/2020/"
   }
  },
+ "heatingCarbonModifiers": {
+  "values": {
+   "naturalGas": 0.98,
+   "electricResistance": 1.15,
+   "heatPump": 0.86,
+   "oil": 1.09,
+   "districtHeating": 0.98,
+   "none": 0.66
+  },
+  "appliesTo": "electronic, household (carbon)",
+  "note": "Home-energy carbon by space-heating source relative to the U.S. household average, for the same heat delivered. RECS 2020 CE4.1: the average home's site energy (electricity 36.0, natural gas 34.3, propane 3.2, fuel oil 3.2 million Btu) is 5.95 t CO2e at the eGRID2023 U.S. grid (349.7 g/kWh) and ENERGY STAR Portfolio Manager fuel factors (natural gas 53.11, propane 61.95, No. 2 fuel oil 74.2, district steam or hot water 66.40 kg CO2e per million Btu, Aug 2025 technical reference); space heating is 2.02 t of it (34%) and delivers about 28.5 million Btu of heat (furnaces 80%, oil 83%, electric heat 1.32 with heat pumps, 40% of electrically heated homes in RECS HC6.1, at a seasonal COP of 2.5). Each source keeps the rest and supplies that heat at its own carbon per unit of heat: gas 66, district 66, oil 89, resistance 102.5, heat pump 41 kg CO2e per million Btu; no heating keeps only the rest. Combustion and power-plant emissions only (no upstream methane). A home with several sources averages theirs evenly.",
+  "verified": false,
+  "citation": {
+   "title": "U.S. EIA, Residential Energy Consumption Survey (RECS) 2020, Table CE4.1: Annual household site end-use consumption by fuel (with US EPA eGRID2023 and ENERGY STAR Portfolio Manager Greenhouse Gas Emissions Technical Reference, Aug 2025)",
+   "tier": 3,
+   "url": "https://www.eia.gov/consumption/residential/data/2020/c&e/pdf/ce4.1.pdf"
+  }
+ },
  "categoryShares": {
   "verified": false,
   "citation": {

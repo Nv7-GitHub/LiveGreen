@@ -46,6 +46,9 @@ public struct CohortReference: Sendable, Hashable {
     public var homeTypeModifiers: [HomeType: Double]
     /// Household electricity by heating source, relative to the average home.
     public var heatingModifiers: [HeatingSource: Double]
+    /// Home-energy carbon by heating source, relative to the average home: burning fuel or running resistance
+    /// heaters adds carbon that a heat pump or an unheated home does not.
+    public var heatingCarbonModifiers: [HeatingSource: Double]
     /// Food's footprint from meat and dairy meals a week.
     public var meals: MealFactors
     /// Clothing's footprint from new clothes bought a year.
@@ -56,12 +59,14 @@ public struct CohortReference: Sendable, Hashable {
 
     public init(categoryShares: [MetricKey: [Category: Double]], commuteModifiers: [CommuteMode: Double],
                 homeTypeModifiers: [HomeType: Double] = [:], heatingModifiers: [HeatingSource: Double] = [:],
-                meals: MealFactors = MealFactors(), clothing: ClothingFactors = ClothingFactors(),
-                homeSize: HomeSizeFactors = HomeSizeFactors(), citations: [Source]) {
+                heatingCarbonModifiers: [HeatingSource: Double] = [:], meals: MealFactors = MealFactors(),
+                clothing: ClothingFactors = ClothingFactors(), homeSize: HomeSizeFactors = HomeSizeFactors(),
+                citations: [Source]) {
         self.categoryShares = categoryShares
         self.commuteModifiers = commuteModifiers
         self.homeTypeModifiers = homeTypeModifiers
         self.heatingModifiers = heatingModifiers
+        self.heatingCarbonModifiers = heatingCarbonModifiers
         self.meals = meals
         self.clothing = clothing
         self.homeSize = homeSize
@@ -73,11 +78,13 @@ public struct CohortReference: Sendable, Hashable {
     }
 
     /// The heating sources' modifiers averaged evenly (each source taken to heat an equal part of the home);
-    /// no sources means an unheated home (`.none`).
-    public func heatingModifier(for sources: Set<HeatingSource>) -> Double {
+    /// no sources means an unheated home (`.none`). Carbon uses `heatingCarbonModifiers`, every other metric
+    /// the electricity table.
+    public func heatingModifier(for sources: Set<HeatingSource>, metric: MetricKey = .yearlyElectricity) -> Double {
+        let table = metric == .carbon ? heatingCarbonModifiers : heatingModifiers
         let used = sources.subtracting([.none])
-        guard !used.isEmpty else { return heatingModifiers[.none] ?? 1 }
-        return used.reduce(0) { $0 + (heatingModifiers[$1] ?? 1) } / Double(used.count)
+        guard !used.isEmpty else { return table[.none] ?? 1 }
+        return used.reduce(0) { $0 + (table[$1] ?? 1) } / Double(used.count)
     }
 }
 

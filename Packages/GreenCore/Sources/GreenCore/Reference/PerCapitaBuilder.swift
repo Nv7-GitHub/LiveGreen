@@ -54,6 +54,7 @@ struct PerCapitaBuilder {
             commuteModifiers: Self.keyed(file.commuteModifiers.resolved ?? [:], CommuteMode.init(rawValue:)),
             homeTypeModifiers: Self.keyed(file.homeTypeModifiers.resolved ?? [:], HomeType.init(rawValue:)),
             heatingModifiers: Self.keyed(file.heatingModifiers.resolved ?? [:], HeatingSource.init(rawValue:)),
+            heatingCarbonModifiers: Self.keyed(file.heatingCarbonModifiers.resolved ?? [:], HeatingSource.init(rawValue:)),
             meals: meals,
             clothing: ClothingFactors(averageNewItemsPerYear: clothing["averageNewItemsPerYear"] ?? 0,
                                       baseShare: clothing["baseShare"] ?? 0),
@@ -64,7 +65,8 @@ struct PerCapitaBuilder {
                         file.averageMealsPerWeek.citation, file.clothingPurchases.citation,
                         file.commuteModifiers.citation, file.householdSizeExponent.citation,
                         file.homeTypeModifiers.citation, file.typicalFloorAreaM2.citation,
-                        file.spaceConditioningShare.citation, file.heatingModifiers.citation, file.sigmas.citation])
+                        file.spaceConditioningShare.citation, file.heatingModifiers.citation,
+                        file.heatingCarbonModifiers.citation, file.sigmas.citation])
 
         let cited: [(String, Bool, Source)] = [
             ("sigmas", file.sigmas.verified, file.sigmas.citation),
@@ -78,6 +80,7 @@ struct PerCapitaBuilder {
             ("typicalFloorAreaM2", file.typicalFloorAreaM2.verified, file.typicalFloorAreaM2.citation),
             ("spaceConditioningShare", file.spaceConditioningShare.verified, file.spaceConditioningShare.citation),
             ("heatingModifiers", file.heatingModifiers.verified, file.heatingModifiers.citation),
+            ("heatingCarbonModifiers", file.heatingCarbonModifiers.verified, file.heatingCarbonModifiers.citation),
             ("categoryShares", file.categoryShares.verified, file.categoryShares.citation),
         ]
         info += cited.map { ReferenceRecordInfo(table: "per_capita", key: $0.0, verified: $0.1, citation: $0.2) }

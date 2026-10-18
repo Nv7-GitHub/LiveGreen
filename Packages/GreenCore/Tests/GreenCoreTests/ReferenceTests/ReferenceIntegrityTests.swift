@@ -124,6 +124,8 @@ struct ReferenceIntegrityTests {
         #expect(Set(cohort.homeSize.typicalFloorAreaM2.keys) == Set(HomeType.allCases))
         #expect((0.3...0.7).contains(cohort.homeSize.spaceConditioningShare))
         #expect(Set(cohort.heatingModifiers.keys) == Set(HeatingSource.allCases))
+        #expect(Set(cohort.heatingCarbonModifiers.keys) == Set(HeatingSource.allCases))
+        #expect(cohort.heatingCarbonModifiers.values.allSatisfy { (0.3...2).contains($0) })
         #expect(Set(cohort.commuteModifiers.keys) == Set(CommuteMode.allCases))
     }
 }

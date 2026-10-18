@@ -44,7 +44,7 @@ public struct CohortModel: Sendable {
             // Shared appliances spread across the household: per-person use scales with size^(exponent − 1).
             var value = pow(Double(max(profile.householdSize, 1)), baseline.householdSizeExponent - 1)
             // Bigger homes run more appliances and heat and cool more space; electric heating adds to the
-            // electricity bill only.
+            // electricity bill. (Heating's effect on carbon is `heatingCarbonModifier`, applied to home energy.)
             if metric == .carbon || metric == .yearlyElectricity {
                 value *= reference.homeTypeModifiers[profile.homeType] ?? 1
                 value *= reference.homeSize.modifier(areaM2: profile.floorAreaM2, homeType: profile.homeType)
@@ -58,8 +58,12 @@ public struct CohortModel: Sendable {
         }
     }
 
-    /// The profile's heating sources' modifiers, averaged evenly.
+    /// The profile's heating sources' household-electricity modifiers, averaged evenly.
     public var heatingModifier: Double { reference.heatingModifier(for: profile.heatingSources) }
+
+    /// The profile's heating sources' home-energy carbon modifiers, averaged evenly: a heat pump or no heating
+    /// lowers it, oil and electric resistance raise it.
+    public var heatingCarbonModifier: Double { reference.heatingModifier(for: profile.heatingSources, metric: .carbon) }
 
     /// Peer median of the per-person yearly sub-footprint for `categories`.
     public func median(for metric: MetricKey, categories: Set<Category>) -> Double {
@@ -105,10 +109,10 @@ public struct CohortModel: Sendable {
     /// scanned it equals `LifestyleEstimate.totalKg`.
     public func estimate(for metric: MetricKey, scanned: ScannedFootprint = .empty) -> Double? {
         guard Self.leaderboardMetrics.contains(metric), let total = baseline.medians[metric] else { return nil }
-        let heating = heatingModifier
+        let heating = heatingCarbonModifier
         var value = Category.allCases.reduce(0.0) { sum, category in
             var typical = total * reference.share(of: category, for: metric) * modifier(for: category, metric: metric)
-            // As in `LifestyleEstimate`: the heating fuel shifts home-energy carbon too.
+            // As in `LifestyleEstimate`: the heating source shifts home-energy carbon too.
             if metric == .carbon, category == .electronic || category == .household { typical *= heating }
             return sum + max(typical, scanned.byCategory[category]?[metric] ?? 0)
         }

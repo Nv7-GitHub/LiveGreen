@@ -131,7 +131,7 @@ struct LiveEstimateCard: View {
                 : "\(Measured.format(LifestyleEstimate.kgPerKm[.car] ?? 0)) kg per km"
             return "Getting around: \(amount(.travel)) a year. A typical car emits about \(car); walking and cycling are zero."
         case .home:
-            return "Home energy: \(amount(.homeEnergy)) a year. A bigger home and electric heating raise it; several heating sources count equally."
+            return "Home energy: \(amount(.homeEnergy)) a year. A bigger home raises it; a heat pump emits less than gas, oil or resistance heat."
         case .clothing:
             let item = DisplayUnits.carbon(kg: marginalKg(.clothing) { $0.newClothesPerYear = Double($1) })
             return "Clothing: \(amount(.clothing)) a year. Each new item a year adds about \(item); second-hand avoids most of it."
