@@ -35,8 +35,10 @@ public struct FakeAlternativeSuggester: AlternativeSuggester {
                                              high: measured.high * share)
         }
         var estimates: [MetricKey: EstimateRange] = [:]
+        let bulk = Self.isBottledShake(component)
         for (metric, estimate) in baseline {
-            let factor = metric.higherIsBetter ? 1.3 : 0.6
+            // A scoop from a big tub carries a sliver of the bottle's plastic.
+            let factor = metric.higherIsBetter ? 1.3 : bulk && metric == .plasticMass ? 0.12 : 0.6
             let bound = metric == .recyclablePercent ? 100.0 : .infinity
             estimates[metric] = EstimateRange(value: min(estimate.value * factor, bound),
                                               low: min(estimate.low * factor, bound),
@@ -78,11 +80,20 @@ public struct FakeAlternativeSuggester: AlternativeSuggester {
         return kept.isEmpty ? name : kept.joined(separator: " ")
     }
 
+    /// A ready-to-drink shake in its own bottle, which a tub of powder replaces.
+    private static func isBottledShake(_ component: Component) -> Bool {
+        component.category == .food && component.name.lowercased().contains("shake")
+    }
+
     private static func swap(for component: Component) -> (String, String, Practicality) {
         switch component.category {
         case .electronic:
             ("Refurbished \(inline(component.name))",
              "Refurbished devices avoid most manufacturing emissions.", Practicality(cost: .lower, effort: .easy))
+        case .food where isBottledShake(component):
+            ("Protein powder in a bulk tub",
+             "One tub makes about 30 shakes, so you skip a plastic bottle every time.",
+             Practicality(cost: .lower, effort: .easy))
         case .food:
             ("Plant-based \(inline(withoutMeat(component.name)))",
              "Plant proteins need far less land and emit less methane.", Practicality(cost: .similar, effort: .easy))

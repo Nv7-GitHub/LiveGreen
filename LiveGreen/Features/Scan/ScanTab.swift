@@ -111,13 +111,18 @@ struct ScanTab: View {
         .glassEffectID("modes", in: glass)
     }
 
+    /// Scrolls sideways: the four scenes don't fit across a phone.
     private var demoButtons: some View {
-        HStack {
-            ForEach(DemoScene.allCases, id: \.self) { scene in
-                Button(scene.title) { start(image: DemoArtwork.photo(for: scene), hints: .none, scene: scene) }
-                    .buttonStyle(.glass)
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack {
+                ForEach(DemoScene.allCases, id: \.self) { scene in
+                    Button(scene.title) { start(image: DemoArtwork.photo(for: scene), hints: .none, scene: scene) }
+                        .buttonStyle(.glass)
+                }
             }
+            .padding(.horizontal)
         }
+        .scrollClipDisabled()
         .glassEffectID("demo", in: glass)
     }
 

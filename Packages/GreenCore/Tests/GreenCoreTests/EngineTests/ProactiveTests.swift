@@ -41,6 +41,11 @@ struct ProactiveTests {
         #expect(trend.typicalMinute == MealTime.lunch.usualStartMinute)
     }
 
+    @Test func snacksGetNoMealNudge() {
+        let lateNight = Self.meal(18, 3, 40, items: [Self.food("Beef jerky", 3)])
+        #expect(MealTrends.analyze([lateNight], calendar: Self.calendar).isEmpty)
+    }
+
     @Test func lowCarbonMealsAndNonFoodScansAreIgnored() {
         let salad = Self.meal(17, 12, items: [Self.food("Lentil salad", 0.6)])
         let desk = ScanResult(date: Self.date(17, 12), title: "Desk",
@@ -67,6 +72,8 @@ struct ProactiveTests {
         let laptop = Self.food("Laptop", 200, category: .electronic)
         let refurbished = Alternative(name: "Refurbished laptop", category: .electronic, rationale: "", condition: .refurbished)
         #expect(ActionPlanning.placeQueries(for: refurbished, replacing: laptop).first == "refurbished laptop")
+        let tub = Alternative(name: "Protein powder in a bulk tub", category: .food, rationale: "")
+        #expect(ActionPlanning.placeQueries(for: tub, replacing: Self.shake()) == ["protein powder", "grocery store", "supermarket"])
         let keep = Alternative(name: "Keep it two more years", category: .electronic, rationale: "")
         #expect(ActionPlanning.placeQueries(for: keep, replacing: laptop).isEmpty)
     }
@@ -96,5 +103,53 @@ struct ProactiveTests {
         #expect(PhotonClient.e164("1 617 555 0123") == "+16175550123")
         #expect(PhotonClient.e164("+44 20 7946 0958") == "+442079460958")
         #expect(PhotonClient.e164("555-0123") == nil)
+    }
+
+    // MARK: - Shopping
+
+    private static func shake(plastic: Double = 28, swaps: [Alternative] = []) -> Component {
+        var shake = Component(name: "Premier Protein shake", category: .food,
+                              metrics: [.carbon: Measured(value: 0.6, relativeRange: 0.2, unit: .kgCO2e, tier: .factorModel),
+                                        .plasticMass: Measured(value: plastic, relativeRange: 0.2, unit: .grams, tier: .factorModel)],
+                              usage: UsageProfile(servingsPerWeek: 5))
+        shake.alternatives = swaps
+        return shake
+    }
+
+    private static func swap(_ name: String, carbon: Double, plastic: Double) -> Alternative {
+        Alternative(name: name, category: .food, usage: UsageProfile(servingsPerWeek: 5), rationale: "",
+                    metrics: [.carbon: Measured(value: carbon, relativeRange: 0.2, unit: .kgCO2e, tier: .factorModel),
+                              .plasticMass: Measured(value: plastic, relativeRange: 0.2, unit: .grams, tier: .factorModel)])
+    }
+
+    @Test func shoppingIsSundayMorning() {
+        // Oct 17 2026 is a Saturday.
+        #expect(ShoppingTrends.nextShoppingDate(after: Self.date(17, 15), calendar: Self.calendar) == Self.date(18, 10))
+        #expect(ShoppingTrends.nextShoppingDate(after: Self.date(18, 9), calendar: Self.calendar) == Self.date(18, 10))
+        #expect(ShoppingTrends.nextShoppingDate(after: Self.date(18, 11), calendar: Self.calendar) == Self.date(25, 10))
+    }
+
+    @Test func bulkSwapNeedsABigPlasticCut() throws {
+        let item = Self.shake(swaps: [Self.swap("Lighter bottle", carbon: 0.55, plastic: 25),
+                                      Self.swap("Protein powder in a bulk tub", carbon: 0.4, plastic: 3)])
+        let best = try #require(ShoppingTrends.bulkSwap(for: item))
+        #expect(best.swap.name == "Protein powder in a bulk tub")
+        #expect(best.cut > 0.85)
+        #expect(ShoppingTrends.bulkSwap(for: Self.shake(swaps: [Self.swap("Lighter bottle", carbon: 0.55, plastic: 25)])) == nil)
+    }
+
+    @Test func shoppingTrendCountsRepeatScans() throws {
+        let swaps = [Self.swap("Protein powder in a bulk tub", carbon: 0.4, plastic: 3)]
+        let older = ScanResult(date: Self.date(15, 8), title: "Shake", components: [Self.shake(swaps: swaps)])
+        let newer = ScanResult(date: Self.date(17, 8), title: "Shake", components: [Self.shake(swaps: swaps)])
+        let noPlastic = ScanResult(date: Self.date(17, 9), title: "Apple",
+                                   components: [Self.food("Apple", 0.1)])
+        let trends = ShoppingTrends.analyze([older, newer, noPlastic])
+        let trend = try #require(trends.first)
+        #expect(trends.count == 1)
+        #expect(trend.scanID == newer.id)
+        #expect(trend.scanCount == 2)
+        #expect(trend.reason.contains("2 times"))
+        #expect(trend.reason.contains("buying in bulk"))
     }
 }

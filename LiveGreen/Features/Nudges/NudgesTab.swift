@@ -34,13 +34,14 @@ struct NudgesTab: View {
 
     @ViewBuilder private var trendsSection: some View {
         let trends = app.nudges.trends
+        let shopping = app.nudges.shoppingTrends
         VStack(alignment: .leading, spacing: 10) {
             sectionTitle("What we noticed", systemImage: "chart.line.uptrend.xyaxis")
-            if trends.isEmpty {
+            if trends.isEmpty && shopping.isEmpty {
                 GreeneryEmptyState(art: .seedling,
                                    title: app.nudges.isRefreshing ? "Looking at your meals…" : "No heavy meals yet",
                                    caption: "Watching what's on your plate",
-                                   message: "Scan what you eat. When a meal keeps coming out high in carbon, LiveGreen texts you a specific swap nearby right before you'd usually eat it.") {
+                                   message: "Scan what you eat and buy. LiveGreen texts you a specific swap nearby right before a heavy meal, and on Sunday for single-serve things worth buying in bulk.") {
                     EmptyView()
                 }
                 .accessibilityIdentifier("nudges.noTrends")
@@ -61,6 +62,23 @@ struct NudgesTab: View {
                         }
                     }
                     .accessibilityIdentifier("nudges.trend.\(trend.mealTime.rawValue)")
+                }
+                ForEach(shopping) { trend in
+                    GlassCard {
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: "shippingbox")
+                                .font(.title2)
+                                .foregroundStyle(Theme.warning)
+                                .frame(width: 32)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("\(trend.itemName) comes wrapped one by one").font(.headline)
+                                Text(trend.reason).font(.subheadline).foregroundStyle(.secondary)
+                                Text("Swap: \(trend.swap.name) · on your Sunday shop")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .accessibilityIdentifier("nudges.shoppingTrend")
                 }
             }
         }
@@ -83,7 +101,7 @@ struct NudgesTab: View {
                 GlassCard {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Label("\(nudge.mealTime.title) nudge", systemImage: nudge.mealTime.systemImage)
+                            Label("\(nudge.occasion.title) nudge", systemImage: nudge.occasion.systemImage)
                                 .font(.subheadline.weight(.semibold))
                             Spacer()
                             if let sentAt = nudge.sentAt {
@@ -124,13 +142,13 @@ struct NudgeCard: View {
         GlassCard {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .firstTextBaseline) {
-                    Label("\(nudge.mealTime.title) nudge", systemImage: nudge.mealTime.systemImage)
+                    Label("\(nudge.occasion.title) nudge", systemImage: nudge.occasion.systemImage)
                         .font(.headline)
                     Spacer()
                     status
                 }
                 Label {
-                    Text("Normally sends \(Self.when(nudge.scheduledFor)), \(MealTrend.leadMinutes) min before your usual \(nudge.mealTime.rawValue)")
+                    Text(scheduleNote)
                 } icon: {
                     Image(systemName: "calendar.badge.clock")
                 }
@@ -153,12 +171,21 @@ struct NudgeCard: View {
                 .controlSize(.large)
                 .disabled(nudge.status == .sending)
                 .accessibilityIdentifier("nudge.sendNow")
-                Text("Demo: sends the text right away instead of waiting for \(nudge.mealTime.rawValue).")
+                Text("Demo: sends the text right away instead of waiting for \(nudge.occasion.moment).")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
         }
-        .accessibilityIdentifier("nudge.card.\(nudge.mealTime.rawValue)")
+        .accessibilityIdentifier("nudge.card.\(nudge.occasion.key)")
+    }
+
+    private var scheduleNote: String {
+        switch nudge.occasion {
+        case .meal(let meal):
+            "Normally sends \(Self.when(nudge.scheduledFor)), \(MealTrend.leadMinutes) min before your usual \(meal.rawValue)"
+        case .shopping:
+            "Normally sends \(Self.when(nudge.scheduledFor)), when you do your weekly shop"
+        }
     }
 
     @ViewBuilder private var status: some View {
@@ -294,10 +321,17 @@ struct PhoneSetupCard: View {
     }
 }
 
-/// On a meal's results: the text LiveGreen scheduled because of it.
+/// On a scan's results: the text LiveGreen scheduled because of it.
 struct NudgeBanner: View {
     let nudge: Nudge
     @Environment(AppModel.self) private var app
+
+    private var bannerTitle: String {
+        switch nudge.occasion {
+        case .meal(let meal): "We'll text you before \(meal.rawValue)"
+        case .shopping: "We'll text you for your Sunday shop"
+        }
+    }
 
     var body: some View {
         Button { app.selectedTab = .nudges } label: {
@@ -306,7 +340,7 @@ struct NudgeBanner: View {
                     .font(.title2)
                     .foregroundStyle(Theme.leaf)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("We'll text you before \(nudge.mealTime.rawValue)").font(.subheadline.weight(.semibold))
+                    Text(bannerTitle).font(.subheadline.weight(.semibold))
                     Text("\(NudgeCard.when(nudge.scheduledFor).prefix(1).uppercased() + NudgeCard.when(nudge.scheduledFor).dropFirst())"
                          + (nudge.placeName.map { " · try \($0)" } ?? ""))
                         .font(.caption).foregroundStyle(.secondary)

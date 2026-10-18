@@ -40,6 +40,8 @@ nonisolated enum DemoArtwork {
         if name.contains("lamp") { return Look(symbol: "lamp.desk.fill", color: .darkGray, badge: "arrow.3.trianglepath") }
         if name.contains("burger") { return Look(symbol: "takeoutbag.and.cup.and.straw.fill", color: .brown, greenerSymbol: "carrot.fill", badge: "leaf.fill") }
         if name.contains("fries") { return Look(symbol: "frying.pan.fill", color: .orange, greenerSymbol: "leaf.fill", badge: "leaf.fill") }
+        if name.contains("shake") { return Look(symbol: "waterbottle.fill", color: .brown, greenerSymbol: "takeoutbag.and.cup.and.straw.fill", badge: "leaf.fill") }
+        if name.contains("bar") && !name.contains("e-bike") { return Look(symbol: "rectangle.fill", color: .orange, badge: "leaf.fill") }
         if name.contains("cola") || name.contains("can") { return Look(symbol: "cylinder.fill", color: .red, badge: "leaf.fill") }
         if name.contains("charger") { return Look(symbol: "bolt.batteryblock.fill", color: .darkGray, badge: "powerplug.fill") }
         if name.contains("e-bike") || name.contains("bike") { return Look(symbol: "bicycle", color: .black, badge: "arrow.3.trianglepath") }
@@ -70,11 +72,13 @@ nonisolated enum DemoArtwork {
         case .deskSetup: [UIColor(white: 0.88, alpha: 1), UIColor(red: 0.78, green: 0.80, blue: 0.76, alpha: 1)]
         case .meal: [UIColor(red: 0.93, green: 0.89, blue: 0.82, alpha: 1), UIColor(red: 0.85, green: 0.80, blue: 0.72, alpha: 1)]
         case .eBikeCorner: [UIColor(red: 0.80, green: 0.84, blue: 0.88, alpha: 1), UIColor(red: 0.70, green: 0.74, blue: 0.78, alpha: 1)]
+        case .proteinShake: [UIColor(red: 0.90, green: 0.92, blue: 0.86, alpha: 1), UIColor(red: 0.80, green: 0.84, blue: 0.76, alpha: 1)]
         }
         let surface: UIColor = switch scene {
         case .deskSetup: UIColor(red: 0.55, green: 0.40, blue: 0.28, alpha: 1)
         case .meal: UIColor(red: 0.92, green: 0.92, blue: 0.90, alpha: 1)
         case .eBikeCorner: UIColor(red: 0.45, green: 0.45, blue: 0.47, alpha: 1)
+        case .proteinShake: UIColor(red: 0.62, green: 0.50, blue: 0.38, alpha: 1)
         }
         let colors = wall.map(\.cgColor) as CFArray
         if let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors, locations: [0, 1]) {

@@ -103,7 +103,7 @@ public enum MealTrends {
     /// burger meal is 3–5.
     public static let highCarbonKg = 1.5
 
-    /// Meals that came out high in carbon, one trend per meal time, worst first. A scan counts as a meal when most
+    /// Breakfasts, lunches and dinners that came out high in carbon, one trend per meal time, worst first. A scan counts as a meal when most
     /// of what it totals is food (packaging and drinks with it are fine); screenshots don't count.
     public static func analyze(_ scans: [ScanResult], calendar: Calendar = .current) -> [MealTrend] {
         let meals = scans.compactMap { scan -> (scan: ScanResult, carbon: Double, time: MealTime, minute: Int)? in
@@ -117,7 +117,8 @@ public enum MealTrends {
             }
             return (scan, carbon, named, named.usualStartMinute)
         }
-        let byTime = Dictionary(grouping: meals, by: \.time)
+        // Snacks have no set time to nudge before; packaged ones get the Sunday shopping nudge instead.
+        let byTime = Dictionary(grouping: meals.filter { $0.time != .snack }, by: \.time)
         let trends = byTime.compactMap { time, group -> MealTrend? in
             let ordered = group.sorted { $0.scan.date > $1.scan.date }
             guard let latest = ordered.first, let top = topFood(latest.scan) else { return nil }

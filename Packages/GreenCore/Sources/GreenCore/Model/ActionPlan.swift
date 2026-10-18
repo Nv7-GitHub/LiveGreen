@@ -141,7 +141,9 @@ public enum ActionPlanning {
             break
         }
         let fallback: [String] = switch Alternative.scoredCategory(alternative.category, isReusable: alternative.isReusable) {
-        case .food: original.category == .food ? ["vegetarian restaurant", "grocery store"] : ["grocery store"]
+        // A dish is swapped at a restaurant; a packaged food (it has packaging) at a store.
+        case .food: original.category == .food && (original.metrics[.plasticMass]?.value ?? 0) == 0
+            ? ["vegetarian restaurant", "grocery store"] : ["grocery store", "supermarket"]
         case .electronic: ["electronics store"]
         case .clothing: ["clothing store", "thrift store"]
         case .packaging: ["grocery store"]
@@ -152,9 +154,11 @@ public enum ActionPlanning {
         return [item] + fallback
     }
 
-    /// The swap's name without buying words: "Buy a used bicycle" → "bicycle".
+    /// The swap's name without buying words or how it comes: "Buy a used bicycle" → "bicycle", "Protein powder in a
+    /// bulk tub" → "protein powder".
     static func cleanedItemName(_ name: String) -> String {
-        var words = name.split(separator: " ").map(String.init)
+        let item = name.components(separatedBy: " in ").first ?? name
+        var words = item.split(separator: " ").map(String.init)
         let dropped: Set<String> = ["buy", "a", "an", "used", "refurbished", "second-hand", "secondhand", "new", "switch", "to"]
         while let first = words.first, dropped.contains(first.lowercased()) { words.removeFirst() }
         return words.joined(separator: " ").lowercased()

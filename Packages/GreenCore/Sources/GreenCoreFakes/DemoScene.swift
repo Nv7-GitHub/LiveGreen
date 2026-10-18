@@ -1,17 +1,20 @@
 import Foundation
 import GreenCore
 
-/// The three canned demo scenes (spec §11): desk setup, meal, e-bike corner.
+/// The canned demo scenes (spec §11): desk setup, meal, e-bike corner, and a single-serve protein shake for the
+/// Sunday shopping nudge.
 public enum DemoScene: String, CaseIterable, Sendable {
     case deskSetup
     case meal
     case eBikeCorner
+    case proteinShake
 
     public var title: String {
         switch self {
         case .deskSetup: "Desk setup"
         case .meal: "Lunch"
         case .eBikeCorner: "E-bike corner"
+        case .proteinShake: "Protein shake"
         }
     }
 
@@ -20,6 +23,7 @@ public enum DemoScene: String, CaseIterable, Sendable {
         case .deskSetup: DemoFixtures.desk
         case .meal: DemoFixtures.meal
         case .eBikeCorner: DemoFixtures.eBike
+        case .proteinShake: DemoFixtures.proteinShake
         }
     }
 }
@@ -123,6 +127,29 @@ enum DemoFixtures {
             estimates: [.carbon: est(0.08, 0.03, 0.2), .water: est(1, 0.3, 3), .plasticMass: est(10, 0, 30),
                         .recyclablePercent: est(15, 0, 50), .decompositionTime: est(100, 1, 500)]),
     ], sceneTitle: "Lunch")
+
+    /// A ready-to-drink protein shake, each one its own plastic bottle, and a wrapped protein bar.
+    static let proteinShake = IdentifyResponse(components: [
+        IdentifiedComponent(
+            name: "Premier Protein shake", category: .food,
+            boundingBox: NormalizedRect(x: 0.30, y: 0.12, width: 0.22, height: 0.52),
+            identifiers: Identifiers(brand: "Premier Protein",
+                                     packagingMaterials: [MaterialShare(material: "pet", percent: 100)]),
+            quantities: Quantities(massKg: 0.36, servingKg: 0.33, packagingMassG: 28, volumeLiters: 0.325,
+                                   foodGroup: "milkshake"),
+            defaultUsage: UsageProfile(servingsPerWeek: 5),
+            estimates: [.carbon: est(0.6, 0.4, 0.9), .water: est(40, 20, 80), .land: est(0.8, 0.4, 1.5),
+                        .waterPollution: est(2, 1, 4), .plasticMass: est(28, 22, 34),
+                        .recyclablePercent: est(30, 15, 50), .decompositionTime: est(450, 300, 600)]),
+        IdentifiedComponent(
+            name: "Protein bar", category: .food,
+            boundingBox: NormalizedRect(x: 0.60, y: 0.52, width: 0.28, height: 0.14),
+            quantities: Quantities(massKg: 0.065, servingKg: 0.06, packagingMassG: 4, foodGroup: "baked_goods"),
+            defaultUsage: UsageProfile(servingsPerWeek: 3),
+            estimates: [.carbon: est(0.35, 0.2, 0.6), .water: est(30, 15, 60), .land: est(0.4, 0.2, 0.8),
+                        .waterPollution: est(1, 0.5, 2), .plasticMass: est(4, 2, 6),
+                        .recyclablePercent: est(0, 0, 10), .decompositionTime: est(400, 200, 500)]),
+    ], sceneTitle: "Protein shake")
 
     static let eBike = IdentifyResponse(components: [
         IdentifiedComponent(
