@@ -118,6 +118,14 @@ public enum FoodServing {
         return cooked ? yield : 1
     }
 
+    /// Whether the portion counts as cooked (`cookedDivisor`), with its group resolved through `reference`; nil when
+    /// the item is not food or its group has no cooked yield.
+    public static func isCooked(_ component: Component, reference: any ReferenceProviding) -> Bool? {
+        guard component.category == .food, let group = reference.foodFactor(group: factorKey(component))?.group,
+              cookedYield[group] != nil else { return nil }
+        return cookedDivisor(group: group, component: component) > 1
+    }
+
     /// Groups that are one ingredient of a mixed drink, which identify sometimes gives for the whole drink.
     static let ingredientDrinkGroups: Set<String> = ["milk", "coffee", "tea", "soft_drinks"]
 
@@ -189,15 +197,11 @@ extension Alternative {
     /// food, bought as often: one pack of the original's net quantity at its packs a week, so the two are compared
     /// per kg eaten whatever the swap's own pack size. Its estimates are per serving of the original (the suggesters
     /// see `FoodServing.servingView`), so without a serving of its own it takes the original's; its packaging, given
-    /// for its own pack, is scaled to the original's pack size as Open Food Facts records are. A swap of the same food
-    /// group that does not say whether it is cooked is as cooked as the original (brown rice for boiled white rice).
-    /// Other swaps are returned unchanged.
+    /// for its own pack, is scaled to the original's pack size as Open Food Facts records are. Other swaps are returned
+    /// unchanged.
     public func onBasis(of original: Component) -> Alternative {
         guard kind == .product, category == .food else { return self }
         var copy = self
-        if copy.quantities.cooked == nil, quantities.foodGroup != nil, quantities.foodGroup == original.quantities.foodGroup {
-            copy.quantities.cooked = original.quantities.cooked
-        }
         guard case .pack(let kg) = FoodServing.basis(of: original) else { return copy }
         if (copy.quantities.servingKg ?? 0) <= 0 { copy.quantities.servingKg = FoodServing.servingKg(original) }
         if let ownPack = quantities.packNetKg ?? quantities.massKg ?? quantities.volumeLiters, ownPack > 0 {

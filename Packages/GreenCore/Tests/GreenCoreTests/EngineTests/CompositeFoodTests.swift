@@ -82,15 +82,14 @@ struct CompositeFoodTests {
         #expect(FoodServing.cookedDivisor(group: "beef", component: food("Steak", group: "beef", kg: 0.2, cooked: true)) == 1)
     }
 
-    @Test func aSwapOfTheSameFoodIsAsCookedAsTheOriginal() {
-        let original = food("Spaghetti", group: "wheat_rye", kg: 0.2, cooked: true)
-        let wholeWheat = Alternative(name: "Whole-wheat spaghetti", category: .food,
-                                     quantities: Quantities(servingKg: 0.2, foodGroup: "wheat_rye"), rationale: "")
-        #expect(wholeWheat.onBasis(of: original).quantities.cooked == true)
-        // Another food group decides for itself.
-        let lentils = Alternative(name: "Lentil salad", category: .food, quantities: Quantities(servingKg: 0.2, foodGroup: "other_pulses"),
-                                  rationale: "")
-        #expect(lentils.onBasis(of: original).quantities.cooked == nil)
+    @Test func aSwapIsPreparedLikeTheOriginal() {
+        // The swap resolver gives a food swap that does not say the original's state (`FoodServing.isCooked`).
+        #expect(FoodServing.isCooked(food("Spaghetti", group: "wheat_rye", kg: 0.2, cooked: true), reference: store) == true)
+        // 19: a barley pilaf without a flag counts as dry, so its lentil swap is compared dry too.
+        #expect(FoodServing.isCooked(food("Barley pilaf", group: "barley", kg: 0.25), reference: store) == false)
+        #expect(FoodServing.isCooked(food("Boiled rice", group: "rice", kg: 0.15), reference: store) == true)
+        // A group without a cooked yield says nothing.
+        #expect(FoodServing.isCooked(food("Steak", group: "beef", kg: 0.2), reference: store) == nil)
     }
 
     @Test func identifyAsksForFoodsAsServed() throws {
