@@ -26,6 +26,7 @@ struct GreenerImageView: View {
                         .glassEffect(.regular, in: .capsule)
                 }
                 .clipShape(.rect(cornerRadius: Theme.cardCornerRadius))
+                .frame(maxWidth: .infinity)
                 .accessibilityLabel("Generating the greener image")
         case let .failed(message):
             GlassCard(tint: Theme.danger.opacity(0.15)) {
@@ -42,8 +43,16 @@ struct GreenerImageView: View {
     }
 
     private func photo(_ data: Data) -> some View {
-        DecodedImage(data: data).aspectRatio(contentMode: .fit)
-            .frame(maxHeight: BeforeAfterSlider.maxHeight)
+        DecodedImage(data: data).photoFrame(aspect: BeforeAfterSlider.aspectRatio(of: data) ?? 4 / 3)
+    }
+}
+
+extension View {
+    /// The photo's proportions at full width, or narrower and centered where that would be taller than
+    /// `BeforeAfterSlider.maxHeight`. The cap is on the width, which a scroll view always proposes.
+    func photoFrame(aspect: CGFloat) -> some View {
+        aspectRatio(aspect, contentMode: .fit)
+            .frame(maxWidth: BeforeAfterSlider.maxHeight * aspect)
     }
 }
 
@@ -64,7 +73,7 @@ struct BeforeAfterSlider: View {
 
     var body: some View {
         Color.clear
-            .aspectRatio(Self.aspectRatio(of: before) ?? 4 / 3, contentMode: .fit)
+            .photoFrame(aspect: Self.aspectRatio(of: before) ?? 4 / 3)
             .overlay {
                 GeometryReader { proxy in
                     let x = proxy.size.width * split
@@ -93,7 +102,6 @@ struct BeforeAfterSlider: View {
                     }
                 }
             }
-            .frame(maxHeight: Self.maxHeight)
             .clipShape(.rect(cornerRadius: Theme.cardCornerRadius))
             .frame(maxWidth: .infinity)
             .accessibilityElement()

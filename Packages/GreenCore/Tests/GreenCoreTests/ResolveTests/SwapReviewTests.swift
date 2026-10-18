@@ -31,6 +31,7 @@ struct SwapReviewTests {
         #expect(SwapText.rationale("The user commutes by transit and drives about twice a week, so a car-share covers the rest.") == "")
         #expect(SwapText.rationale("Bamboo grows fast; it needs no pesticides") == "Bamboo grows fast. It needs no pesticides.")
         #expect(SwapText.rationale("Lighter, e.g. for travel. Lasts years.") == "Lighter, e.g. for travel. Lasts years.")
+        #expect(SwapText.rationale("Plant proteins (e.g. lentils) replace the beef.") == "Plant proteins (e.g. lentils) replace the beef.")
     }
 
     @Test func claimsAreReadNearTheirMetric() {

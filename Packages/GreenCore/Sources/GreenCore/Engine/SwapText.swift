@@ -262,8 +262,10 @@ public enum SwapText {
             guard ".!?;".contains(character) else { continue }
             let atEnd = index + 1 >= characters.count || characters[index + 1] == " "
             guard atEnd else { continue }
-            if character == ".", let last = current.dropLast().split(separator: " ").last,
-               abbreviations.contains(last.lowercased()) || last.count == 1 { continue }
+            if character == ".", let word = current.dropLast().split(separator: " ").last {
+                let last = word.trimmingCharacters(in: CharacterSet(charactersIn: "([\"'“‘")).lowercased()
+                if abbreviations.contains(last) || last.count == 1 { continue }
+            }
             clauses.append(current)
             current = ""
         }
