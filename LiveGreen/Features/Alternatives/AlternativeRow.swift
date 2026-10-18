@@ -23,9 +23,7 @@ struct AlternativeRow: View {
                         Text(alternative.name).font(.subheadline.weight(.semibold))
                         Text(alternative.rationale).font(.caption).foregroundStyle(.secondary)
                         PracticalityTags(practicality: alternative.practicality)
-                        if let summary {
-                            Text(summary).font(.caption.bold().monospacedDigit()).foregroundStyle(Theme.leaf)
-                        }
+                        summary.font(.caption.bold().monospacedDigit())
                     }
                     .multilineTextAlignment(.leading)
                     Spacer(minLength: 0)
@@ -53,24 +51,39 @@ struct AlternativeRow: View {
         }
     }
 
-    /// GreenScore's average gain across every metric that counts, then the yearly carbon saving when it is a
-    /// net change.
-    private var summary: String? {
-        var parts: [String] = []
-        if !isPlug {
-            let assessment = GreenScore.assess(alternative, replacing: component, engine: SwapMath.engine)
-            let percent = Int((assessment.averageImprovement * 100).rounded())
-            if percent > 0 {
-                let count = assessment.changes.count
-                parts.append("\(percent)% greener across \(count) metric\(count == 1 ? "" : "s")")
-            }
+    /// How many of the metrics on the card get better and worse (`SwapMath.tally`, so it always matches the
+    /// charts below), then the yearly carbon change whichever way it goes: a swap that adds carbon says so, in the
+    /// warning color.
+    @ViewBuilder private var summary: some View {
+        let verdict = tallyText.map { Text($0).foregroundStyle(Theme.leaf) }
+        let carbon = carbonChange.map { Text($0.text).foregroundStyle($0.saves ? Theme.leaf : Theme.warning) }
+        switch (verdict, carbon) {
+        case let (verdict?, carbon?): Text("\(verdict)\(Text(" · ").foregroundStyle(.secondary))\(carbon)")
+        case let (verdict?, nil): verdict
+        case let (nil, carbon?): carbon
+        case (nil, nil): EmptyView()
         }
+    }
+
+    private var tallyText: String? {
+        guard !isPlug else { return nil }
+        let tally = SwapMath.tally(component, alternative)
+        func metrics(_ count: Int) -> String { "\(count) metric\(count == 1 ? "" : "s")" }
+        switch (tally.better, tally.worse) {
+        case (0, 0): return nil
+        case (let better, 0): return "Better on \(metrics(better)), none worse"
+        case (0, let worse): return "Worse on \(metrics(worse))"
+        case let (better, worse): return "Better on \(metrics(better)), worse on \(worse)"
+        }
+    }
+
+    /// The yearly carbon change when it is a net change: "−14 lb CO₂e/yr" saved or "+3 lb CO₂e/yr" added.
+    private var carbonChange: (text: String, saves: Bool)? {
         let baseline = (component.metrics[.carbon]?.value ?? 0) * SwapMath.yearlyFactor(.carbon, for: component)
-        if let saving = SwapMath.yearlySaving(.carbon, component: component, alternative: alternative),
-           saving.value > 0, SwapMath.isNetChange(saving, baseline: baseline) {
-            parts.append("−\(DisplayUnits.carbon(kg: saving.value))/yr")
-        }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        guard let saving = SwapMath.yearlySaving(.carbon, component: component, alternative: alternative),
+              SwapMath.isNetChange(saving, baseline: baseline) else { return nil }
+        let amount = DisplayUnits.carbon(kg: abs(saving.value))
+        return saving.value > 0 ? ("−\(amount)/yr", true) : ("+\(amount)/yr", false)
     }
 }
 

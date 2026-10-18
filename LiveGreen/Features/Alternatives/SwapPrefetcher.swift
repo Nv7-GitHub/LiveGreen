@@ -127,8 +127,8 @@ final class SwapPrefetcher {
 
     /// Moves swaps fetched for an earlier copy of a scan onto the current one. Usage answered since then changes
     /// how much, not what: a swap that shared the original's usage takes the new usage too and is re-derived
-    /// locally (electronics' yearly electricity and use-phase carbon), the plug option is rebuilt from the
-    /// current item, and the GreenScore trade-off rule runs again.
+    /// locally (electronics' yearly electricity and use-phase carbon, a reusable's washing), the plug option is
+    /// rebuilt from the current item, and the GreenScore trade-off rule runs again.
     static func rebase(_ fetched: ScanResult, onto current: ScanResult, engine: ImpactEngine,
                        profile: UserProfile) -> ScanResult {
         var updated = current
@@ -142,7 +142,12 @@ final class SwapPrefetcher {
                 }
                 var swap = alternative
                 swap.usage = usage
-                swap.metrics = engine.applyingUsage(usage, to: alternative.asComponent(replacing: then), profile: profile).metrics
+                var replacement = engine.applyingUsage(usage, to: alternative.asComponent(replacing: then), profile: profile)
+                if alternative.isReusable {
+                    let moreUses = (usage.usesPerWeek ?? 1) - (then.usage?.usesPerWeek ?? 1)
+                    replacement = engine.addingWashing(usesPerWeek: moreUses, to: replacement, profile: profile)
+                }
+                swap.metrics = replacement.metrics
                 return swap
             }
             updated.components[index].alternatives = GreenScore.ranked(moved, replacing: component, engine: engine)

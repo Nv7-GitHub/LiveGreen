@@ -94,30 +94,6 @@ public struct ScanPipeline: Sendable {
         return result
     }
 
-    /// Asks for greener alternatives and resolves them through the same ladder and engine as the
-    /// originals (spec §7), then keeps only swaps without a big trade-off on any metric, best GreenScore
-    /// first; deferrable loads also get the local smart-plug alternative.
-    public func suggestAlternatives(for result: ScanResult) async throws -> ScanResult {
-        let suggestions = try await alternatives.suggestAlternatives(for: result.components, profile: profile)
-        var updated = result
-        for suggestion in suggestions {
-            guard let index = updated.components.firstIndex(where: { $0.id == suggestion.componentID }) else { continue }
-            var resolved: [Alternative] = []
-            for alternative in suggestion.alternatives where alternative.kind == .product {
-                resolved.append(await resolve(alternative.onBasis(of: updated.components[index])))
-            }
-            updated.components[index].alternatives = GreenScore.ranked(resolved, replacing: updated.components[index],
-                                                                        engine: engine)
-        }
-        for index in updated.components.indices where updated.components[index].plugCandidate != nil {
-            let component = updated.components[index]
-            if !component.alternatives.contains(where: { $0.kind == .smartPlugScheduling }) {
-                updated.components[index].alternatives.append(.smartPlugScheduling(for: component))
-            }
-        }
-        return updated
-    }
-
     /// Re-runs the engine after question answers (spec §5.5), locally with no network call.
     public func applying(_ answers: [(componentID: UUID, option: AnswerOption)], to result: ScanResult) -> ScanResult {
         var updated = result
@@ -289,30 +265,6 @@ public struct ScanPipeline: Sendable {
     func plugSavings(for candidate: PlugCandidate) -> Measured? {
         guard let record = engine.gridIntensity(for: profile) else { return nil }
         return GreenHoursPlanner.estimatedSavings(for: candidate, forecast: .fallback(record))
-    }
-
-    /// Records and cited research first, as for originals. An alternative without its own identifiers would get
-    /// the same generic factor-model numbers as the item it replaces (a refurbished laptop is still a "laptop"),
-    /// so the suggester's bounded per-metric estimates come next and the factor model fills what is left.
-    private func resolveAlternative(_ component: Component) async -> Component {
-        if let hit = await ladder.cached(component) { return hit }
-        var result = await ladder.resolve(component, profile: profile, tiers: .exactRecord ... .researchedSpec)
-        if component.identifiers.cacheKey == nil {
-            result = await ladder.resolve(result, profile: profile, tiers: .estimate ... .estimate)
-        }
-        result = await ladder.resolve(result, profile: profile, tiers: .factorModel ... .estimate)
-        await ladder.remember(result)
-        return result
-    }
-
-    private func resolve(_ alternative: Alternative) async -> Alternative {
-        let asComponent = Component(id: alternative.id, name: alternative.name, category: alternative.category,
-                                    identifiers: alternative.identifiers, quantities: alternative.quantities,
-                                    usage: alternative.usage, fallbackEstimates: alternative.fallbackEstimates)
-        let resolved = completed(await resolveAlternative(asComponent), deferrable: nil)
-        var filled = alternative
-        filled.metrics = resolved.metrics
-        return filled
     }
 }
 
