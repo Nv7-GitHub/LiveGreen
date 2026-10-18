@@ -1,7 +1,7 @@
 import SwiftUI
 import GreenCore
 
-/// Lets the user set how they actually use an item (hours a day, servings a week…) at any time, not only
+/// Lets the user set how they actually use an item (hours a day, servings or packs a week…) at any time, not only
 /// when a question was asked. Each slider covers the field's full range and commits when released.
 struct UsageEditorCard: View {
     let component: Component
@@ -20,6 +20,12 @@ struct UsageEditorCard: View {
                     Label("Your usage", systemImage: "slider.horizontal.3").font(.headline)
                     ForEach(fields, id: \.self) { field in
                         row(field)
+                    }
+                    if let basis = basisNote {
+                        Text(basis)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("usageBasis")
                     }
                     Text("Numbers update when you let go of a slider.")
                         .font(.caption2)
@@ -50,11 +56,19 @@ struct UsageEditorCard: View {
         }
     }
 
+    /// For food, what the item's figures cover and how a year is counted from the slider.
+    private var basisNote: String? {
+        guard let basis = component.basisTitle else { return nil }
+        let unit = FoodServing.isPerPack(component) ? "packs" : "servings"
+        return "\(basis). A year is \(unit) a week × 52."
+    }
+
     static func title(_ field: UsageField) -> String {
         switch field {
         case .hoursOnPerDay: "In use"
         case .standbyHoursPerDay: "Plugged in, idle"
         case .servingsPerWeek: "Servings"
+        case .packsPerWeek: "Packs"
         case .wearsPerYear: "Worn"
         case .usesPerWeek: "Used"
         case .chargesPerWeek: "Charged"

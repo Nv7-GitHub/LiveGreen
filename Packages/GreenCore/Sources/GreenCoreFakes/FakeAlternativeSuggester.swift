@@ -13,7 +13,8 @@ public struct FakeAlternativeSuggester: AlternativeSuggester {
 
     public func suggestAlternatives(for components: [Component], profile: UserProfile) async throws -> [AlternativeSuggestion] {
         try await simulateLatency(latency)
-        return components.map { component in
+        // Per serving like the real suggesters' estimates; the pipeline scales swaps for a per-pack item to its pack.
+        return components.map(FoodServing.servingView).map { component in
             AlternativeSuggestion(componentID: component.id, alternatives: [alternative(for: component)])
         }
     }

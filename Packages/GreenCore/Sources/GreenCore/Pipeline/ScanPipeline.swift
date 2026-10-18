@@ -47,6 +47,7 @@ public struct ScanPipeline: Sendable {
         let deferrable = Dictionary(uniqueKeysWithValues: zip(components.map(\.id), identified.map(\.deferrableLoad)))
         emit(.componentsIdentified(components))
         emit(.stepFinished(.identifying))
+        components = await onPackBasis(components, records: records)
 
         // A cache hit skips the ladder, so the same identifier always gives the same numbers.
         var cachedIDs = Set<UUID>()
@@ -94,7 +95,7 @@ public struct ScanPipeline: Sendable {
             guard let index = updated.components.firstIndex(where: { $0.id == suggestion.componentID }) else { continue }
             var resolved: [Alternative] = []
             for alternative in suggestion.alternatives where alternative.kind == .product {
-                resolved.append(await resolve(alternative))
+                resolved.append(await resolve(alternative.onBasis(of: updated.components[index])))
             }
             updated.components[index].alternatives = GreenScore.ranked(resolved, replacing: updated.components[index],
                                                                         engine: engine)

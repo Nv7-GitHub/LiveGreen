@@ -2,7 +2,7 @@ extension ImpactEngine {
     /// Applies an updated usage profile locally (spec §5.5: answering a question re-runs the engine, no network).
     /// For electronics, yearly electricity is re-derived from the power metrics and the carbon metric's use phase
     /// is shifted by the change in electricity over the item's lifespan. Food and consumables need no change:
-    /// their yearly view already scales with servings/uses.
+    /// their yearly view already scales with servings, packs or uses.
     public func applyingUsage(_ usage: UsageProfile, to component: Component, profile: UserProfile) -> Component {
         var updated = component
         updated.usage = usage
@@ -27,8 +27,13 @@ extension ImpactEngine {
     }
 
     /// Applies one question answer (`AnswerOption.field` = `value`); options without a field leave the estimate.
+    /// Identify asks about food in servings, so for a per-pack item a servings-a-week answer sets packs a week.
     public func applyingAnswer(_ option: AnswerOption, to component: Component, profile: UserProfile) -> Component {
-        guard let field = option.field, let value = option.value else { return component }
+        guard var field = option.field, var value = option.value else { return component }
+        if field == .servingsPerWeek, FoodServing.isPerPack(component) {
+            field = .packsPerWeek
+            value = FoodServing.packsPerWeek(servingsPerWeek: value, for: component)
+        }
         return applyingUsage((component.usage ?? UsageProfile()).setting(field, to: value), to: component, profile: profile)
     }
 }
@@ -53,6 +58,8 @@ extension ImpactEngine {
                 .defaults.typicalHoursOnPerDay ?? 4
             let hoursOn = usage?.hoursOnPerDay ?? typical
             return [(.hoursOnPerDay, hoursOn), (.standbyHoursPerDay, usage?.standbyHoursPerDay ?? max(0, 24 - hoursOn))]
+        case .food where FoodServing.isPerPack(component):
+            return [(.packsPerWeek, usage?.packsPerWeek ?? 1)]
         case .food:
             return [(.servingsPerWeek, usage?.servingsPerWeek ?? 1)]
         case .packaging, .personalCare:

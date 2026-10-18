@@ -4,7 +4,8 @@ import GreenCore
 
 /// Current vs. alternative bars per key metric, with range whiskers and a "% better" chip (spec §7). Values are on
 /// the GreenScore comparison basis: per year where the impact recurs (carbon, electricity, and everything for
-/// consumables), else for the item as made. Metrics a swap leaves unchanged are left out.
+/// consumables), else for the item as made. A food swap for a barcoded pack is put on that pack's size and packs a
+/// week (`Alternative.onBasis`), so both bars are the same amount of food. Metrics a swap leaves unchanged are left out.
 struct ComparisonChart: View {
     let component: Component
     let alternative: Alternative

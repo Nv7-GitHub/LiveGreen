@@ -28,6 +28,7 @@ enum DisplayUnits {
     static let gallonsPerLiter = 0.264_172
     static let squareFeetPerSquareMeter = 10.763_9
     static let ouncesPerGram = 0.035_274
+    static let fluidOuncesPerLiter = 33.814
 
     /// Multiplier from the metric unit to the displayed one.
     static func factor(for unit: MetricUnit, in system: UnitSystem = system) -> Double {
@@ -87,6 +88,24 @@ enum DisplayUnits {
 
     static func gridIntensityValue(gramsPerKWh: Double) -> Double {
         system == .imperial ? gramsPerKWh * poundsPerKilogram : gramsPerKWh
+    }
+
+    /// A food amount given in kg, or a drink's in liters, as a label would print it: oz (lb from a pound up) or
+    /// fl oz in imperial, g or kg, mL or L in metric.
+    static func foodAmount(kg: Double, isDrink: Bool, in system: UnitSystem = system) -> String {
+        // At most one decimal, like "11.2 fl oz" or "340 g" on a label.
+        func amount(_ number: Double) -> String { number.formatted(.number.precision(.fractionLength(0...1))) }
+        switch (system, isDrink) {
+        case (.imperial, true):
+            return "\(amount(kg * fluidOuncesPerLiter)) fl oz"
+        case (.imperial, false):
+            let ounces = kg * 1000 * ouncesPerGram
+            return ounces >= 16 ? "\(amount(kg * poundsPerKilogram)) lb" : "\(amount(ounces)) oz"
+        case (.metric, true):
+            return kg >= 1 ? "\(amount(kg)) L" : "\(amount(kg * 1000)) mL"
+        case (.metric, false):
+            return kg >= 1 ? "\(amount(kg)) kg" : "\(amount(kg * 1000)) g"
+        }
     }
 
     /// Temperature given in °C.

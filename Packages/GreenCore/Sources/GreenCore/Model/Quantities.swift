@@ -16,10 +16,14 @@ public struct Quantities: Codable, Sendable, Hashable {
     public var foodGroup: String?
     /// Reference-table key for devices, e.g. "laptop", "monitor", "ebike_charger".
     public var deviceType: String?
+    /// Net quantity of the whole pack in kg, from the product record of a scanned barcode. Set only when the
+    /// record states it; the food's metrics are then for the whole pack instead of one serving (`FoodServing.basis`).
+    /// Nil in scans saved by older builds, which stay per serving.
+    public var packNetKg: Double?
 
     public init(massKg: Double? = nil, servingKg: Double? = nil, packagingMassG: Double? = nil,
                 screenSizeInches: Double? = nil, ratedPowerW: Double? = nil, volumeLiters: Double? = nil,
-                foodGroup: String? = nil, deviceType: String? = nil) {
+                foodGroup: String? = nil, deviceType: String? = nil, packNetKg: Double? = nil) {
         self.massKg = massKg
         self.servingKg = servingKg
         self.packagingMassG = packagingMassG
@@ -28,5 +32,6 @@ public struct Quantities: Codable, Sendable, Hashable {
         self.volumeLiters = volumeLiters
         self.foodGroup = foodGroup
         self.deviceType = deviceType
+        self.packNetKg = packNetKg
     }
 }
