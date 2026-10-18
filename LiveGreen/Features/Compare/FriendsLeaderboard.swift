@@ -1,56 +1,84 @@
 import SwiftUI
 import GreenCore
 
-/// Leaderboard of your friends plus you, greenest first (spec §9). Each person gets a circle with their
-/// initials, and the header says what the numbers stand for.
+/// Leaderboard of your friends plus you, greenest first (spec §9): one metric's yearly footprints, or overall
+/// GreenScores. Each person gets a circle with their initials, and the header says what the numbers stand for.
 struct FriendsLeaderboard: View {
-    let metric: MetricKey
-    /// Greenest first, from `CohortModel.leaderboard`.
-    let entries: [LeaderboardEntry]
+    struct Row: Identifiable {
+        let id: String
+        let name: String
+        let isUser: Bool
+        let detail: String
+        let value: String
+    }
+
+    let basis: String
+    /// Greenest first.
+    let rows: [Row]
+
+    /// One metric's board, from `CohortModel.leaderboard`.
+    init(metric: MetricKey, entries: [LeaderboardEntry]) {
+        basis = CohortMetric.basis(metric)
+        rows = entries.map { entry in
+            Row(id: entry.id, name: entry.name, isUser: entry.isUser,
+                detail: "Greener than \(SharePercent.format(entry.greenerThan))",
+                value: YearlyValue.format(entry.value, metric: metric))
+        }
+    }
+
+    /// The overall board, from `CohortModel.overallLeaderboard`.
+    init(overall entries: [OverallEntry]) {
+        basis = "GreenScore out of 100, all four metrics"
+        rows = entries.map { entry in
+            Row(id: entry.id, name: entry.name, isUser: entry.isUser,
+                detail: OverallWording.versusTypical(entry.greenScore.footprintRatio),
+                value: "\(entry.greenScore.points)")
+        }
+    }
 
     var body: some View {
         GlassCard {
             VStack(alignment: .leading, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Friends").font(.headline)
-                    Text(CohortMetric.basis(metric))
+                    Text(basis)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                ForEach(Array(entries.enumerated()), id: \.element.id) { rank, entry in
-                    row(rank: rank + 1, entry: entry)
-                    if rank < entries.count - 1 { Divider().padding(.leading, 78) }
+                ForEach(Array(rows.enumerated()), id: \.element.id) { rank, row in
+                    self.row(rank: rank + 1, row: row)
+                    if rank < rows.count - 1 { Divider().padding(.leading, 78) }
                 }
             }
         }
         .accessibilityIdentifier("leaderboard")
     }
 
-    private func row(rank: Int, entry: LeaderboardEntry) -> some View {
+    private func row(rank: Int, row: Row) -> some View {
         HStack(spacing: 12) {
             Text("\(rank)")
                 .font(.subheadline.weight(.bold).monospacedDigit())
                 .frame(width: 22)
                 .foregroundStyle(rank <= 3 ? Theme.leaf : .secondary)
-            InitialsAvatar(name: entry.name, isUser: entry.isUser)
+            InitialsAvatar(name: row.name, isUser: row.isUser)
             VStack(alignment: .leading, spacing: 1) {
-                Text(entry.name).font(.subheadline.weight(entry.isUser ? .bold : .regular))
+                Text(row.name).font(.subheadline.weight(row.isUser ? .bold : .regular))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                Text("Greener than \(SharePercent.format(entry.greenerThan))")
+                Text(row.detail)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Text(YearlyValue.format(entry.value, metric: metric))
+            Text(row.value)
                 .font(.subheadline.monospacedDigit())
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
                 .layoutPriority(1)
         }
         .padding(.vertical, 2)
-        .padding(.horizontal, entry.isUser ? 6 : 0)
-        .background(entry.isUser ? AnyShapeStyle(Theme.leaf.opacity(0.12)) : AnyShapeStyle(.clear),
+        .padding(.horizontal, row.isUser ? 6 : 0)
+        .background(row.isUser ? AnyShapeStyle(Theme.leaf.opacity(0.12)) : AnyShapeStyle(.clear),
                     in: .rect(cornerRadius: 12))
         .accessibilityElement(children: .combine)
     }

@@ -65,12 +65,16 @@ public struct Alternative: Codable, Sendable, Hashable, Identifiable {
     /// Years the swap is kept when that differs from the original (a laptop kept longer, a product built to last);
     /// nil to compare it over the original's lifespan.
     public var lifespanYears: Double?
+    /// The suggester's judgement of whether a photo of the swap in place would look clearly different from the
+    /// original; nil in swaps saved by older builds and from suggesters that do not say (`changesTheLook`).
+    public var looksDifferent: Bool?
 
     public init(id: UUID = UUID(), kind: Kind = .product, name: String, category: Category,
                 identifiers: Identifiers = Identifiers(), quantities: Quantities = Quantities(),
                 usage: UsageProfile? = nil, rationale: String, practicality: Practicality = Practicality(),
                 metrics: [MetricKey: Measured] = [:], fallbackEstimates: [MetricKey: EstimateRange] = [:],
-                condition: Condition = .new, isReusable: Bool = false, lifespanYears: Double? = nil) {
+                condition: Condition = .new, isReusable: Bool = false, lifespanYears: Double? = nil,
+                looksDifferent: Bool? = nil) {
         self.id = id
         self.kind = kind
         self.name = name
@@ -85,10 +89,11 @@ public struct Alternative: Codable, Sendable, Hashable, Identifiable {
         self.condition = condition
         self.isReusable = isReusable
         self.lifespanYears = lifespanYears
+        self.looksDifferent = looksDifferent
     }
 
-    /// Swaps saved before `condition`, `isReusable` and `lifespanYears` existed decode as new, single-use and on
-    /// the original's lifespan.
+    /// Swaps saved before `condition`, `isReusable`, `lifespanYears` and `looksDifferent` existed decode as new,
+    /// single-use, on the original's lifespan and with no judgement of their look.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
@@ -105,6 +110,7 @@ public struct Alternative: Codable, Sendable, Hashable, Identifiable {
         condition = try container.decodeIfPresent(Condition.self, forKey: .condition) ?? .new
         isReusable = try container.decodeIfPresent(Bool.self, forKey: .isReusable) ?? false
         lifespanYears = try container.decodeIfPresent(Double.self, forKey: .lifespanYears)
+        looksDifferent = try container.decodeIfPresent(Bool.self, forKey: .looksDifferent)
     }
 
     /// The category a swap is scored in. A reusable given as packaging or personal care is a durable household
@@ -112,6 +118,49 @@ public struct Alternative: Codable, Sendable, Hashable, Identifiable {
     /// year at 3 uses a week).
     public static func scoredCategory(_ stated: Category, isReusable: Bool) -> Category {
         isReusable && (stated == .packaging || stated == .personalCare) ? .household : stated
+    }
+
+    /// Whether taking the swap means buying something: a used or refurbished item, a "Buy …" swap or the smart plug.
+    /// Keeping, repairing or using what you have differently is not. For an item the user already owns, a purchase
+    /// is never "saves money" next to keeping it, only next to buying a new one.
+    public var isPurchase: Bool {
+        kind == .smartPlugScheduling || condition != .new || name.lowercased().hasPrefix("buy ")
+    }
+
+    /// Whether the swap would show in a photo of the scene, so the greener picture has something to draw (G2): the
+    /// suggester's judgement when it gave one; otherwise not for the smart plug, a second-hand copy of the same kind of
+    /// item (a used car looks like the car) or a change in how something is used ("Keep it two more years").
+    public var changesTheLook: Bool {
+        if kind == .smartPlugScheduling { return false }
+        if let looksDifferent { return looksDifferent }
+        if condition != .new { return false }
+        let lowered = name.lowercased()
+        return !Self.behaviourPrefixes.contains { lowered.hasPrefix($0) }
+    }
+
+    /// How swaps that change a habit rather than an object start.
+    static let behaviourPrefixes = ["keep ", "repair", "fix ", "line-dry", "line dry", "air-dry", "air dry", "unplug",
+                                    "turn ", "run ", "wash ", "set ", "lower ", "use less", "use it", "share "]
+
+    // MARK: - Safety gear
+
+    /// Gear whose protection hidden damage or age can undo: makers and safety bodies (CPSC, NHTSA, helmet makers)
+    /// say not to buy it second-hand or keep it past its life.
+    static let safetyGearTerms = ["helmet", "car seat", "child seat", "booster seat", "infant seat", "baby seat",
+                                  "crib", "harness", "life jacket", "life vest", "smoke alarm", "smoke detector",
+                                  "carbon monoxide"]
+
+    /// A second-hand, refurbished or kept-longer swap for safety gear ("Second-hand bike helmet", "Keep your helmet
+    /// longer"), which is never suggested. The swap's whole name counts (a used bike "with child seat" includes a used
+    /// seat); of the original only what comes before "with", so a used bike for a "bicycle with child seat" is fine.
+    public func isUnsafeSecondHand(replacing original: Component) -> Bool {
+        let swapName = name.lowercased()
+        let originalHead = original.name.lowercased().components(separatedBy: " with ").first ?? ""
+        let isGear = Self.safetyGearTerms.contains { swapName.contains($0) }
+            || (category == original.category && Self.safetyGearTerms.contains { originalHead.contains($0) })
+        guard isGear else { return false }
+        let keptLonger = lifespanYears != nil || swapName.contains("keep") || swapName.contains("longer")
+        return condition != .new || Condition(name: name) != .new || keptLonger
     }
 }
 

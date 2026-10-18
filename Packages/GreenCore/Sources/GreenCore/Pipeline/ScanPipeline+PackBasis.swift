@@ -103,6 +103,10 @@ struct AnsweredProducts: ProductDatabase {
         return try await fallback.product(gtin: gtin)
     }
 
+    func searchProduct(brand: String, name: String) async throws -> ProductRecord? {
+        try await fallback.searchProduct(brand: brand, name: name)
+    }
+
     func productImage(for record: ProductRecord) async -> Data? {
         await fallback.productImage(for: record)
     }

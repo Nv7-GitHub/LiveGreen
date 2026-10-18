@@ -1,9 +1,10 @@
 import SwiftUI
 import GreenCore
 
-/// Shown before the results when some items are still rough AI estimates (T4): one plain question per item as
-/// chips plus "Not sure". "Update numbers" re-resolves the answered items on-device with the factor tables;
-/// "Skip" (or swiping the sheet away) opens the results with the estimates.
+/// Shown before the results when some items are still rough AI estimates (T4) or are foods whose kind swings the
+/// numbers (dairy or plant milk, the main protein): one plain question per item as chips plus "Not sure". "Update
+/// numbers" re-resolves the answered items on-device with the factor tables, and the item's detail sheet can take an
+/// answer back; "Skip" (or swiping the sheet away) opens the results with the estimates.
 struct SpecQuestionsSheet: View {
     let questions: [SpecQuestion]
     let onApply: ([SpecAnswer]) -> Void
@@ -31,7 +32,8 @@ struct SpecQuestionsSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("A couple of quick details to sharpen the numbers.")
+                    Text(questions.count == 1 ? "One quick detail to sharpen the numbers."
+                                              : "A couple of quick details to sharpen the numbers.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     ForEach(questions) { questionCard($0) }

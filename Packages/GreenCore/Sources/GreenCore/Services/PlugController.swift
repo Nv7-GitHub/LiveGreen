@@ -74,13 +74,25 @@ public struct PlugSchedule: Codable, Sendable, Hashable {
     public var createdAt: Date
     /// Mean grid intensity over the chosen hours, gCO2e/kWh.
     public var expectedIntensity: Double?
+    /// The day's mean forecast intensity the plan shifts charging away from, gCO2e/kWh. Nil on plans written
+    /// before it was kept.
+    public var baselineIntensity: Double?
 
     public init(onHours: [Int], timeZoneIdentifier: String = TimeZone.current.identifier,
-                createdAt: Date = Date(), expectedIntensity: Double? = nil) {
+                createdAt: Date = Date(), expectedIntensity: Double? = nil, baselineIntensity: Double? = nil) {
         self.onHours = Array(Set(onHours.filter { (0..<24).contains($0) })).sorted()
         self.timeZoneIdentifier = timeZoneIdentifier
         self.createdAt = createdAt
         self.expectedIntensity = expectedIntensity
+        self.baselineIntensity = baselineIntensity
+    }
+
+    /// kg CO2e a year saved by running `dailyKWh` a day in these hours instead of at the day's average; nil
+    /// without both intensities.
+    public func yearlySavingsKg(dailyKWh: Double) -> Double? {
+        guard let expectedIntensity, let baselineIntensity else { return nil }
+        return GreenHoursPlanner.yearlySavingsKg(kWhPerYear: dailyKWh * ImpactEngine.daysPerYear,
+                                                 averageIntensity: baselineIntensity, windowIntensity: expectedIntensity)
     }
 
     /// Contiguous on-windows as half-open hour ranges, e.g. [1..<4, 13..<15].

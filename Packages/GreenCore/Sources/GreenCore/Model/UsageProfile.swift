@@ -11,10 +11,12 @@ public struct UsageProfile: Codable, Sendable, Hashable {
     public var packsPerWeek: Double?
     /// Distance driven per week, km (vehicles).
     public var kmPerWeek: Double?
+    /// Where a consumable's frequency came from; nil for identify's own usage and scans saved by older builds.
+    public var source: UsageSource?
 
     public init(hoursOnPerDay: Double? = nil, standbyHoursPerDay: Double? = nil, servingsPerWeek: Double? = nil,
                 wearsPerYear: Double? = nil, usesPerWeek: Double? = nil, chargesPerWeek: Double? = nil,
-                packsPerWeek: Double? = nil, kmPerWeek: Double? = nil) {
+                packsPerWeek: Double? = nil, kmPerWeek: Double? = nil, source: UsageSource? = nil) {
         self.hoursOnPerDay = hoursOnPerDay
         self.standbyHoursPerDay = standbyHoursPerDay
         self.servingsPerWeek = servingsPerWeek
@@ -23,6 +25,7 @@ public struct UsageProfile: Codable, Sendable, Hashable {
         self.chargesPerWeek = chargesPerWeek
         self.packsPerWeek = packsPerWeek
         self.kmPerWeek = kmPerWeek
+        self.source = source
     }
 
     public subscript(field: UsageField) -> Double? {
@@ -58,6 +61,19 @@ public struct UsageProfile: Codable, Sendable, Hashable {
         copy[field] = value
         return copy
     }
+}
+
+/// Where a consumable's servings, packs or uses a week came from (`UsageDefaults`).
+public enum UsageSource: String, Codable, Sendable, Hashable {
+    /// LiveGreen's typical week for that kind of item, an assumption until the user says otherwise.
+    case typical
+    /// The user's answer for the same kind of item on an earlier scan.
+    case remembered
+    /// The user's answer on this scan.
+    case answered
+
+    /// The user said it, here or on an earlier scan.
+    public var isUsers: Bool { self != .typical }
 }
 
 /// Addressable fields of `UsageProfile`, so question answers can target them.
