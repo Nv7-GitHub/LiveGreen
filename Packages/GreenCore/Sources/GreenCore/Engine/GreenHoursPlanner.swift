@@ -12,10 +12,11 @@ public struct GreenWindow: Sendable, Hashable {
         zip(hours, hours.dropFirst()).allSatisfy { ($0 + 1) % 24 == $1 }
     }
 
-    /// The window as a daily plug schedule.
-    public func schedule(timeZone: TimeZone = .current, createdAt: Date = Date()) -> PlugSchedule {
+    /// The window as a daily plug schedule; `baselineIntensity` is the day's average it shifts charging away from.
+    public func schedule(timeZone: TimeZone = .current, createdAt: Date = Date(),
+                         baselineIntensity: Double? = nil) -> PlugSchedule {
         PlugSchedule(onHours: hours, timeZoneIdentifier: timeZone.identifier, createdAt: createdAt,
-                     expectedIntensity: averageIntensity)
+                     expectedIntensity: averageIntensity, baselineIntensity: baselineIntensity)
     }
 }
 

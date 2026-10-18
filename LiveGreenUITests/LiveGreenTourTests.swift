@@ -121,6 +121,10 @@ final class LiveGreenTourTests: XCTestCase {
         snap("07-alternatives")
         app.swipeUp()
         snap("08-comparison")
+        let savings = app.staticTexts["Projected savings"]
+        for _ in 0..<6 where !savings.isHittable { app.swipeUp() }
+        app.swipeUp()
+        snap("08b-projected-savings")
         XCTAssertTrue(generate.isEnabled)
         generate.tap()
         let slider = app.descendants(matching: .any)["Before and after comparison"]
@@ -133,6 +137,10 @@ final class LiveGreenTourTests: XCTestCase {
     @MainActor
     private func checkCompare(_ app: XCUIApplication) {
         selectTab("Leaderboard", in: app)
+        XCTAssertTrue(app.descendants(matching: .any)["overallScore"].waitForExistence(timeout: 15),
+                      "The board opens on the overall GreenScore")
+        snap("10a-compare-overall")
+        app.buttons["leaderboard.metric.carbon"].tap()
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] %@", "people like you"))
             .firstMatch.waitForExistence(timeout: 15))
         snap("10-compare")

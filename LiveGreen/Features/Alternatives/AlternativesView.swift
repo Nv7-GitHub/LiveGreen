@@ -34,7 +34,8 @@ struct AlternativesView: View {
                     case .ready:
                         swapCards
                         ProjectedSavingsCard(savings: SwapMath.projectedSavings(screen.result, selection: selection),
-                                             swapCount: selection.count)
+                                             swapCount: selection.count,
+                                             context: "swaps-\(screen.result.id.uuidString)")
                         if screen.showsGreenerImage { imageSection.id(Self.imageAnchor) }
                     }
                 }

@@ -3,7 +3,8 @@ import GreenCore
 
 /// Scan summary (spec §6): the selected metric's yearly total as one big number with its likely range, the frequency
 /// that year assumes, durables' lifetime and one of each consumable as secondary stats, and where the numbers come
-/// from. Every metric uses the same per-year basis as the list below. "All" shows every additive total as tiles.
+/// from, with an everyday comparison for the total ("That's like driving 1,200 miles"). Every metric uses the same
+/// per-year basis as the list below. "All" shows every additive total as tiles.
 struct SummaryHeader: View {
     let result: ScanResult
     let filter: ResultMetricFilter
@@ -19,6 +20,10 @@ struct SummaryHeader: View {
             VStack(alignment: .leading, spacing: 16) {
                 if let metric = filter.metric {
                     singleTotal(metric)
+                    if let headline = shownYearly(metric, in: yearlyTotals) {
+                        EquivalenceCallout(metric: metric, amount: headline.value,
+                                           context: "scan-\(result.id.uuidString)|\(metric.rawValue)")
+                    }
                 } else {
                     allTotals
                 }
