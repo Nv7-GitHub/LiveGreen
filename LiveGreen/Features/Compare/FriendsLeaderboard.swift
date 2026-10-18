@@ -90,7 +90,7 @@ struct InitialsAvatar: View {
     var isUser = false
 
     private var initials: String {
-        guard !isUser else { return "You" }
+        guard !isUser || name != "You" else { return "You" }
         return name.split(separator: " ").prefix(2).compactMap(\.first).map(String.init).joined().uppercased()
     }
 

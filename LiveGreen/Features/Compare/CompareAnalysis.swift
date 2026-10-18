@@ -25,7 +25,8 @@ nonisolated struct CompareAnalysis: Sendable {
     }
 
     /// `plugSavingsKg` is what paired plugs' green-hours schedules avoid a year; it comes off your carbon.
-    init(scans: [ScanResult], profile: UserProfile, plugSavingsKg: Double = 0, store: ReferenceStore = .bundled) {
+    init(scans: [ScanResult], profile: UserProfile, plugSavingsKg: Double = 0, userName: String = "You",
+         store: ReferenceStore = .bundled) {
         let engine = ImpactEngine(reference: store)
         let footprint = ScannedFootprint.from(scans: scans, scheduledSavingsKg: plugSavingsKg, engine: engine)
         let cohort = CohortModel(profile: profile, store: store)
@@ -33,10 +34,10 @@ nonisolated struct CompareAnalysis: Sendable {
         var leaderboards: [MetricKey: [LeaderboardEntry]] = [:]
         if let cohort {
             for comparison in cohort.compare(footprint) { comparisons[comparison.metric] = comparison }
-            for metric in CohortMetric.all { leaderboards[metric] = cohort.leaderboard(for: footprint, metric: metric) }
+            for metric in CohortMetric.all { leaderboards[metric] = cohort.leaderboard(for: footprint, metric: metric, userName: userName) }
         }
         self.init(footprint: footprint, cohort: cohort, comparisons: comparisons, leaderboards: leaderboards,
-                  overall: cohort?.overallLeaderboard(for: footprint) ?? [])
+                  overall: cohort?.overallLeaderboard(for: footprint, userName: userName) ?? [])
     }
 
     var isEmpty: Bool { footprint.yearly.isEmpty }

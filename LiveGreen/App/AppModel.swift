@@ -30,6 +30,9 @@ final class AppModel {
     /// save it back or start fetching its swaps; every new scan gets a fresh id, so nothing else is affected.
     @ObservationIgnored private var deletedScanIDs: Set<UUID> = []
 
+    /// `-SkipOnboarding` (UI tests, previews) also skips the name prompt.
+    @ObservationIgnored private let skipsNamePrompt: Bool
+
     @ObservationIgnored let container: ModelContainer
     @ObservationIgnored private var store: ScanStore { ScanStore(context: container.mainContext) }
     /// Notes the user left on scans; new scans send a few to identify as weak hints.
@@ -40,6 +43,7 @@ final class AppModel {
     init(container: ModelContainer, launch: LaunchArguments = LaunchArguments(), secrets: Secrets = Secrets()) {
         let flags = FeatureFlags.load(arguments: launch)
         self.container = container
+        self.skipsNamePrompt = launch.skipOnboarding
         self.secrets = secrets
         self.flags = flags
         self.services = ServiceContainer.make(flags: flags, secrets: secrets)
@@ -57,7 +61,34 @@ final class AppModel {
         return model
     }
 
-    var needsOnboarding: Bool { !profile.onboardingCompleted }
+    /// With the name prompt standing in for onboarding, installs that finished the questionnaire before it
+    /// existed are asked for a name too.
+    var needsOnboarding: Bool {
+        !profile.onboardingCompleted || (!Self.usesFullOnboarding && displayName.isEmpty && !skipsNamePrompt)
+    }
+
+    /// The full lifestyle questionnaire is temporarily replaced by a name prompt (`NameEntryView`); flip this back
+    /// to restore `OnboardingFlow` at first launch. Settings can still edit the profile either way.
+    static let usesFullOnboarding = false
+
+    static let displayNameKey = "LiveGreen.displayName"
+    static let accountCreatedKey = "LiveGreen.accountCreated"
+
+    /// The name asked for at first launch, shown on the Leaderboard. Empty until entered.
+    var displayName: String = UserDefaults.standard.string(forKey: AppModel.displayNameKey) ?? "" {
+        didSet { UserDefaults.standard.set(displayName, forKey: Self.displayNameKey) }
+    }
+    /// Whether the Leaderboard has played its pretend "creating your account" step. There is no real account.
+    var accountCreated: Bool = UserDefaults.standard.bool(forKey: AppModel.accountCreatedKey) {
+        didSet { UserDefaults.standard.set(accountCreated, forKey: Self.accountCreatedKey) }
+    }
+
+    /// Finishes the name-only onboarding: keeps the current profile answers and records the name.
+    func completeOnboarding(withName name: String) {
+        if name != displayName { accountCreated = false }
+        displayName = name
+        completeOnboarding(with: profile)
+    }
 
     func completeOnboarding(with profile: UserProfile) {
         var completed = profile
@@ -87,6 +118,8 @@ final class AppModel {
         // Removing the domain doesn't notify @AppStorage, so clear the units key directly as well.
         defaults.removeObject(forKey: DisplayUnits.defaultsKey)
         flags = FeatureFlags.load(defaults: defaults)
+        displayName = ""
+        accountCreated = false
         refreshServices()
         selectedTab = .scan
         updateProfile(.default)
