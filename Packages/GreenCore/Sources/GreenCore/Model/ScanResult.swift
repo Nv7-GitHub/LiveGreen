@@ -34,11 +34,15 @@ public struct ScanResult: Codable, Sendable, Hashable, Identifiable {
     public var selectedAlternatives: [UUID: UUID]
     /// Components the user chose to keep as they are, so the default pick is not re-applied (spec §7).
     public var keptOriginals: Set<UUID>
+    /// What kind of scene identify saw (the user's own, a store display, a street, a screenshot); nil in scans from
+    /// older builds and barcode scans, which count as the user's own.
+    public var sceneContext: SceneContext?
 
     public init(id: UUID = UUID(), date: Date = Date(), title: String, mode: ScanMode = .photo, photo: Data? = nil,
                 components: [Component] = [], totals: [MetricKey: Measured] = [:],
                 yearlyTotals: [MetricKey: Measured] = [:], greenerImage: Data? = nil,
-                selectedAlternatives: [UUID: UUID] = [:], keptOriginals: Set<UUID> = []) {
+                selectedAlternatives: [UUID: UUID] = [:], keptOriginals: Set<UUID> = [],
+                sceneContext: SceneContext? = nil) {
         self.id = id
         self.date = date
         self.title = title
@@ -50,6 +54,7 @@ public struct ScanResult: Codable, Sendable, Hashable, Identifiable {
         self.greenerImage = greenerImage
         self.selectedAlternatives = selectedAlternatives
         self.keptOriginals = keptOriginals
+        self.sceneContext = sceneContext
     }
 
     /// Scans saved before a field existed decode with its empty default.
@@ -66,15 +71,17 @@ public struct ScanResult: Codable, Sendable, Hashable, Identifiable {
         greenerImage = try container.decodeIfPresent(Data.self, forKey: .greenerImage)
         selectedAlternatives = try container.decode([UUID: UUID].self, forKey: .selectedAlternatives)
         keptOriginals = try container.decodeIfPresent(Set<UUID>.self, forKey: .keptOriginals) ?? []
+        sceneContext = try container.decodeIfPresent(SceneContext.self, forKey: .sceneContext)
     }
 
     /// Seed for the scan totals: from what was scanned, so a rescan of the same items gives the same ranges.
     public var totalsSeed: UInt64 { StableHash.seed(components) }
 
-    /// Recomputes both totals from the components.
+    /// Recomputes both totals from the components the results add up (`totaledComponents`): items the user marked
+    /// as not theirs, other people's things and background items stay out.
     public mutating func updateTotals(engine: ImpactEngine) {
-        totals = engine.itemTotals(components, seed: totalsSeed)
-        yearlyTotals = engine.yearlyTotals(components, seed: totalsSeed)
+        totals = engine.itemTotals(totaledComponents, seed: totalsSeed)
+        yearlyTotals = engine.yearlyTotals(totaledComponents, seed: totalsSeed)
     }
 
     /// Monte Carlo seed derived from the scan id so results are reproducible (spec §5.6).

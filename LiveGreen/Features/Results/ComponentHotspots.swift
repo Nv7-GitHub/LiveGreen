@@ -2,8 +2,8 @@ import SwiftUI
 import GreenCore
 
 /// Numbered glass pins over each component (spec §6), with the list's numbers (`ScanBreakdown.numbers`, ranked once
-/// by yearly carbon), so a number names the same item whatever the metric. Pins start at the center of each item's
-/// box, so a loose box still points at the item, and are spread apart (`PinLayout`) so none hides another; a pin
+/// by yearly carbon), so a number names the same item whatever the metric. Pins start at identify's point on each item,
+/// else its box centre (`Component.pinAnchor`), and are spread apart (`PinLayout`) so none hides another; a pin
 /// moved off its spot keeps a thin leader line to it. Colors say how large the item's yearly amount is
 /// (`ImpactLevel`), not its share of the scene. The selected item also gets scanner-style corner brackets and a dark
 /// callout beside its box, clamped inside the photo. Pins pop in one after another inside a `GlassEffectContainer`.
@@ -14,6 +14,8 @@ struct ComponentHotspots: View {
     /// Yearly values, shares and numbers, the same basis as the list.
     let breakdown: ScanBreakdown
     let selectedID: Component.ID?
+    /// Items the scan does not count (not the user's, background, removed): grey pins, numbered after the rest.
+    var notCounted: Set<Component.ID> = []
     let onSelect: (Component) -> Void
 
     @State private var revealed = 0
@@ -31,7 +33,7 @@ struct ComponentHotspots: View {
         GeometryReader { geometry in
             let size = geometry.size
             let ordered = self.ordered
-            let anchors = ordered.map { CGPoint(x: rect(for: $0, in: size).midX, y: rect(for: $0, in: size).midY) }
+            let anchors = ordered.map { anchor(for: $0, in: size) }
             let pins = positions(for: anchors, in: size)
             let selected = ordered.first { $0.id == selectedID }
             ZStack(alignment: .topLeading) {
@@ -81,18 +83,27 @@ struct ComponentHotspots: View {
                       width: box.width * size.width, height: box.height * size.height)
     }
 
-    /// Pin centers: box centers spread apart and kept inside the photo.
+    private func anchor(for component: Component, in size: CGSize) -> CGPoint {
+        let point = component.pinAnchor
+        return CGPoint(x: point.x * size.width, y: point.y * size.height)
+    }
+
+    /// Pin centers: the items' anchors spread apart and kept inside the photo.
     private func positions(for anchors: [CGPoint], in size: CGSize) -> [CGPoint] {
         PinLayout.spread(anchors.map { SIMD2(Double($0.x), Double($0.y)) }, spacing: Double(pinSpacing),
                          in: SIMD2(Double(size.width), Double(size.height)), inset: Double(pinSize / 2 + 2))
             .map { CGPoint(x: $0.x, y: $0.y) }
     }
 
-    /// Leaders for revealed pins that were moved noticeably off their item's center.
+    /// Leaders for revealed pins that were moved noticeably off their item's anchor.
     private func leaders(from anchors: [CGPoint], to pins: [CGPoint]) -> [LeaderLines.Segment] {
         zip(anchors, pins).prefix(revealed).compactMap { anchor, pin in
             hypot(pin.x - anchor.x, pin.y - anchor.y) > pinSize * 0.6 ? LeaderLines.Segment(from: anchor, to: pin) : nil
         }
+    }
+
+    private func tint(of component: Component) -> Color {
+        notCounted.contains(component.id) ? .gray : Theme.impactTint(level(of: component))
     }
 
     private func level(of component: Component) -> ImpactLevel? {
@@ -107,7 +118,7 @@ struct ComponentHotspots: View {
                 .font(.footnote.weight(.bold).monospacedDigit())
                 .foregroundStyle(.white)
                 .frame(width: pinSize - 8, height: pinSize - 8)
-                .background(Theme.impactTint(level(of: component)).gradient, in: .circle)
+                .background(tint(of: component).gradient, in: .circle)
                 .overlay {
                     if isSelected { Circle().strokeBorder(.white, lineWidth: 2) }
                 }
@@ -130,7 +141,11 @@ struct ComponentHotspots: View {
             Text(component.name)
                 .font(.caption.weight(.semibold))
                 .lineLimit(2)
-            if let value = breakdown.yearly(filter.shareMetric, of: component), !value.isEffectivelyZero {
+            if notCounted.contains(component.id) {
+                Text("Not counted")
+                    .font(.caption2)
+                    .opacity(0.9)
+            } else if let value = breakdown.yearly(filter.shareMetric, of: component), !value.isEffectivelyZero {
                 Text(value.formattedPerYear)
                     .font(.caption2.monospacedDigit())
                     .opacity(0.9)
@@ -146,8 +161,9 @@ struct ComponentHotspots: View {
     }
 
     private func accessibilityText(_ component: Component, number: Int) -> String {
+        if notCounted.contains(component.id) { return "\(number). \(component.name), not counted" }
         let metric = filter.shareMetric
-        let share = breakdown.share(of: component, metric: metric, in: components)
+        let share = breakdown.share(of: component, metric: metric, in: components.filter { !notCounted.contains($0.id) })
         let value = breakdown.yearly(metric, of: component).map { "\($0.formattedPerYear), " } ?? ""
         let percent = Int((share * 100).rounded())
         return "\(number). \(component.name), \(value)\(percent)% of \(metric.displayName.lowercased()) per year"
@@ -197,7 +213,7 @@ private struct CalloutPlacement: Layout {
     }
 }
 
-/// Thin lines from items' box centers to the pins the layout moved away from them, each with a small ring at the
+/// Thin lines from items' anchors to the pins the layout moved away from them, each with a small ring at the
 /// item's end, so a moved pin still points at its item.
 private struct LeaderLines: Shape {
     struct Segment {

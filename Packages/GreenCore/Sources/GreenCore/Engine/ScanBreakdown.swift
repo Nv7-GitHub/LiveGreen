@@ -32,14 +32,16 @@ public struct ScanBreakdown: Sendable {
     /// Each component's yearly value per additive metric (`ImpactEngine.annualized`), by component id.
     public let yearly: [UUID: [MetricKey: Measured]]
     /// Pin and row number per component id. Ranked once by yearly carbon (then detection order), so a number
-    /// names the same item whichever metric is selected.
+    /// names the same item whichever metric is selected. Items the results do not count come after the rest, so a
+    /// background bag never takes pin 1.
     public let numbers: [UUID: Int]
     /// Ids of durables: items whose per-unit values cover a whole life (`AnnualBasis.lifetime`).
     public let durables: Set<UUID>
     /// What each component's year assumes, by component id.
     public let assumptions: [UUID: UsageAssumption]
 
-    public init(components: [Component], engine: ImpactEngine = ImpactEngine()) {
+    /// - Parameter notCounted: ids of items the results leave out of their totals (`ScanResult.notCountedComponents`).
+    public init(components: [Component], engine: ImpactEngine = ImpactEngine(), notCounted: Set<UUID> = []) {
         var yearly: [UUID: [MetricKey: Measured]] = [:]
         var durables: Set<UUID> = []
         var assumptions: [UUID: UsageAssumption] = [:]
@@ -55,6 +57,8 @@ public struct ScanBreakdown: Sendable {
 
         let carbon = { (component: Component) in yearly[component.id]?[.carbon]?.value ?? -.infinity }
         let order = components.enumerated().sorted { lhs, rhs in
+            let lOut = notCounted.contains(lhs.element.id), rOut = notCounted.contains(rhs.element.id)
+            if lOut != rOut { return rOut }
             let l = carbon(lhs.element), r = carbon(rhs.element)
             return l != r ? l > r : lhs.offset < rhs.offset
         }

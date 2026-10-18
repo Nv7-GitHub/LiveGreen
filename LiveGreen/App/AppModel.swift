@@ -99,6 +99,7 @@ final class AppModel {
 
     func save(_ result: ScanResult) {
         guard !deletedScanIDs.contains(result.id) else { return }
+        let before = scans.first { $0.id == result.id }
         if let index = scans.firstIndex(where: { $0.id == result.id }) {
             scans[index] = result
         } else {
@@ -106,6 +107,8 @@ final class AppModel {
         }
         perform { try store.save(result) }
         prefetchSwaps(for: result)
+        // An item marked "It's mine" after the swaps came back was left out of them.
+        if let before { swapPrefetch.fetchNewlyCounted(result, since: before, app: self) }
     }
 
     /// Starts fetching a scan's greener swaps in the background, with no UI, unless the saved copy has them or a

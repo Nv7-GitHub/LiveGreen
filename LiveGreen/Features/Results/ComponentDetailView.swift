@@ -12,6 +12,8 @@ struct ComponentDetailView: View {
     var plugAction: (() -> Void)?
     /// Called when the user changes a usage field; nil hides the usage editor.
     var onUsageChange: ((UsageField, Double) -> Void)?
+    /// The scan the item belongs to and the "Not mine" / "It's mine" handler; nil hides the ownership card.
+    var ownership: (result: ScanResult, onChange: (Bool?) -> Void)?
     /// Under the usage editor: where the rate comes from and what else it changes.
     var usageNote: String?
     /// Takes back the quick-details answer that refined the item; nil hides the answer card.
@@ -32,6 +34,7 @@ struct ComponentDetailView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             header
+            if ownershipFirst { ownershipCard }
             if let answer = component.detailAnswer, let onUndoAnswer {
                 answerCard(answer, undo: onUndoAnswer)
             }
@@ -60,6 +63,20 @@ struct ComponentDetailView: View {
                 }
             }
             MetricInspector(component: component)
+            if !ownershipFirst { ownershipCard }
+        }
+    }
+
+    /// Up top when it matters (the item is not counted, or the scan is a store or street scene); for the user's own
+    /// things "Not mine" waits at the end, below the numbers.
+    private var ownershipFirst: Bool {
+        guard let ownership else { return false }
+        return !component.isCounted || ownership.result.sceneContext?.asksWhichIsYours == true
+    }
+
+    @ViewBuilder private var ownershipCard: some View {
+        if let ownership {
+            OwnershipCard(component: component, result: ownership.result, onChange: ownership.onChange)
         }
     }
 
