@@ -40,13 +40,24 @@ struct NameEntryView: View {
             Label("LiveGreen", systemImage: "leaf.fill")
                 .font(.headline)
                 .foregroundStyle(Theme.leaf)
-            Spacer()
-            switch stage {
-            case .form: form.transition(.opacity)
-            case .texting: texting.transition(.opacity)
-            case .creating, .welcome: progress.transition(.opacity)
+            // Scrolls so the fields can rise above the keyboard; centred while everything fits.
+            GeometryReader { proxy in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 0)
+                        switch stage {
+                        case .form: form.transition(.opacity)
+                        case .texting: texting.transition(.opacity)
+                        case .creating, .welcome: progress.transition(.opacity)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                .scrollDismissesKeyboard(.interactively)
+                .scrollIndicators(.hidden)
             }
-            Spacer()
             if stage == .form {
                 Button(action: register) {
                     Label("Create account", systemImage: "person.badge.plus")
@@ -60,17 +71,20 @@ struct NameEntryView: View {
         }
         .padding()
         .greeneryBackground(.onboarding)
+        .toolbar {
+            // The phone pad has no return key; this puts the keyboard away.
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focus = nil }
+                    .accessibilityIdentifier("onboarding.keyboardDone")
+            }
+        }
         .onAppear { focus = .name }
     }
 
     private var form: some View {
         VStack(alignment: .leading, spacing: 20) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Create your account").font(.largeTitle.weight(.bold))
-                Text("Join the leaderboard and compete with your friends for the greenest footprint.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
+            Text("Create your account").font(.largeTitle.weight(.bold))
             competitors
             GlassCard {
                 VStack(alignment: .leading, spacing: 14) {
@@ -101,11 +115,11 @@ struct NameEntryView: View {
                             .padding(12)
                             .background(.background.opacity(0.6), in: .rect(cornerRadius: 12))
                             .accessibilityIdentifier("onboarding.phone")
-                        Label(phoneValid ? "Optional. We'll text you a greener idea right before a meal that's been heavy on carbon."
-                                         : "Include the area code, e.g. (617) 555-0123.",
-                              systemImage: phoneValid ? "message.badge" : "exclamationmark.circle")
-                            .font(.caption)
-                            .foregroundStyle(phoneValid ? Color.secondary : Theme.danger)
+                        if !phoneValid {
+                            Label("Include the area code, e.g. (617) 555-0123.", systemImage: "exclamationmark.circle")
+                                .font(.caption)
+                                .foregroundStyle(Theme.danger)
+                        }
                     }
                 }
             }
