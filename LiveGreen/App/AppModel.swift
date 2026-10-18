@@ -32,6 +32,8 @@ final class AppModel {
 
     @ObservationIgnored let container: ModelContainer
     @ObservationIgnored private var store: ScanStore { ScanStore(context: container.mainContext) }
+    /// Notes the user left on scans; new scans send a few to identify as weak hints.
+    @ObservationIgnored private(set) lazy var feedback = FeedbackStore(context: container.mainContext)
 
     init(container: ModelContainer, launch: LaunchArguments = LaunchArguments(), secrets: Secrets = Secrets()) {
         let flags = FeatureFlags.load(arguments: launch)
@@ -103,7 +105,8 @@ final class AppModel {
     func makeScanCoordinator(mode: ScanMode? = nil, scene: DemoScene? = nil) -> ScanCoordinator {
         let services = scene.map { self.services.replaying($0) } ?? self.services
         return ScanCoordinator(services: services, profile: profile, mode: mode ?? flags.scanMode,
-                               cache: services.isDemo ? nil : ScanCache(container: container))
+                               cache: services.isDemo ? nil : ScanCache(container: container),
+                               feedback: feedback.identifyHints)
     }
 
     func refreshServices() {

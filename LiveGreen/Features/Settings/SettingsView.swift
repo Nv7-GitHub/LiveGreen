@@ -65,6 +65,8 @@ struct SettingsView: View {
 
             APIKeysSection(drafts: $keyDrafts, revision: $keyRevision)
 
+            ScanFeedbackSection()
+
             Section {
                 NavigationLink {
                     AboutView()

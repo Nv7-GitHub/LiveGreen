@@ -19,6 +19,7 @@ extension ClaudeClient: VisionIdentifier {
         // Barcode/label mode can send hints without a frame; the label text alone then identifies the item.
         var content: [JSONValue] = image.isEmpty ? [] : [ImageBlock.make(image)]
         content.append(["type": "text", "text": .string(Self.identifyUserText(hints: hints, profile: profile, hasPhoto: !image.isEmpty))])
+        if let feedback = ScanFeedback.promptSection(identifyFeedback) { content.append(["type": "text", "text": .string(feedback)]) }
         let reporter = ProgressThrottle(report: progress)
         return try await streamTool(spec, userContent: content, progress: { reporter.update($0) }) { input, _ in
             try ReportComponentsTool.parse(input)
