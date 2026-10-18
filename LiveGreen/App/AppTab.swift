@@ -5,5 +5,4 @@ enum AppTab: Hashable {
     case compare
     case nudges
     case plugs
-    case search
 }
