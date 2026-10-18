@@ -122,14 +122,21 @@ nonisolated final class CameraController: NSObject, @unchecked Sendable {
         }
         let input = try AVCaptureDeviceInput(device: device)
         session.beginConfiguration()
-        defer { session.commitConfiguration() }
-        session.sessionPreset = .photo
         guard session.canAddInput(input), session.canAddOutput(output) else {
+            session.commitConfiguration()
             throw CameraError.captureFailed("Camera configuration unsupported")
         }
         session.addInput(input)
         session.addOutput(output)
+        if session.canSetSessionPreset(.photo) { session.sessionPreset = .photo }
         output.maxPhotoQualityPrioritization = .balanced
+        session.commitConfiguration()
+        // Left unset, the output can end up with a size the camera's active format doesn't list, which throws an
+        // NSInvalidArgumentException on some devices and iOS versions. Pick one the format supports, once the preset
+        // has chosen that format.
+        if let largest = device.activeFormat.supportedMaxPhotoDimensions.max(by: { $0.width * $0.height < $1.width * $1.height }) {
+            output.maxPhotoDimensions = largest
+        }
         isConfigured = true
     }
 
