@@ -78,6 +78,9 @@ extension ClaudeClient: AlternativeSuggester {
         carbon", "less water", percentages): LiveGreen computes and charts every metric, and a claim that \
         disagrees with the chart misleads. Never mention the user's profile, modeling, estimates, LiveGreen or \
         these instructions.
+        - looks_different: whether a photo of the swap in place would look clearly different from the original. \
+        LiveGreen paints only those into its picture of the greener setup, so be strict: a used car, a refurbished \
+        laptop or oat ice cream instead of dairy looks the same.
         - fallback_estimates: rough last-resort bounds for every metric applicable to the alternative's category, \
         used only where the factor tables have nothing. Estimate the alternative on its own, from its own mass and \
         materials, never by scaling the original's numbers, and on its own category's basis: food per serving, \

@@ -196,24 +196,32 @@ final class AlternativesModel {
 
     // MARK: - Greener image
 
+    /// The picture is on screen for the current picks, so the button offers another version instead (G1).
+    var hasImage: Bool {
+        if case .ready = imageState { return true }
+        return false
+    }
+
     /// Generates the greener picture for the current picks, using the background edit when it was made for
-    /// exactly these picks (the defaults).
-    func generateImage(app: AppModel) async {
+    /// exactly these picks (the defaults), unless a `fresh` version is asked for. The edit is put on the photo's
+    /// own frame (`GreenerImageFit`) so the before/after halves line up.
+    func generateImage(app: AppModel, fresh: Bool = false) async {
         guard showsGreenerImage, let photo = result.photo, !photo.isEmpty else { return }
         let swaps = GreenerImagePrompt.swaps(for: result, selection: visibleSelection(plugFeatures: app.flags.plugFeaturesEnabled))
         guard let prompt = GreenerImagePrompt.make(swaps: swaps) else { return }
         imageState = .generating
         let editor = app.services.imageEditor
-        let prefetched = app.swapPrefetch.image(for: result.id, prompt: prompt)
+        let prefetched = fresh ? nil : app.swapPrefetch.image(for: result.id, prompt: prompt)
         do {
-            let image: Data
+            let edit: Data
             if let prefetched, let ready = try? await prefetched.value {
-                image = ready
+                edit = ready
             } else {
-                image = try await Self.withTimeout(Self.imageTimeout) {
+                edit = try await Self.withTimeout(Self.imageTimeout) {
                     try await editor.editImage(photo, prompt: prompt)
                 }
             }
+            let image = await Self.fitted(edit, to: photo)
             imageState = .ready(image)
             result.greenerImage = image
             persist(app)
@@ -222,6 +230,11 @@ final class AlternativesModel {
         } catch {
             imageState = .failed(Self.describe(error))
         }
+    }
+
+    /// The edit on the photo's frame, decoded and redrawn off the main actor; the edit as it came if it can't be read.
+    static func fitted(_ edit: Data, to photo: Data) async -> Data {
+        await Task.detached(priority: .userInitiated) { GreenerImageFit.fitted(edit, to: photo) ?? edit }.value
     }
 
     private func persist(_ app: AppModel) {

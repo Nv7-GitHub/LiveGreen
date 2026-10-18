@@ -47,9 +47,15 @@ enum SuggestAlternativesTool {
             reusable's life). Null when it lasts about as long; a used or refurbished item is compared over the \
             original's years.
             """),
+        "looks_different": ["type": "boolean", "description": """
+            True when a photo of the swap in place would look clearly different from the original: another kind of \
+            object, material or food (a steel tumbler for a paper cup, tofu for chicken). False when it would look \
+            about the same: the same item second-hand or refurbished, oat ice cream for dairy ice cream, the same \
+            device used differently.
+            """],
         "fallback_estimates": SchemaParts.estimates,
     ], required: ["name", "category", "rationale", "cost", "effort", "identifiers", "quantities", "usage", "condition",
-                  "reusable", "lifespan_years", "fallback_estimates"])
+                  "reusable", "lifespan_years", "looks_different", "fallback_estimates"])
 
     static func parse(_ input: JSONValue, components: [Component]) throws -> [AlternativeSuggestion] {
         let decoder = JSONDecoder()
@@ -93,6 +99,7 @@ enum SuggestAlternativesTool {
         var condition: String?
         var reusable: Bool?
         var lifespanYears: Double?
+        var looksDifferent: Bool?
         var fallbackEstimates: [EstimatePayload]?
 
         /// A condition or reuse flag left out is read from the name ("Used …", "Reusable …"). A reusable is filed
@@ -113,7 +120,8 @@ enum SuggestAlternativesTool {
                 fallbackEstimates: EstimatePayload.table(fallbackEstimates ?? [], for: category),
                 condition: condition.flatMap { Alternative.Condition(rawValue: $0.lowercased()) } ?? Alternative.Condition(name: name),
                 isReusable: isReusable,
-                lifespanYears: lifespanYears.flatMap { $0.isFinite && $0 > 0 ? $0 : nil })
+                lifespanYears: lifespanYears.flatMap { $0.isFinite && $0 > 0 ? $0 : nil },
+                looksDifferent: looksDifferent)
         }
     }
 }

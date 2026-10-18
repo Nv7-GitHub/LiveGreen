@@ -1,10 +1,13 @@
 import SwiftUI
 import UIKit
+import ImageIO
 
 /// The greener-setup picture: shimmer while generating, retry on failure, before/after slider when ready.
 struct GreenerImageView: View {
     let original: Data
     let state: AlternativesModel.ImageState
+    /// Where the slider's divider settles so the swapped items show on the greener side.
+    var reveal: Double = 0.5
     let onRetry: () -> Void
 
     var body: some View {
@@ -34,33 +37,42 @@ struct GreenerImageView: View {
                 }
             }
         case let .ready(greener):
-            BeforeAfterSlider(before: original, after: greener)
+            BeforeAfterSlider(before: original, after: greener, reveal: reveal)
         }
     }
 
     private func photo(_ data: Data) -> some View {
         DecodedImage(data: data).aspectRatio(contentMode: .fit)
+            .frame(maxHeight: BeforeAfterSlider.maxHeight)
     }
 }
 
-/// Drag the glass handle to wipe between the original photo and the greener one.
+/// Drag the glass handle to wipe between the original photo and the greener one. Both are drawn into one frame with
+/// the photo's proportions, so they line up (G3): the greener edit is redrawn on the photo's frame when it arrives
+/// (`GreenerImageFit`), and an older saved one is stretched to it. It opens on the original and wipes to `reveal`,
+/// the divider left of every swapped item.
 struct BeforeAfterSlider: View {
     let before: Data
     let after: Data
-    @State private var split: CGFloat = 0.5
+    var reveal: Double = 0.5
+    @State private var split: CGFloat = 1
+    @State private var revealed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private static let space = "beforeAfter"
+    /// A tall screenshot stays within one screen, so both tags and the handle are visible together.
+    static let maxHeight: CGFloat = 540
 
     var body: some View {
-        DecodedImage(data: after)
-            .aspectRatio(contentMode: .fit)
+        Color.clear
+            .aspectRatio(Self.aspectRatio(of: before) ?? 4 / 3, contentMode: .fit)
             .overlay {
                 GeometryReader { proxy in
                     let x = proxy.size.width * split
                     ZStack(alignment: .topLeading) {
-                        DecodedImage(data: before)
-                            .scaledToFill()
+                        DecodedImage(data: after)
                             .frame(width: proxy.size.width, height: proxy.size.height)
-                            .clipped()
+                        DecodedImage(data: before)
+                            .frame(width: proxy.size.width, height: proxy.size.height)
                             .mask(alignment: .leading) { Rectangle().frame(width: x) }
                         Rectangle()
                             .fill(.white.opacity(0.9))
@@ -81,7 +93,9 @@ struct BeforeAfterSlider: View {
                     }
                 }
             }
+            .frame(maxHeight: Self.maxHeight)
             .clipShape(.rect(cornerRadius: Theme.cardCornerRadius))
+            .frame(maxWidth: .infinity)
             .accessibilityElement()
             .accessibilityLabel("Before and after comparison")
             .accessibilityValue("\(Int(split * 100))% original")
@@ -92,6 +106,27 @@ struct BeforeAfterSlider: View {
                 @unknown default: break
                 }
             }
+            .task {
+                guard !revealed else { return }
+                revealed = true
+                if reduceMotion {
+                    split = reveal
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(400))
+                withAnimation(.easeInOut(duration: 1.1)) { split = reveal }
+            }
+    }
+
+    /// Width over height of the photo as shown, read from its header without decoding it.
+    static func aspectRatio(of data: Data) -> CGFloat? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? Double,
+              let height = properties[kCGImagePropertyPixelHeight] as? Double, width > 0, height > 0 else { return nil }
+        // EXIF orientations 5–8 are rotated a quarter turn.
+        let rotated = (properties[kCGImagePropertyOrientation] as? Int).map { (5...8).contains($0) } ?? false
+        return rotated ? height / width : width / height
     }
 
     private var handle: some View {

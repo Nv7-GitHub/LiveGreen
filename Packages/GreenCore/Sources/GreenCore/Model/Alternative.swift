@@ -65,12 +65,16 @@ public struct Alternative: Codable, Sendable, Hashable, Identifiable {
     /// Years the swap is kept when that differs from the original (a laptop kept longer, a product built to last);
     /// nil to compare it over the original's lifespan.
     public var lifespanYears: Double?
+    /// The suggester's judgement of whether a photo of the swap in place would look clearly different from the
+    /// original; nil in swaps saved by older builds and from suggesters that do not say (`changesTheLook`).
+    public var looksDifferent: Bool?
 
     public init(id: UUID = UUID(), kind: Kind = .product, name: String, category: Category,
                 identifiers: Identifiers = Identifiers(), quantities: Quantities = Quantities(),
                 usage: UsageProfile? = nil, rationale: String, practicality: Practicality = Practicality(),
                 metrics: [MetricKey: Measured] = [:], fallbackEstimates: [MetricKey: EstimateRange] = [:],
-                condition: Condition = .new, isReusable: Bool = false, lifespanYears: Double? = nil) {
+                condition: Condition = .new, isReusable: Bool = false, lifespanYears: Double? = nil,
+                looksDifferent: Bool? = nil) {
         self.id = id
         self.kind = kind
         self.name = name
@@ -85,10 +89,11 @@ public struct Alternative: Codable, Sendable, Hashable, Identifiable {
         self.condition = condition
         self.isReusable = isReusable
         self.lifespanYears = lifespanYears
+        self.looksDifferent = looksDifferent
     }
 
-    /// Swaps saved before `condition`, `isReusable` and `lifespanYears` existed decode as new, single-use and on
-    /// the original's lifespan.
+    /// Swaps saved before `condition`, `isReusable`, `lifespanYears` and `looksDifferent` existed decode as new,
+    /// single-use, on the original's lifespan and with no judgement of their look.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
@@ -105,6 +110,7 @@ public struct Alternative: Codable, Sendable, Hashable, Identifiable {
         condition = try container.decodeIfPresent(Condition.self, forKey: .condition) ?? .new
         isReusable = try container.decodeIfPresent(Bool.self, forKey: .isReusable) ?? false
         lifespanYears = try container.decodeIfPresent(Double.self, forKey: .lifespanYears)
+        looksDifferent = try container.decodeIfPresent(Bool.self, forKey: .looksDifferent)
     }
 
     /// The category a swap is scored in. A reusable given as packaging or personal care is a durable household
@@ -120,6 +126,21 @@ public struct Alternative: Codable, Sendable, Hashable, Identifiable {
     public var isPurchase: Bool {
         kind == .smartPlugScheduling || condition != .new || name.lowercased().hasPrefix("buy ")
     }
+
+    /// Whether the swap would show in a photo of the scene, so the greener picture has something to draw (G2): the
+    /// suggester's judgement when it gave one; otherwise not for the smart plug, a second-hand copy of the same kind of
+    /// item (a used car looks like the car) or a change in how something is used ("Keep it two more years").
+    public var changesTheLook: Bool {
+        if kind == .smartPlugScheduling { return false }
+        if let looksDifferent { return looksDifferent }
+        if condition != .new { return false }
+        let lowered = name.lowercased()
+        return !Self.behaviourPrefixes.contains { lowered.hasPrefix($0) }
+    }
+
+    /// How swaps that change a habit rather than an object start.
+    static let behaviourPrefixes = ["keep ", "repair", "fix ", "line-dry", "line dry", "air-dry", "air dry", "unplug",
+                                    "turn ", "run ", "wash ", "set ", "lower ", "use less", "use it", "share "]
 
     // MARK: - Safety gear
 
