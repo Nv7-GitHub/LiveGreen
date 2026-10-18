@@ -109,6 +109,7 @@ struct ScanResultView: View {
                 if !pendingQuestions.isEmpty { questionsBanner }
                 componentList
                 alternativesButton
+                ScanFeedbackCard(result: current)
             }
             .padding(.horizontal)
             .padding(.top, 4)

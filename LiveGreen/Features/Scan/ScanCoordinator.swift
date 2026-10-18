@@ -19,11 +19,15 @@ final class ScanCoordinator: ScanCoordinating {
     @ObservationIgnored let pipeline: ScanPipeline
     private(set) var latestResult: ScanResult?
 
-    init(services: ServiceContainer, profile: UserProfile, mode: ScanMode, cache: (any ResolutionCache)? = nil) {
+    /// - Parameter feedback: notes from earlier scans; identify gets the most relevant few as weak hints.
+    init(services: ServiceContainer, profile: UserProfile, mode: ScanMode, cache: (any ResolutionCache)? = nil,
+         feedback: [ScanFeedback] = []) {
         self.services = services
         self.profile = profile
         self.mode = mode
-        pipeline = services.pipeline(profile: profile, cache: cache)
+        var pipeline = services.pipeline(profile: profile, cache: cache)
+        pipeline.feedback = feedback
+        self.pipeline = pipeline
     }
 
     func scan(image: Data, hints: OCRHints) -> AsyncThrowingStream<PipelineEvent, Error> {

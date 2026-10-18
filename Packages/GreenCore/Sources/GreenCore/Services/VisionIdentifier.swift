@@ -13,12 +13,22 @@ public protocol VisionIdentifier: Sendable {
     /// use the default, which reports nothing.
     func identify(image: Data, hints: OCRHints, profile: UserProfile,
                   progress: @escaping @Sendable (IdentifyProgress) -> Void) async throws -> IdentifyResponse
+
+    /// Same streaming call with notes the user left on earlier scans, which the model may take as weak hints
+    /// (`ScanFeedback.promptSection`). Identifiers that cannot use them keep the default, which ignores them.
+    func identify(image: Data, hints: OCRHints, profile: UserProfile, feedback: [ScanFeedback],
+                  progress: @escaping @Sendable (IdentifyProgress) -> Void) async throws -> IdentifyResponse
 }
 
 extension VisionIdentifier {
     public func identify(image: Data, hints: OCRHints, profile: UserProfile,
                          progress: @escaping @Sendable (IdentifyProgress) -> Void) async throws -> IdentifyResponse {
         try await identify(image: image, hints: hints, profile: profile)
+    }
+
+    public func identify(image: Data, hints: OCRHints, profile: UserProfile, feedback: [ScanFeedback],
+                         progress: @escaping @Sendable (IdentifyProgress) -> Void) async throws -> IdentifyResponse {
+        try await identify(image: image, hints: hints, profile: profile, progress: progress)
     }
 }
 

@@ -10,6 +10,8 @@ public struct ScanPipeline: Sendable {
     public var ladder: EvidenceLadder
     public var engine: ImpactEngine
     public var profile: UserProfile
+    /// Notes the user left on earlier scans; identify gets the few most relevant as weak hints.
+    public var feedback: [ScanFeedback] = []
 
     /// The ladder phases and the progress step each one reports.
     static let phases: [(step: PipelineStep, tiers: ClosedRange<Tier>)] = [
@@ -189,14 +191,15 @@ public struct ScanPipeline: Sendable {
 
     private func identifyWithRetry(image: Data, hints: OCRHints,
                                    progress: @escaping @Sendable (IdentifyProgress) -> Void) async throws -> IdentifyResponse {
+        let notes = ScanFeedback.relevant(feedback, to: hints)
         do {
-            return try await vision.identify(image: image, hints: hints, profile: profile, progress: progress)
+            return try await vision.identify(image: image, hints: hints, profile: profile, feedback: notes, progress: progress)
         } catch is CancellationError {
             throw CancellationError()
         } catch GreenCoreError.missingAPIKey(let key) {
             throw GreenCoreError.missingAPIKey(key)
         } catch {
-            return try await vision.identify(image: image, hints: hints, profile: profile, progress: progress)
+            return try await vision.identify(image: image, hints: hints, profile: profile, feedback: notes, progress: progress)
         }
     }
 

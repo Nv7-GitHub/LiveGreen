@@ -16,6 +16,7 @@ extension GrokAnalysisClient: VisionIdentifier {
                             "image_url": .string("data:\(ImageBlock.mediaType(of: image));base64,\(image.base64EncodedString())")])
         }
         content.append(["type": "input_text", "text": .string(ClaudeClient.identifyUserText(hints: hints, profile: profile, hasPhoto: !image.isEmpty))])
+        if let feedback = ScanFeedback.promptSection(identifyFeedback) { content.append(["type": "input_text", "text": .string(feedback)]) }
         let reporter = ProgressThrottle(report: progress)
         return try await respond(model: configuration.identifyModel,
                                  instructions: ClaudeClient.identifySystemPrompt(vocabulary: configuration.vocabulary,
