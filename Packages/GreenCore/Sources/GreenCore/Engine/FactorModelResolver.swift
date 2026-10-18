@@ -91,4 +91,18 @@ public struct FactorModelResolver: MetricResolver {
         let mass = component.category == .packaging ? (q.packagingMassG ?? q.massKg.map { $0 * 1000 }) : q.packagingMassG
         return MaterialBlend(materials: component.identifiers.materials, massG: mass ?? 0, store: store)
     }
+
+    /// The materials that are thrown away rather than used up.
+    func discarded(_ materials: [MaterialShare]) -> [MaterialShare] {
+        materials.filter { store.materialFactor(material: $0.material)?.isConsumed != true }
+    }
+
+    /// Outside food, a product's own liquid tagged as food (`food_organic`) is its formula: food has no production
+    /// footprint here and would make a cleaner read as compost.
+    func outsideFood(_ materials: [MaterialShare]) -> [MaterialShare] {
+        materials.map { share in
+            store.materialFactor(material: share.material)?.endOfLife.material == "food_organic"
+                ? MaterialShare(material: "detergent_formula", percent: share.percent) : share
+        }
+    }
 }

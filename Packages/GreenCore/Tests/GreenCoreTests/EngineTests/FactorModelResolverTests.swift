@@ -32,8 +32,8 @@ struct FactorModelResolverTests {
         let output = try await resolve(cup)
         #expect(abs(try #require(output.metrics[.plasticMass]).value - 0.6) < 1e-9)
         #expect(abs(try #require(output.metrics[.recyclablePercent]).value - (0.95 * 68.2 + 0.05 * 4.0)) < 1e-9)
-        // The 5% polyethylene lining (20 years) outlasts the paperboard.
-        #expect(try #require(output.metrics[.decompositionTime]).value == 20)
+        // Mass-weighted: the paperboard (0.2 years) with its 5% polyethylene lining (20 years).
+        #expect(abs(try #require(output.metrics[.decompositionTime]).value - (0.95 * 0.2 + 0.05 * 20)) < 1e-9)
         #expect(abs(try #require(output.metrics[.carbon]).value - (0.95 * 0.012 * 1.1 + 0.05 * 0.012 * 1.9)) < 1e-9)
     }
 

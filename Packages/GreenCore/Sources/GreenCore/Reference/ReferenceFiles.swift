@@ -76,6 +76,8 @@ struct MaterialRecordFile: Decodable {
     var resinCode: Int?
     var kgCO2ePerKg: Double
     var litersPerKg: Double
+    var inert: Bool?
+    var consumed: Bool?
     var verified: Bool
     var citation: Source
 
@@ -83,7 +85,8 @@ struct MaterialRecordFile: Decodable {
         MaterialFactor(
             endOfLife: MaterialEndOfLife(material: material, decompositionYears: decompositionYears,
                                          recyclablePercent: recyclablePercent, isPlastic: isPlastic, citation: citation),
-            resinCode: resinCode, kgCO2ePerKg: kgCO2ePerKg, litersPerKg: litersPerKg, verified: verified)
+            resinCode: resinCode, kgCO2ePerKg: kgCO2ePerKg, litersPerKg: litersPerKg, isInert: inert ?? false,
+            isConsumed: consumed ?? false, verified: verified)
     }
 }
 

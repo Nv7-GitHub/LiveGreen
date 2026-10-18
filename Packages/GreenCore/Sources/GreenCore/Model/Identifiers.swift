@@ -37,6 +37,10 @@ public struct Identifiers: Codable, Sendable, Hashable {
     /// What the identification rests on, in a few words (legible text, design cues).
     public var appearanceCues: String?
     public var materials: [MaterialShare]
+    /// The container or wrapping thrown away after use (a drink's cup, lid and straw, a cleaner's bottle), the
+    /// split that `Quantities.packagingMassG` weighs. Food, drinks and filled household or personal-care products
+    /// only. Nil when identify did not say (older scans); the item's own materials then stand in.
+    public var packagingMaterials: [MaterialShare]?
     public var ocrText: String?
     /// The kind of item when nothing more specific identifies it (see `genericKey(name:category:)`). Set by
     /// the scan pipeline, never by the AI, so the same kind of item resolves to the same numbers.
@@ -44,7 +48,8 @@ public struct Identifiers: Codable, Sendable, Hashable {
 
     public init(gtin: String? = nil, brand: String? = nil, model: String? = nil, modelLine: String? = nil,
                 confidence: IdentificationConfidence? = nil, appearanceCues: String? = nil,
-                materials: [MaterialShare] = [], ocrText: String? = nil, genericKey: String? = nil) {
+                materials: [MaterialShare] = [], packagingMaterials: [MaterialShare]? = nil, ocrText: String? = nil,
+                genericKey: String? = nil) {
         self.gtin = gtin
         self.brand = brand
         self.model = model
@@ -52,6 +57,7 @@ public struct Identifiers: Codable, Sendable, Hashable {
         self.confidence = confidence
         self.appearanceCues = appearanceCues
         self.materials = materials
+        self.packagingMaterials = packagingMaterials
         self.ocrText = ocrText
         self.genericKey = genericKey
     }

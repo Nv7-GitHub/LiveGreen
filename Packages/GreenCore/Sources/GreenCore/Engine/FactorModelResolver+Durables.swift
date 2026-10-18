@@ -133,6 +133,17 @@ extension FactorModelResolver {
 
     // MARK: Household goods (per item lifetime)
 
+    /// Items this heavy (vehicles, machinery) are scrapped, not left to break down, so they get no decomposition time.
+    static let scrappedMassG = 300_000.0
+
+    /// Carbon and water need production data for nearly all of the mass; the rest is scaled like the known part.
+    static let minModelledShare = 0.9
+
+    /// A filled product (a cleaner, a detergent) is its contents plus the container `packagingMassG` weighs, as for
+    /// personal care: identify reports the contents in `materials` (`detergent_formula`) and the container in
+    /// `packagingMaterials`, and only the container counts at end of life. Older answers described just the
+    /// container in `materials` for a liquid product; its contents are then unknown, so carbon is left to better
+    /// evidence instead of pricing the whole bottle as plastic. Anything else is one blend over its whole mass.
     func household(_ component: Component) -> ResolverOutput {
         let q = component.quantities
         var metrics: [MetricKey: Measured] = [:]
@@ -141,13 +152,37 @@ extension FactorModelResolver {
                                                        sources: [device.defaults.citation])
         }
         let massG = (q.massKg ?? 0) * 1000
-        if let blend = MaterialBlend(materials: component.identifiers.materials, massG: massG, store: store) {
-            metrics.merge(blend.endOfLifeMetrics()) { current, _ in current }
-            metrics[.carbon] = FactorRanges.relative(blend.kgCO2e, 0.4, unit: .kgCO2e, sources: blend.sources)
-            metrics[.water] = FactorRanges.relative(blend.liters, 0.5, unit: .liters, sources: blend.sources)
+        let materials = outsideFood(component.identifiers.materials)
+        let packagingG = massG > 0 ? min(max(q.packagingMassG ?? 0, 0), massG) : max(q.packagingMassG ?? 0, 0)
+        let packaging = discarded(component.identifiers.packagingMaterials ?? [])
+        let usesUp = materials.contains { store.materialFactor(material: $0.material)?.isConsumed == true }
+        var container: MaterialBlend?
+        var contents: MaterialBlend?
+        var contentsKnown = true
+        if packagingG > 0, !packaging.isEmpty {
+            container = MaterialBlend(materials: packaging, massG: packagingG, store: store)
+            contents = MaterialBlend(materials: materials, massG: massG - packagingG, store: store)
+            contentsKnown = contents != nil || massG <= packagingG
+        } else if packagingG > 0, (q.volumeLiters ?? 0) > 0, !usesUp {
+            container = MaterialBlend(materials: materials, massG: packagingG, store: store)
+            contentsKnown = false
+        } else {
+            contents = MaterialBlend(materials: materials, massG: massG, store: store)
+        }
+        var packagingShare = 0.0
+        if let blend = MaterialBlend(combining: [container, contents].compactMap { $0 }) {
+            var endOfLife = blend.endOfLifeMetrics()
+            if massG >= Self.scrappedMassG { endOfLife[.decompositionTime] = nil }
+            metrics.merge(endOfLife) { current, _ in current }
+            if blend.plasticG > 0 { packagingShare = (container?.plasticG ?? 0) / blend.plasticG }
+            if contentsKnown, blend.modelledShare >= Self.minModelledShare {
+                let scale = 1 / blend.modelledShare
+                metrics[.carbon] = FactorRanges.relative(blend.kgCO2e * scale, 0.4, unit: .kgCO2e, sources: blend.sources)
+                metrics[.water] = FactorRanges.relative(blend.liters * scale, 0.5, unit: .liters, sources: blend.sources)
+            }
         }
         guard !metrics.isEmpty else { return .empty }
         return ResolverOutput(metrics: metrics, stageShares: metrics[.carbon] == nil ? [:] : StageModel.defaultCarbonShares(for: .household),
-                              plasticPackagingShare: metrics[.plasticMass] == nil ? nil : 0)
+                              plasticPackagingShare: metrics[.plasticMass] == nil ? nil : packagingShare)
     }
 }

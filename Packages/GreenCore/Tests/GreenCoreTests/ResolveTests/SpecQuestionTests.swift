@@ -25,9 +25,9 @@ struct SpecQuestionTests {
     /// The AI knew the garment but not its fiber or weight.
     static let shirt = IdentifiedComponent(name: "Graphic T-shirt", category: .clothing, boundingBox: .full,
                                            defaultUsage: UsageProfile(wearsPerYear: 40), estimates: est(8))
-    /// "ceramic" is not a reference material.
+    /// "enamel" is not a reference material.
     static let mug = IdentifiedComponent(name: "Coffee mug", category: .household, boundingBox: .full,
-                                         identifiers: Identifiers(materials: [MaterialShare(material: "ceramic", percent: 100)]),
+                                         identifiers: Identifiers(materials: [MaterialShare(material: "enamel", percent: 100)]),
                                          quantities: Quantities(massKg: 0.35), estimates: est(2))
     static let stew = IdentifiedComponent(name: "Mystery stew", category: .food, boundingBox: .full,
                                           quantities: Quantities(servingKg: 0.3), defaultUsage: UsageProfile(servingsPerWeek: 1),

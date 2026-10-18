@@ -2,12 +2,10 @@
 struct MaterialBlend {
     struct Part {
         var factor: MaterialFactor
-        /// Fraction of the resolved mass, 0–1.
-        var fraction: Double
+        var grams: Double
     }
 
     let parts: [Part]
-    let massG: Double
 
     /// Resolves material names; nil when under half of the stated share matches a reference material.
     init?(materials: [MaterialShare], massG: Double, store: ReferenceStore) {
@@ -17,29 +15,50 @@ struct MaterialBlend {
         let statedTotal = materials.reduce(0) { $0 + max($1.percent, 0) }
         let resolvedTotal = resolved.reduce(0) { $0 + $1.percent }
         guard massG > 0, statedTotal > 0, resolvedTotal >= statedTotal / 2 else { return nil }
-        parts = resolved.map { Part(factor: $0.factor, fraction: $0.percent / resolvedTotal) }
-        self.massG = massG
+        parts = resolved.map { Part(factor: $0.factor, grams: massG * $0.percent / resolvedTotal) }
     }
+
+    /// Blends side by side, such as a product's contents and its container; nil when none has mass.
+    init?(combining blends: [MaterialBlend]) {
+        let parts = blends.flatMap(\.parts)
+        guard parts.contains(where: { $0.grams > 0 }) else { return nil }
+        self.parts = parts
+    }
+
+    var massG: Double { parts.reduce(0) { $0 + $1.grams } }
+
+    /// What is thrown away at the end: everything but what use consumes (a cleaner's formula).
+    private var discarded: [Part] { parts.filter { !$0.factor.isConsumed } }
 
     var plasticG: Double {
-        parts.filter(\.factor.endOfLife.isPlastic).reduce(0) { $0 + $1.fraction * massG }
+        discarded.filter(\.factor.endOfLife.isPlastic).reduce(0) { $0 + $1.grams }
     }
 
-    var recyclablePercent: Double {
-        parts.reduce(0) { $0 + $1.fraction * $1.factor.endOfLife.recyclablePercent }
+    /// Mass-weighted recycling rate of what is thrown away; nil when everything is used up.
+    var recyclablePercent: Double? {
+        Self.weighted(discarded) { $0.endOfLife.recyclablePercent }
     }
 
-    /// The longest-lived material that is at least 5% of the mass: what lingers decides decomposition.
-    var decompositionYears: Double {
-        parts.filter { $0.fraction >= 0.05 }.map(\.factor.endOfLife.decompositionYears).max() ?? 0
+    /// Mass-weighted decomposition time of what is thrown away, inert materials left out: glass or ceramic
+    /// lingers without polluting. A weighted mean moves smoothly with the split, where the longest-lived material
+    /// flipped between 500 and 1,000,000 years on a few percent of glass. Nil when nothing left breaks down.
+    var decompositionYears: Double? {
+        Self.weighted(discarded.filter { !$0.factor.isInert }) { $0.endOfLife.decompositionYears }
     }
 
     var kgCO2e: Double {
-        parts.reduce(0) { $0 + $1.fraction * massG / 1000 * $1.factor.kgCO2ePerKg }
+        parts.reduce(0) { $0 + $1.grams / 1000 * $1.factor.kgCO2ePerKg }
     }
 
     var liters: Double {
-        parts.reduce(0) { $0 + $1.fraction * massG / 1000 * $1.factor.litersPerKg }
+        parts.reduce(0) { $0 + $1.grams / 1000 * $1.factor.litersPerKg }
+    }
+
+    /// Share of the mass whose production footprint the table models; `electronics_mixed` is listed at 0 because
+    /// material factors cannot price chips and boards.
+    var modelledShare: Double {
+        let total = massG
+        return total > 0 ? parts.filter { $0.factor.kgCO2ePerKg > 0 }.reduce(0) { $0 + $1.grams } / total : 0
     }
 
     var sources: [Source] {
@@ -47,13 +66,25 @@ struct MaterialBlend {
         return parts.map(\.factor.citation).filter { seen.insert($0).inserted }
     }
 
-    /// Plastic, recyclability and decomposition metrics shared by every material-based category.
+    /// Plastic, recyclability and decomposition metrics shared by every material-based category. Recyclability
+    /// and decomposition are left out when nothing is thrown away or nothing breaks down.
     func endOfLifeMetrics() -> [MetricKey: Measured] {
-        [
+        var metrics: [MetricKey: Measured] = [
             .plasticMass: Measured(value: plasticG, relativeRange: 0.3, unit: .grams, tier: .factorModel, sources: sources),
-            .recyclablePercent: FactorRanges.percent(recyclablePercent, spread: 15, sources: sources),
-            .decompositionTime: FactorRanges.multiplicative(decompositionYears, factor: 2, unit: .years, sources: sources),
         ]
+        if let recyclablePercent {
+            metrics[.recyclablePercent] = FactorRanges.percent(recyclablePercent, spread: 15, sources: sources)
+        }
+        if let decompositionYears {
+            metrics[.decompositionTime] = FactorRanges.multiplicative(decompositionYears, factor: 2, unit: .years, sources: sources)
+        }
+        return metrics
+    }
+
+    private static func weighted(_ parts: [Part], _ value: (MaterialFactor) -> Double) -> Double? {
+        let total = parts.reduce(0) { $0 + $1.grams }
+        guard total > 0 else { return nil }
+        return parts.reduce(0) { $0 + $1.grams * value($1.factor) } / total
     }
 }
 
