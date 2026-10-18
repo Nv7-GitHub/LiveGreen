@@ -14,7 +14,7 @@ enum ReportComponentsTool {
         "input_schema": SchemaParts.object([
             "scene_title": SchemaParts.string("1-3 word title for the scene, e.g. 'Desk setup', 'Lunch'."),
             "components": SchemaParts.array(of: component, "Distinct items, most environmentally significant first (max 8)."),
-        ], required: ["scene_title", "components"]),
+        ].merging(sceneExtras) { current, _ in current }, required: ["scene_title", "components", "scene_context"]),
     ]
 
     /// The identify schema with `fallback_estimates` limited to one carbon value, which roughly halves the
@@ -90,12 +90,14 @@ enum ReportComponentsTool {
             throw GreenCoreError.invalidModelOutput("report_components input: \(error)")
         }
         let components = try payload.components.map { try $0.makeIdentified() }
-        return IdentifyResponse(components: components, sceneTitle: payload.sceneTitle?.trimmedNonEmpty)
+        return IdentifyResponse(components: components, sceneTitle: payload.sceneTitle?.trimmedNonEmpty,
+                                sceneContext: payload.sceneContext?.value.flatMap(SceneContext.init(looseRawValue:)))
     }
 
     struct Payload: Decodable {
         var sceneTitle: String?
         var components: [ComponentPayload]
+        var sceneContext: Lenient<String>?
     }
 
     struct ComponentPayload: Decodable {
@@ -110,6 +112,8 @@ enum ReportComponentsTool {
         var needsQuestion: [ComponentQuestion]?
         var anchor: Lenient<NormalizedPoint>?
         var kind: Lenient<String>?
+        var likelyOwned: Lenient<Bool>?
+        var background: Lenient<Bool>?
 
         func makeIdentified() throws -> IdentifiedComponent {
             guard let name = name.trimmedNonEmpty else { throw GreenCoreError.invalidModelOutput("component without a name") }
@@ -125,7 +129,7 @@ enum ReportComponentsTool {
                 estimates: EstimatePayload.table(fallbackEstimates ?? [], for: category),
                 needsQuestion: (needsQuestion ?? []).filter { !$0.options.isEmpty },
                 anchor: anchor?.value.flatMap { $0.x.isFinite && $0.y.isFinite ? $0.clamped : nil },
-                kind: kind?.value?.trimmedNonEmpty)
+                kind: kind?.value?.trimmedNonEmpty, likelyOwned: likelyOwned?.value, background: background?.value)
         }
     }
 

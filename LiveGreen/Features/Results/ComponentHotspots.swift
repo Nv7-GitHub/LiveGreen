@@ -14,6 +14,8 @@ struct ComponentHotspots: View {
     /// Yearly values, shares and numbers, the same basis as the list.
     let breakdown: ScanBreakdown
     let selectedID: Component.ID?
+    /// Items the scan does not count (not the user's, background, removed): grey pins, numbered after the rest.
+    var notCounted: Set<Component.ID> = []
     let onSelect: (Component) -> Void
 
     @State private var revealed = 0
@@ -100,6 +102,10 @@ struct ComponentHotspots: View {
         }
     }
 
+    private func tint(of component: Component) -> Color {
+        notCounted.contains(component.id) ? .gray : Theme.impactTint(level(of: component))
+    }
+
     private func level(of component: Component) -> ImpactLevel? {
         ImpactLevel(yearly: breakdown.yearly(filter.shareMetric, of: component)?.value ?? 0, metric: filter.shareMetric)
     }
@@ -112,7 +118,7 @@ struct ComponentHotspots: View {
                 .font(.footnote.weight(.bold).monospacedDigit())
                 .foregroundStyle(.white)
                 .frame(width: pinSize - 8, height: pinSize - 8)
-                .background(Theme.impactTint(level(of: component)).gradient, in: .circle)
+                .background(tint(of: component).gradient, in: .circle)
                 .overlay {
                     if isSelected { Circle().strokeBorder(.white, lineWidth: 2) }
                 }
@@ -135,7 +141,11 @@ struct ComponentHotspots: View {
             Text(component.name)
                 .font(.caption.weight(.semibold))
                 .lineLimit(2)
-            if let value = breakdown.yearly(filter.shareMetric, of: component), !value.isEffectivelyZero {
+            if notCounted.contains(component.id) {
+                Text("Not counted")
+                    .font(.caption2)
+                    .opacity(0.9)
+            } else if let value = breakdown.yearly(filter.shareMetric, of: component), !value.isEffectivelyZero {
                 Text(value.formattedPerYear)
                     .font(.caption2.monospacedDigit())
                     .opacity(0.9)
@@ -151,8 +161,9 @@ struct ComponentHotspots: View {
     }
 
     private func accessibilityText(_ component: Component, number: Int) -> String {
+        if notCounted.contains(component.id) { return "\(number). \(component.name), not counted" }
         let metric = filter.shareMetric
-        let share = breakdown.share(of: component, metric: metric, in: components)
+        let share = breakdown.share(of: component, metric: metric, in: components.filter { !notCounted.contains($0.id) })
         let value = breakdown.yearly(metric, of: component).map { "\($0.formattedPerYear), " } ?? ""
         let percent = Int((share * 100).rounded())
         return "\(number). \(component.name), \(value)\(percent)% of \(metric.displayName.lowercased()) per year"

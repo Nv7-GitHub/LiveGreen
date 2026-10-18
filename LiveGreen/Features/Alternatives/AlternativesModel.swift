@@ -53,9 +53,11 @@ final class AlternativesModel {
     }
 
     /// The swaps to offer: plug scheduling when plug features are on, product swaps that pass the GreenScore
-    /// trade-off rule (scans saved before it existed may still hold others).
+    /// trade-off rule (scans saved before it existed may still hold others). None for an item the scan does not
+    /// count (`Component.isTotaled`), even if its swaps were fetched before the user said it is not theirs.
     static func alternatives(for component: Component, plugFeatures: Bool) -> [Alternative] {
-        component.alternatives.filter { alternative in
+        guard component.isTotaled else { return [] }
+        return component.alternatives.filter { alternative in
             alternative.kind == .smartPlugScheduling
                 ? plugFeatures : GreenScore.accepts(alternative, replacing: component, engine: SwapMath.engine)
         }

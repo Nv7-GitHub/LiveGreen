@@ -25,6 +25,11 @@ public struct Component: Codable, Sendable, Hashable, Identifiable {
     public var plasticPackagingShare: Double?
     /// A point on the item itself from identify, where its pin points (`pinAnchor`); nil uses the box centre.
     public var anchor: NormalizedPoint?
+    /// Why the scan left the item out of the user's totals (someone else's, background, seen on screen); nil when
+    /// it counts. See `isCounted`.
+    public var exclusion: Exclusion?
+    /// The user's own answer ("Not mine", "Which is yours?"), which overrides `exclusion`; nil until they give one.
+    public var markedOwned: Bool?
 
     public init(id: UUID = UUID(), name: String, category: Category, boundingBox: NormalizedRect = .full,
                 identifiers: Identifiers = Identifiers(), quantities: Quantities = Quantities(),
@@ -32,7 +37,7 @@ public struct Component: Codable, Sendable, Hashable, Identifiable {
                 alternatives: [Alternative] = [], plugCandidate: PlugCandidate? = nil,
                 stageShares: [LifecycleStage: Double] = [:], questions: [ComponentQuestion] = [],
                 fallbackEstimates: [MetricKey: EstimateRange] = [:], plasticPackagingShare: Double? = nil,
-                anchor: NormalizedPoint? = nil) {
+                anchor: NormalizedPoint? = nil, exclusion: Exclusion? = nil, markedOwned: Bool? = nil) {
         self.id = id
         self.name = name
         self.category = category
@@ -48,6 +53,8 @@ public struct Component: Codable, Sendable, Hashable, Identifiable {
         self.fallbackEstimates = fallbackEstimates
         self.plasticPackagingShare = plasticPackagingShare
         self.anchor = anchor
+        self.exclusion = exclusion
+        self.markedOwned = markedOwned
     }
 
     /// Applicable metrics that have not been resolved yet.

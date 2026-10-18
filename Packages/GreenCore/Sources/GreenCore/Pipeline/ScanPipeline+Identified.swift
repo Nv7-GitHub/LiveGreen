@@ -140,10 +140,21 @@ extension ScanPipeline {
 
     /// True when the item's kind or name names a non-textile accessory.
     static func isNonTextileAccessory(_ component: IdentifiedComponent) -> Bool {
-        [component.kind, component.name].compactMap(\.self).contains { text in
+        isNonTextileAccessory(name: component.name, kind: component.kind)
+    }
+
+    static func isNonTextileAccessory(name: String, kind: String?) -> Bool {
+        [kind, name].compactMap(\.self).contains { text in
             ReferenceKey.normalize(text).split(separator: "_")
                 .contains { nonTextileAccessoryWords.contains(Identifiers.singular(String($0))) }
         }
+    }
+
+    /// A cached resolution from before accessories left clothing (a helmet resolved with fibre factors) must not put
+    /// one back into clothing; the item resolves afresh instead.
+    static func acceptsCached(_ hit: Component, for component: Component) -> Bool {
+        hit.category != .clothing || component.category == .clothing
+            || !isNonTextileAccessory(name: component.name, kind: component.identifiers.genericKey)
     }
 
     /// Fills identifiers the model left empty from hints that can only belong to one component: a single GTIN

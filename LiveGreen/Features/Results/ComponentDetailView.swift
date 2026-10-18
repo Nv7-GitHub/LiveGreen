@@ -12,6 +12,8 @@ struct ComponentDetailView: View {
     var plugAction: (() -> Void)?
     /// Called when the user changes a usage field; nil hides the usage editor.
     var onUsageChange: ((UsageField, Double) -> Void)?
+    /// The scan the item belongs to and the "Not mine" / "It's mine" handler; nil hides the ownership card.
+    var ownership: (result: ScanResult, onChange: (Bool?) -> Void)?
 
     @State private var flowMetric: MetricKey?
 
@@ -28,6 +30,9 @@ struct ComponentDetailView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             header
+            if let ownership {
+                OwnershipCard(component: component, result: ownership.result, onChange: ownership.onChange)
+            }
             if let metric = activeFlowMetric, let measured = component.displayable(metric) {
                 GlassCard {
                     VStack(alignment: .leading, spacing: 12) {

@@ -42,8 +42,11 @@ public struct ScanPipeline: Sendable {
         // A barcode scan has no frame; the record's front-of-pack photo stands in for one.
         async let productPhoto: Data? = image.isEmpty ? productPhoto(records) : nil
         let identified = prepared(response.components, hints: hints)
+        let scene = Self.sceneContext(of: response, hints: hints)
         // Component ids derive from the scan id, so a scan's seeded Monte Carlo ranges are reproducible.
-        var components = identified.enumerated().map { $1.makeComponent(id: Self.componentID(scan: id, index: $0)) }
+        var components = identified.enumerated().map {
+            $1.makeComponent(id: Self.componentID(scan: id, index: $0), scene: scene)
+        }
         let deferrable = Dictionary(uniqueKeysWithValues: zip(components.map(\.id), identified.map(\.deferrableLoad)))
         emit(.componentsIdentified(components))
         emit(.stepFinished(.identifying))
@@ -56,7 +59,8 @@ public struct ScanPipeline: Sendable {
         // A cache hit skips the ladder, so the same identifier always gives the same numbers.
         var cachedIDs = Set<UUID>()
         for index in components.indices {
-            if let hit = await ladder.cached(components[index], acceptingEstimates: false) {
+            if let hit = await ladder.cached(components[index], acceptingEstimates: false),
+               Self.acceptsCached(hit, for: components[index]) {
                 components[index] = hit
                 cachedIDs.insert(hit.id)
             }
@@ -69,7 +73,7 @@ public struct ScanPipeline: Sendable {
         // A generic item that still only has an estimate takes the one cached for its kind, so it reads the same.
         for index in components.indices where !cachedIDs.contains(components[index].id)
             && components[index].metrics[.carbon]?.tier == .estimate {
-            if let hit = await ladder.cached(components[index]) {
+            if let hit = await ladder.cached(components[index]), Self.acceptsCached(hit, for: components[index]) {
                 components[index] = hit
                 cachedIDs.insert(hit.id)
             }
@@ -80,16 +84,18 @@ public struct ScanPipeline: Sendable {
         }
 
         components = components.map { completed($0, deferrable: deferrable[$0.id] ?? nil) }
-        let pending = QuestionGate.pendingQuestions(for: components)
+        // Questions are only about items the results add up, never a stranger's car or store stock.
+        let asked = components.filter(\.isTotaled)
+        let pending = QuestionGate.pendingQuestions(for: asked)
         if !pending.isEmpty { emit(.questionsNeeded(pending)) }
         // Items still on a T4 estimate get a few plain detail questions before the results (`refining`).
-        let details = await specQuestions(for: components)
+        let details = await specQuestions(for: asked)
         if !details.isEmpty { emit(.specQuestionsNeeded(details)) }
 
         // Identify had the full photo; the result keeps a smaller copy (`ScanPhoto`).
         var result = ScanResult(id: id, date: date, title: response.sceneTitle ?? components.first?.name ?? "Scan",
                                 mode: mode, photo: image.isEmpty ? await productPhoto : ScanPhoto.stored(image),
-                                components: components)
+                                components: components, sceneContext: scene)
         result.updateTotals(engine: engine)
         return result
     }

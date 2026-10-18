@@ -11,8 +11,9 @@ struct SummaryHeader: View {
 
     private var engine: ImpactEngine { ImpactEngine() }
 
-    /// The items the selected metric covers ("All" keeps every item).
-    private var shown: [Component] { ResultInsights.components(result.components, showing: filter) }
+    /// The counted items the selected metric covers ("All" keeps every counted item). Items the scan leaves out (not
+    /// the user's, background, removed) are listed below the totals, never in them.
+    private var shown: [Component] { ResultInsights.components(result.totaledComponents, showing: filter) }
 
     var body: some View {
         GlassCard {
@@ -36,13 +37,13 @@ struct SummaryHeader: View {
 
     /// Yearly totals saved with the scan; older scans compute them on the fly.
     private var yearlyTotals: [MetricKey: Measured] {
-        result.yearlyTotals.isEmpty ? engine.yearlyTotals(result.components, seed: result.totalsSeed)
+        result.yearlyTotals.isEmpty ? engine.yearlyTotals(result.totaledComponents, seed: result.totalsSeed)
                                     : result.yearlyTotals
     }
 
     /// Yearly totals only for metrics some item shows (see `Component.displayable`), so "0 oz plastic" never appears.
     private func shownYearly(_ metric: MetricKey, in totals: [MetricKey: Measured]) -> Measured? {
-        guard ResultInsights.shows(metric, in: result.components) else { return nil }
+        guard ResultInsights.shows(metric, in: result.totaledComponents) else { return nil }
         return totals[metric]
     }
 
@@ -78,15 +79,31 @@ struct SummaryHeader: View {
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)],
                           alignment: .leading, spacing: 10) {
                     unitTiles(metric)
-                    stat("Items", "\(shown.count)", unit: nil)
+                    itemsTile
                 }
             }
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("summaryTotal")
+        } else if result.totaledComponents.isEmpty {
+            Label("Nothing here counts toward your footprint. Mark an item as yours to count it.",
+                  systemImage: "person.crop.circle.badge.xmark")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("summaryNothingCounted")
         } else {
             Label("No \(metric.displayName.lowercased()) figures for these items", systemImage: metric.systemImage)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    /// How many items the totals cover, and of how many when some are not counted.
+    @ViewBuilder private var itemsTile: some View {
+        let left = result.notCountedComponents.count
+        if left == 0 {
+            stat("Items", "\(shown.count)", unit: nil)
+        } else {
+            stat("Items counted", "\(result.totaledComponents.count)", unit: "of \(result.components.count)")
         }
     }
 

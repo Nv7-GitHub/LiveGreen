@@ -93,7 +93,7 @@ struct AlternativesView: View {
     /// Items with nothing to offer, biggest yearly carbon first, so the main item is never silently missing (S10:
     /// the camera was 92% of the scene and had no card).
     private var itemsWithoutSwaps: [Component] {
-        screen.result.components
+        screen.result.totaledComponents
             .filter { screen.alternatives(for: $0, plugFeatures: plugFeatures).isEmpty }
             .sorted { (SwapMath.yearlyCarbon(of: $0)?.value ?? 0) > (SwapMath.yearlyCarbon(of: $1)?.value ?? 0) }
     }

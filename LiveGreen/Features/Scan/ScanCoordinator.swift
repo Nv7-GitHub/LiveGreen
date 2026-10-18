@@ -73,4 +73,19 @@ final class ScanCoordinator: ScanCoordinating {
         let edits = ImpactEngine().usageEdits(field, value, for: component)
         return pipeline.applying(edits.map { (componentID, $0) }, to: result)
     }
+
+    /// The user said whether one item is theirs ("Not mine", "It's mine"; nil restores the scan's guess): the totals
+    /// are recomputed without the items left out.
+    func markingOwned(_ owned: Bool?, componentID: UUID, in result: ScanResult) -> ScanResult {
+        var updated = result
+        updated.markOwned(owned, componentID: componentID, engine: pipeline.engine)
+        return updated
+    }
+
+    /// "Which is yours?": exactly `owned` are the user's.
+    func markingOwned(only owned: Set<UUID>, in result: ScanResult) -> ScanResult {
+        var updated = result
+        updated.markOwned(only: owned, engine: pipeline.engine)
+        return updated
+    }
 }

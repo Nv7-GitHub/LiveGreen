@@ -4,9 +4,10 @@ extension ScanPipeline {
     /// Asks for greener alternatives and resolves them through the same ladder and engine as the
     /// originals (spec §7), then keeps only swaps without a big trade-off on any metric, best GreenScore
     /// first; deferrable loads also get the local smart-plug alternative. Items the suggester skipped, and the
-    /// biggest item when none of its swaps was kept, get one more try with a note on what was wrong (S10).
+    /// biggest item when none of its swaps was kept, get one more try with a note on what was wrong (S10). Items the
+    /// scan does not count (a stranger's car, store stock, a background bag) get none.
     public func suggestAlternatives(for result: ScanResult) async throws -> ScanResult {
-        let suggestions = try await alternatives.suggestAlternatives(for: result.components, profile: profile)
+        let suggestions = try await alternatives.suggestAlternatives(for: result.totaledComponents, profile: profile)
         var updated = result
         var notes: [UUID: String] = [:]
         for suggestion in suggestions {
@@ -28,7 +29,8 @@ extension ScanPipeline {
                 if !review.kept.isEmpty { updated.components[index].alternatives = review.kept }
             }
         }
-        for index in updated.components.indices where updated.components[index].plugCandidate != nil {
+        for index in updated.components.indices
+        where updated.components[index].plugCandidate != nil && updated.components[index].isTotaled {
             let component = updated.components[index]
             if !component.alternatives.contains(where: { $0.kind == .smartPlugScheduling }) {
                 updated.components[index].alternatives.append(.smartPlugScheduling(for: component))
@@ -81,7 +83,7 @@ extension ScanPipeline {
     /// Who gets a second try: items the suggester left out, and the biggest yearly-carbon item when it has no product
     /// swap left, at most `maxRetries`, biggest first.
     func retryTargets(in result: ScanResult, answered: Set<UUID>) -> [Component] {
-        let byCarbon = result.components.enumerated().sorted { lhs, rhs in
+        let byCarbon = result.totaledComponents.enumerated().sorted { lhs, rhs in
             let (a, b) = (yearlyCarbon(lhs.element), yearlyCarbon(rhs.element))
             return a != b ? a > b : lhs.offset < rhs.offset
         }.map(\.element)

@@ -61,8 +61,8 @@ extension ClaudeClient: VisionIdentifier {
         Components
         - Report up to 8 distinct items, the most environmentally significant first. Group trivial items \
         (e.g. cutlery) or omit them. Ignore people, pets, walls and floors.
-        - Write `scene_title` first, and start each component object with its `name`, so the app can show \
-        items while the answer is still arriving.
+        - Write `scene_title` and `scene_context` first, and start each component object with its `name`, so the app \
+        can show items while the answer is still arriving.
         - A meal is split into its foods and drinks (e.g. burger, fries, cola can), not reported as one plate. List \
         every distinct food you can see, including small sides, grains, egg dishes, sauces and dressings, even when \
         partly out of frame; group only garnishes, or minor ingredients once there are more than 8 items.
@@ -76,6 +76,19 @@ extension ClaudeClient: VisionIdentifier {
         kettle), is `electronic`. `household` is for unpowered goods such as furniture, cookware and cleaning supplies. \
         Shoes, bags and fabric accessories (hats, scarves, belts, gloves) are `clothing`; eyewear, helmets, watches, \
         jewellery and umbrellas are not fabric and are `household`.
+
+        Scene and ownership
+        LiveGreen adds only the user's own things to their footprint, so say whose things these are.
+        - scene_context: own for the user's home, desk, meal or belongings; store_display for products for sale \
+        (shelves, an aisle, a display case or freezer); street for a public place (parked cars, buildings, other \
+        people's things); screenshot when the image is a capture of a phone or computer screen (a status bar, an app \
+        or web page, a social post). Report the items shown in every case; in a screenshot never report interface \
+        elements.
+        - likely_owned: false for an item that is probably not the user's: other people's things (a stranger's \
+        parked car, a neighbour's window unit), store stock and displays, and fixtures of the place (signs, shelving, \
+        a store freezer, street furniture). Omit it for the user's own things.
+        - background: true for an incidental item only partly visible behind or beside what the photo is of (a bag \
+        on the floor behind a notebook on a desk). Omit it otherwise. Report what the photo is of first.
 
         Bounding boxes
         - Normalized to the image: x and y are the box's top-left corner as fractions of width and height \

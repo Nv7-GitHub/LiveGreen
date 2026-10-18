@@ -37,10 +37,13 @@ public struct IdentifyResponse: Codable, Sendable, Hashable {
     public var components: [IdentifiedComponent]
     /// Short scene title, e.g. "Desk setup".
     public var sceneTitle: String?
+    /// Whose things these are likely to be: the user's own, a store display, a street or a screenshot.
+    public var sceneContext: SceneContext?
 
-    public init(components: [IdentifiedComponent], sceneTitle: String? = nil) {
+    public init(components: [IdentifiedComponent], sceneTitle: String? = nil, sceneContext: SceneContext? = nil) {
         self.components = components
         self.sceneTitle = sceneTitle
+        self.sceneContext = sceneContext
     }
 }
 
@@ -61,11 +64,17 @@ public struct IdentifiedComponent: Codable, Sendable, Hashable {
     public var anchor: NormalizedPoint?
     /// The plain generic noun for what the item is ("backpack"), which its generic key prefers over the name.
     public var kind: String?
+    /// False when identify judged the item not the user's (someone else's, store stock, a fixture); nil when it
+    /// did not say.
+    public var likelyOwned: Bool?
+    /// True for an incidental item only partly visible behind what the photo is of.
+    public var background: Bool?
 
     public init(name: String, category: Category, boundingBox: NormalizedRect, identifiers: Identifiers = Identifiers(),
                 quantities: Quantities = Quantities(), defaultUsage: UsageProfile? = nil,
                 deferrableLoad: DeferrableLoadType? = nil, estimates: [MetricKey: EstimateRange] = [:],
-                needsQuestion: [ComponentQuestion] = [], anchor: NormalizedPoint? = nil, kind: String? = nil) {
+                needsQuestion: [ComponentQuestion] = [], anchor: NormalizedPoint? = nil, kind: String? = nil,
+                likelyOwned: Bool? = nil, background: Bool? = nil) {
         self.name = name
         self.category = category
         self.boundingBox = boundingBox
@@ -77,12 +86,16 @@ public struct IdentifiedComponent: Codable, Sendable, Hashable {
         self.needsQuestion = needsQuestion
         self.anchor = anchor
         self.kind = kind
+        self.likelyOwned = likelyOwned
+        self.background = background
     }
 
-    /// Converts to an unresolved `Component` (no metrics yet).
-    public func makeComponent(id: UUID = UUID()) -> Component {
+    /// Converts to an unresolved `Component` (no metrics yet), left out of the user's totals when `scene` and
+    /// identify's ownership call say so (`exclusion(in:)`).
+    public func makeComponent(id: UUID = UUID(), scene: SceneContext? = nil) -> Component {
         Component(id: id, name: name, category: category, boundingBox: boundingBox.clamped,
                   identifiers: identifiers, quantities: quantities, usage: defaultUsage,
-                  questions: needsQuestion, fallbackEstimates: estimates, anchor: anchor?.clamped)
+                  questions: needsQuestion, fallbackEstimates: estimates, anchor: anchor?.clamped,
+                  exclusion: exclusion(in: scene))
     }
 }
