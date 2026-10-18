@@ -135,7 +135,9 @@ private struct SankeyDrawing {
 
     private func drawLabel(_ part: (stage: LifecycleStage, share: Double), at point: CGPoint,
                            in context: inout GraphicsContext) {
-        let value = Measured.format(total.displayValue * part.share)
+        // The header's unit (`Measured.formatted`), so a 0.12 oz CO₂e item's stages read in ounces too.
+        let scale = total.displayScale
+        let value = Measured.format(total.value * scale.factor * part.share, resolution: scale.resolution)
         let name = Text(part.stage.flowLabel).font(.caption2.weight(.semibold))
         let detail = Text("\(value) · \(Int((part.share * 100).rounded()))%")
             .font(.caption2.monospacedDigit())

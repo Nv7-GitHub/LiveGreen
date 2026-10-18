@@ -111,12 +111,12 @@ struct SummaryHeader: View {
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.secondary)
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(Measured.format(headline.displayValue))
+                        Text(headline.formattedNumber)
                             .font(.system(size: 52, weight: .bold, design: .rounded).monospacedDigit())
                             .contentTransition(.numericText())
                             .minimumScaleFactor(0.5)
                             .lineLimit(1)
-                        Text(headline.displaySymbol)
+                        Text(headline.displayScale.symbol)
                             .font(.title3.weight(.semibold))
                             .foregroundStyle(.secondary)
                     }
@@ -125,9 +125,9 @@ struct SummaryHeader: View {
                         .foregroundStyle(.secondary)
                 }
                 HStack(spacing: 10) {
-                    if perYear != nil { stat(perItemTitle, Measured.format(total.displayValue), unit: total.displaySymbol) }
+                    if perYear != nil { stat(perItemTitle, total.formattedNumber, unit: total.displayScale.symbol) }
                     if let repeats = repeatPurchases(metric) {
-                        stat("Per year, re-buying", Measured.format(repeats.displayValue), unit: repeats.displaySymbol)
+                        stat("Per year, re-buying", repeats.formattedNumber, unit: repeats.displayScale.symbol)
                     }
                     stat("Items", "\(ResultInsights.components(result.components, showing: filter).count)", unit: nil)
                 }
@@ -167,8 +167,8 @@ struct SummaryHeader: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         HStack(alignment: .firstTextBaseline, spacing: 3) {
-                            Text(Measured.format(shown.displayValue)).font(.title3.weight(.bold).monospacedDigit())
-                            Text(shown.displaySymbol).font(.caption).foregroundStyle(.secondary)
+                            Text(shown.formattedNumber).font(.title3.weight(.bold).monospacedDigit())
+                            Text(shown.displayScale.symbol).font(.caption).foregroundStyle(.secondary)
                         }
                         Text(metric == .carbon || metric == .yearlyElectricity ? "per year" : "as pictured")
                             .font(.caption2)
