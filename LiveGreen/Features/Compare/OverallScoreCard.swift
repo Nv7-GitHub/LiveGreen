@@ -18,12 +18,24 @@ struct OverallScoreCard: View {
                 Label("Overall GreenScore", systemImage: "trophy")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                HStack(spacing: 6) {
+                    // The score sits in an olive wreath, open at the top like a victor's laurel.
                     Text("\(score.points)")
-                        .font(.system(size: 56, weight: .bold, design: .rounded))
+                        .font(.system(size: 52, weight: .bold, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(Theme.leaf)
                         .contentTransition(.numericText(value: Double(score.points)))
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
+                        .frame(width: 84)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 18)
+                        .background {
+                            GreeneryArt.laurel.image
+                                .resizable()
+                                .scaledToFit()
+                                .accessibilityHidden(true)
+                        }
                     Text("/ 100")
                         .font(.title3.weight(.semibold))
                         .foregroundStyle(.secondary)

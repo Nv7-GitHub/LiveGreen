@@ -32,6 +32,7 @@ struct PlugDashboard: View {
                 .padding()
             }
         }
+        .greeneryBackground(.detail)
         .navigationTitle(dashboard.plug?.name ?? "Plug")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

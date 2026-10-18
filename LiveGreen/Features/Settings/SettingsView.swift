@@ -23,7 +23,7 @@ struct SettingsView: View {
             }
             .listSectionSpacing(0)
 
-            Section("Your profile") {
+            Section {
                 Button { isEditingProfile = true } label: {
                     ProfileSummaryRow(profile: model.profile)
                 }
@@ -35,6 +35,18 @@ struct SettingsView: View {
                 .accessibilityIdentifier("settings.units")
                 Button("Redo onboarding", systemImage: "arrow.counterclockwise") { confirmsOnboardingReset = true }
                     .accessibilityIdentifier("settings.resetOnboarding")
+            } header: {
+                VStack(spacing: 6) {
+                    // Your home on its own little floating island, solar roof and all.
+                    GreeneryArt.ecoIsland.image
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 140)
+                        .floating(4, duration: 4)
+                        .frame(maxWidth: .infinity)
+                        .accessibilityHidden(true)
+                    Text("Your profile").frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
 
             Section {
@@ -84,6 +96,7 @@ struct SettingsView: View {
                 Text("Deletes your scans and history, profile, paired plugs, settings and the API keys entered here, then starts onboarding again.")
             }
         }
+        .greeneryBackground(.settings)
         .navigationTitle("Settings")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {

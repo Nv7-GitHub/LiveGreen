@@ -50,6 +50,7 @@ struct AlternativesView: View {
                 withAnimation { scroller.scrollTo(Self.imageAnchor, anchor: .bottom) }
             }
         }
+        .greeneryBackground(.detail)
         .navigationTitle("Greener swaps")
         .task { await screen.load(app: app) }
     }

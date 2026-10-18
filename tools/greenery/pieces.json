@@ -1,0 +1,72 @@
+{
+  "IvyVine": {
+    "prompt": "Hand-drawn botanical illustration of a trailing heart-leaf vine with a few small cream blossoms and buds and curly tendrils, its stem entering from the very top-left corner of the image and spilling downward and slightly to the right.",
+    "ratio": "2:3",
+    "cutout": "960 --holes 600"
+  },
+  "HangingFern": {
+    "prompt": "Hand-drawn botanical illustration of drooping maidenhair and sword-fern fronds hanging down from the top-right corner of the image, delicate leaflets, one curled fiddlehead.",
+    "ratio": "2:3",
+    "cutout": "960 --holes 99999999"
+  },
+  "BlossomBranch": {
+    "prompt": "Hand-drawn botanical illustration of a flowering apple-blossom branch reaching in from the top-right corner of the image: a thin gnarled twig, soft pink-and-white five-petal blossoms with yellow stamens, a few buds and fresh green leaves, hanging diagonally down to the left.",
+    "ratio": "3:2",
+    "cutout": "820"
+  },
+  "LilyArch": {
+    "prompt": "Hand-drawn botanical illustration of a single long arching stem of lily of the valley running across the image, with six nodding bell flowers in cream with lavender and pale-blue shading hanging below it and two broad leaves at one end.",
+    "ratio": "5:2",
+    "cutout": "900"
+  },
+  "GroundFerns": {
+    "prompt": "Hand-drawn botanical illustration of a long low strip of forest-floor plants: curling ferns, clover, tufts of grass, moss-covered pebbles and a few tiny mushrooms, dense at the far left and far right ends and thinning to a few low sprigs in the middle.",
+    "ratio": "21:9",
+    "cutout": "1400 --holes 99999999"
+  },
+  "GroundMeadow": {
+    "prompt": "Hand-drawn botanical illustration of a long low strip of airy meadow plants: slender grass stems, blue cornflowers, red poppies, yellow buttercups, pink clover heads and a tiny sprouting seedling, each stem drawn separately with clear open space between the stems, clustered at the far left and far right ends and thinning to short grass in the middle, the plants rising from a thin straight line of brown soil. No white flowers.",
+    "ratio": "21:9",
+    "cutout": "1400 --holes 99999999 --no-vision"
+  },
+  "CornerLeaves": {
+    "prompt": "Hand-drawn botanical illustration of a lush cluster of big leaves, monstera, elephant ear and a banana leaf, rising up from the bottom-right corner of the image and leaning inward to the left, a small fern at their base.",
+    "ratio": "3:4",
+    "cutout": "960 --holes 99999999"
+  },
+  "CornerFoxglove": {
+    "prompt": "Hand-drawn botanical illustration of tall wild grasses, a young birch sapling and a pink foxglove rising from the bottom-left corner of the image and leaning slightly to the right.",
+    "ratio": "2:3",
+    "cutout": "960 --holes 300"
+  },
+  "Seedling": {
+    "prompt": "Hand-drawn illustration of a single small seedling with two round leaves sprouting from a little mound of dark soil, a tiny ladybird on one leaf and a few pebbles around it, small centered vignette.",
+    "ratio": "1:1",
+    "cutout": "700 --holes 99999999"
+  },
+  "Terrarium": {
+    "prompt": "Hand-drawn illustration of a glass dome terrarium cloche on a small round wooden base, inside it a tiny sapling growing from moss and pebbles, soft white highlights on the glass, small centered vignette.",
+    "ratio": "1:1",
+    "cutout": "700 --glass 0.28"
+  },
+  "SproutingPlug": {
+    "prompt": "Hand-drawn illustration of an old two-prong electrical plug with its coiled cord, ivy and a small flowering vine growing around the cord, two fresh leaves sprouting from the plug itself, small centered vignette.",
+    "ratio": "1:1",
+    "cutout": "700 --holes 600"
+  },
+  "Laurel": {
+    "prompt": "Hand-drawn illustration of an open laurel wreath made of two curved olive branches with small leaves and a few olives, symmetric, open at the top, tied at the bottom with a thin twine bow, centered.",
+    "ratio": "3:2",
+    "cutout": "760 --holes 99999999"
+  },
+  "EcoIsland": {
+    "prompt": "Hand-drawn illustration of a small floating island vignette: a grassy hill with a little cottage with solar panels on its roof, one wind turbine, two round trees and a tiny vegetable patch, roots and earth hanging below the island, centered.",
+    "ratio": "3:2",
+    "cutout": "820 --holes 1500 --no-vision"
+  },
+  "Leaves": {
+    "prompt": "Hand-drawn botanical illustration of eight separate individual fallen leaves scattered far apart across the image with lots of empty space between them, none touching or overlapping: a ginkgo leaf, a birch leaf, a small olive sprig, a small ochre maple leaf, a willow leaf, a round clover leaf, a fern leaflet and a pink blossom petal.",
+    "ratio": "3:2",
+    "cutout": "1800 --holes 99999999"
+  }
+}

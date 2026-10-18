@@ -64,6 +64,7 @@ struct ScanResultView: View {
                 overview
             }
         }
+        .greeneryBackground(.detail)
         .navigationTitle(current.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

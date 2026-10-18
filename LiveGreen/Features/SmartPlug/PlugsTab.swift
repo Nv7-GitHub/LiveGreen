@@ -52,6 +52,7 @@ struct PlugsTab: View {
                 }
                 .padding()
             }
+            .greeneryBackground(.plugs)
             .navigationTitle("Plugs")
             .navigationDestination(for: UUID.self) { id in
                 PlugDashboard(plugID: id)
@@ -64,14 +65,8 @@ struct PlugsTab: View {
     }
 
     private var emptyState: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Image(systemName: "powerplug.portrait")
-                .font(.system(size: 40))
-                .foregroundStyle(Theme.leaf)
-            Text("Charge when the grid is clean").font(.title2.weight(.bold))
-            Text("Pair a Shelly smart plug and LiveGreen writes a daily schedule to it, so your chargers run in the cleanest hours, even with the app closed.")
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+        GreeneryEmptyState(art: .sproutingPlug, title: "Charge when the grid is clean", caption: "Green hours, every day",
+                           message: "Pair a Shelly smart plug and LiveGreen writes a daily schedule to it, so your chargers run in the cleanest hours, even with the app closed.") {
             Button {
                 showsPairing = true
             } label: {
@@ -81,7 +76,8 @@ struct PlugsTab: View {
             .controlSize(.large)
             .accessibilityIdentifier("plugs.pair")
         }
-        .glassCard()
+        .frame(maxWidth: .infinity)
+        .padding(.top, 8)
     }
 }
 
