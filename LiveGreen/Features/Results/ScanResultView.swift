@@ -4,8 +4,8 @@ import GreenCoreFakes
 
 /// Results for one scan (spec §6): summary header with confidence, the photo with glass hotspots,
 /// a glass metric picker and the component list. Tapping a component opens its flow + inspector in a
-/// detent sheet (portrait) or a side inspector (landscape). Gated questions (spec §5.5) appear in one
-/// sheet and re-run the engine locally.
+/// detent sheet (portrait) or a side inspector (landscape). Gated questions (spec §5.5) wait behind a banner,
+/// never over the fresh results, and re-run the engine locally.
 struct ScanResultView: View {
     /// Read in `body` so converted numbers refresh when Settings switches units.
     @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
@@ -26,7 +26,6 @@ struct ScanResultView: View {
     @State private var selectedID: Component.ID?
     @State private var showsQuestions = false
     @State private var handledQuestions: Set<PendingQuestion.ID> = []
-    @State private var didOfferQuestions = false
     @State private var isRerunning = false
     /// Height of the overview's visible area, which caps the photo's height.
     @State private var viewportHeight: CGFloat = 0
@@ -106,7 +105,6 @@ struct ScanResultView: View {
         // Greener swaps save picks and the image to the stored scan; pick them up when returning here.
         .onAppear { if let saved = savedCopy, saved != current { current = saved } }
         .onAppear { model.prefetchSwaps(for: current) }
-        .task { await offerQuestionsOnce() }
     }
 
     // MARK: - Overview
@@ -226,7 +224,7 @@ struct ScanResultView: View {
                     Text(pendingQuestions.count == 1 ? "1 question can narrow these numbers"
                                                      : "\(pendingQuestions.count) questions can narrow these numbers")
                         .font(.subheadline.weight(.semibold))
-                    Text("Answer to tighten the widest ranges.")
+                    Text("Answer to replace assumptions and tighten the widest ranges.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -299,13 +297,8 @@ struct ScanResultView: View {
 
     // MARK: - Questions
 
-    private func offerQuestionsOnce() async {
-        guard !didOfferQuestions else { return }
-        didOfferQuestions = true
-        // Let the navigation push settle before presenting.
-        try? await Task.sleep(for: .milliseconds(450))
-        if !pendingQuestions.isEmpty { showsQuestions = true }
-    }
+    // Questions are offered by the banner only: opening them over the fresh results (or right after Quick details)
+    // hid the headline before it was read.
 
     private func useEstimates() {
         let declined = pendingQuestions

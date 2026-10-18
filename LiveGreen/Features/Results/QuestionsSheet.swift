@@ -1,9 +1,9 @@
 import SwiftUI
 import GreenCore
 
-/// All gated questions in one glass sheet (spec §5.5): chip answers per question plus a "Custom" chip with
-/// a slider over the field's full range, "Use estimate" to keep the current ranges, or "Update numbers" to
-/// re-run the engine with the answers.
+/// All gated questions in one glass sheet (spec §5.5): chip answers per question, led by what the numbers use now
+/// ("Now: 3 a week") so it can be kept, plus a "Custom" chip with a slider over the field's full range; "Use estimate"
+/// keeps the current values, "Update numbers" re-runs the engine with the answers.
 struct QuestionsSheet: View {
     let questions: [PendingQuestion]
     let onApply: ([QuestionAnswer]) -> Void
@@ -45,13 +45,16 @@ struct QuestionsSheet: View {
             Text(pending.question.question).font(.headline)
             Text(pending.question.whyItMatters).font(.footnote).foregroundStyle(.secondary)
             ChipLayout(spacing: 8) {
-                ForEach(Array(pending.question.options.enumerated()), id: \.offset) { _, option in
-                    chip(option, for: pending)
+                if let now = Self.nowOption(for: pending) {
+                    chip(now, for: pending).accessibilityIdentifier("currentAnswer")
                 }
-                if let field = Self.field(of: pending) { customChip(field, for: pending) }
+                ForEach(Array(pending.question.options.enumerated()), id: \.offset) { _, option in
+                    chip(option, for: pending, isNow: Self.isCurrent(option, of: pending))
+                }
+                if let field = pending.field { customChip(field, for: pending) }
             }
             .padding(.top, 4)
-            if let field = Self.field(of: pending), let value = customValues[pending.id] {
+            if let field = pending.field, let value = customValues[pending.id] {
                 customSlider(field, value: value, for: pending)
             }
             if !pending.question.affectedMetrics.isEmpty {
@@ -65,10 +68,18 @@ struct QuestionsSheet: View {
         .accessibilityElement(children: .contain)
     }
 
-    /// The usage field a question's options set, when they all set the same one.
-    private static func field(of pending: PendingQuestion) -> UsageField? {
-        let fields = Set(pending.question.options.compactMap(\.field))
-        return fields.count == 1 ? fields.first : nil
+    /// Whether an option is what the numbers use now.
+    private static func isCurrent(_ option: AnswerOption, of pending: PendingQuestion) -> Bool {
+        guard let current = pending.currentValue, let value = option.value else { return false }
+        return abs(value - current) < 1e-6
+    }
+
+    /// A chip for the value the numbers use now, when no option is it (a latte assumed at 3 a week against chips of
+    /// 0.5, 1.5 and 5), so the user can keep it knowingly.
+    private static func nowOption(for pending: PendingQuestion) -> AnswerOption? {
+        guard let field = pending.field, let current = pending.currentValue,
+              !pending.question.options.contains(where: { isCurrent($0, of: pending) }) else { return nil }
+        return AnswerOption(label: "Now: \(field.customLabel(current))", field: field, value: current)
     }
 
     private func customChip(_ field: UsageField, for pending: PendingQuestion) -> some View {
@@ -79,7 +90,8 @@ struct QuestionsSheet: View {
                     customValues[pending.id] = nil
                     picks[pending.id] = nil
                 } else {
-                    let start = pending.question.options.compactMap(\.value).max() ?? field.customRange.lowerBound
+                    let start = pending.currentValue ?? pending.question.options.compactMap(\.value).max()
+                        ?? field.customRange.lowerBound
                     setCustom(min(max(start, field.customRange.lowerBound), field.customRange.upperBound),
                               field: field, for: pending)
                 }
@@ -122,7 +134,8 @@ struct QuestionsSheet: View {
         picks[pending.id] = AnswerOption(label: field.customLabel(value), field: field, value: value)
     }
 
-    private func chip(_ option: AnswerOption, for pending: PendingQuestion) -> some View {
+    /// - Parameter isNow: marks the option the numbers use now ("Weekly · now").
+    private func chip(_ option: AnswerOption, for pending: PendingQuestion, isNow: Bool = false) -> some View {
         let isPicked = picks[pending.id] == option && customValues[pending.id] == nil
         return Button {
             withAnimation(.snappy) {
@@ -130,7 +143,7 @@ struct QuestionsSheet: View {
                 picks[pending.id] = isPicked ? nil : option
             }
         } label: {
-            Text(option.label)
+            Text(isNow ? "\(option.label) · now" : option.label)
                 .font(.subheadline.weight(isPicked ? .semibold : .regular))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
