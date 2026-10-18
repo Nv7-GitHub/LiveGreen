@@ -47,12 +47,14 @@ struct SummaryHeader: View {
         return totals[metric]
     }
 
+    /// A screenshot's items are framed as what they would add if bought, never as the user's own year.
     private func headlineTitle(_ metric: MetricKey) -> String {
-        switch metric {
+        let title = switch metric {
         case .yearlyElectricity: "Electricity per year"
         case .land: "Land per year"
         default: "\(metric.displayName) per year"
         }
+        return result.isScreenshot ? "\(title) if bought" : title
     }
 
     @ViewBuilder private func singleTotal(_ metric: MetricKey) -> some View {

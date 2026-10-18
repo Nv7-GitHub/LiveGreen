@@ -83,7 +83,8 @@ extension ClaudeClient: VisionIdentifier {
         (shelves, an aisle, a display case or freezer); street for a public place (parked cars, buildings, other \
         people's things); screenshot when the image is a capture of a phone or computer screen (a status bar, an app \
         or web page, a social post). Report the items shown in every case; in a screenshot never report interface \
-        elements.
+        elements, and give photo_region: the box of the photo or product image itself, without bars, buttons, \
+        captions or comments.
         - likely_owned: false for an item that is probably not the user's: other people's things (a stranger's \
         parked car, a neighbour's window unit), store stock and displays, and fixtures of the place (signs, shelving, \
         a store freezer, street furniture). Omit it for the user's own things.
@@ -211,6 +212,11 @@ extension ClaudeClient: VisionIdentifier {
                 lines.append("- Text lines (top to bottom):")
                 lines += text.map { "  \($0)" }
             }
+        }
+        switch hints.screenshot {
+        case .confirmed: lines.append("Capture: the photo library marks this image as a screenshot (scene_context screenshot).")
+        case .likely: lines.append("Capture: no camera data and a phone-screen shape; it may be a screenshot.")
+        case nil: break
         }
         lines.append(hasPhoto ? "Identify the components in the photo and call `report_components`."
             : "There is no photo: identify the scanned product from the hints and call `report_components`.")

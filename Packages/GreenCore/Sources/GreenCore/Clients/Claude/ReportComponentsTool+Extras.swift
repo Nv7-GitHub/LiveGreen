@@ -9,6 +9,13 @@ extension ReportComponentsTool {
     static let sceneExtras: [String: JSONValue] = [
         "scene_context": SchemaParts.enumeration(SceneContext.allCases.map(\.rawValue),
             "Whose things these are: own = the user's home, desk, meal or belongings; store_display = products for sale on shelves or in a display; street = a public place with other people's things; screenshot = a capture of a phone or computer screen."),
+        "photo_region": SchemaParts.object([
+            "x": SchemaParts.number("Left edge, fraction of image width (0-1)."),
+            "y": SchemaParts.number("Top edge, fraction of image height (0-1, origin top-left)."),
+            "width": SchemaParts.number("Width, fraction of image width."),
+            "height": SchemaParts.number("Height, fraction of image height."),
+        ], required: ["x", "y", "width", "height"],
+            description: "Screenshots only: the box of the photo or product image itself, without the interface around it. Omit otherwise."),
     ]
 
     /// Per-component extras, merged into `component`'s properties.

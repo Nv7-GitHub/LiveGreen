@@ -37,6 +37,13 @@ struct AlternativesView: View {
                         ProjectedSavingsCard(savings: SwapMath.projectedSavings(screen.result, selection: selection),
                                              swapCount: selection.count)
                         if screen.showsGreenerImage { imageSection.id(Self.imageAnchor) }
+                        if screen.result.isScreenshot {
+                            Label("No greener picture for a screenshot: it would redraw someone else's post.",
+                                  systemImage: "photo.badge.exclamationmark")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .accessibilityIdentifier("alternatives.noImageForScreenshot")
+                        }
                     }
                 }
                 .padding()

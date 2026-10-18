@@ -43,8 +43,9 @@ final class AlternativesModel {
 
     var hasPhoto: Bool { !(result.photo ?? Data()).isEmpty }
 
-    /// A greener picture only suits a scene: for one item or a pair the edit looks odd, so it is not offered.
-    static func showsGreenerImage(for result: ScanResult) -> Bool { result.components.count > 2 }
+    /// A greener picture only suits a scene: for one item or a pair the edit looks odd, so it is not offered. Nor for
+    /// a screenshot (C3): the edit would re-render someone else's post or a store's listing.
+    static func showsGreenerImage(for result: ScanResult) -> Bool { result.components.count > 2 && !result.isScreenshot }
 
     var showsGreenerImage: Bool { Self.showsGreenerImage(for: result) }
 

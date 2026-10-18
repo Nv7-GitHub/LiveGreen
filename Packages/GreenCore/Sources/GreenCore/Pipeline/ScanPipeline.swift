@@ -41,8 +41,9 @@ public struct ScanPipeline: Sendable {
         let (response, records) = try await identify(image: image, hints: hints, emit: emit)
         // A barcode scan has no frame; the record's front-of-pack photo stands in for one.
         async let productPhoto: Data? = image.isEmpty ? productPhoto(records) : nil
-        let identified = prepared(response.components, hints: hints)
         let scene = Self.sceneContext(of: response, hints: hints)
+        let (identified, photo) = Self.croppedToPhoto(prepared(response.components, hints: hints), image: image,
+                                                      region: response.photoRegion, scene: scene, hints: hints)
         // Component ids derive from the scan id, so a scan's seeded Monte Carlo ranges are reproducible.
         var components = identified.enumerated().map {
             $1.makeComponent(id: Self.componentID(scan: id, index: $0), scene: scene)
@@ -92,9 +93,9 @@ public struct ScanPipeline: Sendable {
         let details = await specQuestions(for: asked)
         if !details.isEmpty { emit(.specQuestionsNeeded(details)) }
 
-        // Identify had the full photo; the result keeps a smaller copy (`ScanPhoto`).
+        // Identify had the full photo; the result keeps a smaller copy (`ScanPhoto`), a screenshot's cropped to its photo.
         var result = ScanResult(id: id, date: date, title: response.sceneTitle ?? components.first?.name ?? "Scan",
-                                mode: mode, photo: image.isEmpty ? await productPhoto : ScanPhoto.stored(image),
+                                mode: mode, photo: image.isEmpty ? await productPhoto : ScanPhoto.stored(photo),
                                 components: components, sceneContext: scene)
         result.updateTotals(engine: engine)
         return result

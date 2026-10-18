@@ -39,11 +39,15 @@ public struct IdentifyResponse: Codable, Sendable, Hashable {
     public var sceneTitle: String?
     /// Whose things these are likely to be: the user's own, a store display, a street or a screenshot.
     public var sceneContext: SceneContext?
+    /// Screenshots: the photo or product image inside the app's interface, which the scan's photo is cropped to.
+    public var photoRegion: NormalizedRect?
 
-    public init(components: [IdentifiedComponent], sceneTitle: String? = nil, sceneContext: SceneContext? = nil) {
+    public init(components: [IdentifiedComponent], sceneTitle: String? = nil, sceneContext: SceneContext? = nil,
+                photoRegion: NormalizedRect? = nil) {
         self.components = components
         self.sceneTitle = sceneTitle
         self.sceneContext = sceneContext
+        self.photoRegion = photoRegion
     }
 }
 

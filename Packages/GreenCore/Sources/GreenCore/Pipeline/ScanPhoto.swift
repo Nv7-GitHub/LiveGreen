@@ -30,4 +30,23 @@ public enum ScanPhoto {
         CGImageDestinationAddImage(destination, image, encoding)
         return CGImageDestinationFinalize(destination) ? output as Data : photo
     }
+
+    /// The photo cropped to a normalized region, JPEG encoded; nil when it cannot be read, carries an orientation
+    /// other than upright (identify photos have it baked in, so boxes map straight onto pixels) or the region is empty.
+    public static func cropped(_ photo: Data, to region: NormalizedRect, quality: Double = 0.9) -> Data? {
+        guard let source = CGImageSourceCreateWithData(photo as CFData, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return nil }
+        let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
+        if let orientation = properties?[kCGImagePropertyOrientation] as? NSNumber, orientation.intValue != 1 { return nil }
+        let width = Double(image.width), height = Double(image.height)
+        let region = region.clamped
+        let rect = CGRect(x: region.x * width, y: region.y * height, width: region.width * width,
+                          height: region.height * height).integral.intersection(CGRect(x: 0, y: 0, width: width, height: height))
+        let output = NSMutableData()
+        guard rect.width >= 1, rect.height >= 1, let crop = image.cropping(to: rect),
+              let destination = CGImageDestinationCreateWithData(output, UTType.jpeg.identifier as CFString, 1, nil)
+        else { return nil }
+        CGImageDestinationAddImage(destination, crop, [kCGImageDestinationLossyCompressionQuality: quality] as CFDictionary)
+        return CGImageDestinationFinalize(destination) ? output as Data : nil
+    }
 }

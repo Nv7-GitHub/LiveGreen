@@ -91,13 +91,15 @@ enum ReportComponentsTool {
         }
         let components = try payload.components.map { try $0.makeIdentified() }
         return IdentifyResponse(components: components, sceneTitle: payload.sceneTitle?.trimmedNonEmpty,
-                                sceneContext: payload.sceneContext?.value.flatMap(SceneContext.init(looseRawValue:)))
+                                sceneContext: payload.sceneContext?.value.flatMap(SceneContext.init(looseRawValue:)),
+                                photoRegion: payload.photoRegion?.value?.clamped)
     }
 
     struct Payload: Decodable {
         var sceneTitle: String?
         var components: [ComponentPayload]
         var sceneContext: Lenient<String>?
+        var photoRegion: Lenient<NormalizedRect>?
     }
 
     struct ComponentPayload: Decodable {
