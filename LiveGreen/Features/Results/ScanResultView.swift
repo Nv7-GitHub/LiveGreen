@@ -80,6 +80,8 @@ struct ScanResultView: View {
                 ScrollView {
                     detail(for: component).padding()
                 }
+                // Content scrolled under the Done button is cut off cleanly instead of showing through behind it.
+                .scrollEdgeEffectStyle(.hard, for: .top)
                 // The detail header already names the item.
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {

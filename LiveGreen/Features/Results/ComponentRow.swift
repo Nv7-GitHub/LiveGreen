@@ -25,14 +25,16 @@ struct ComponentRow: View {
                 .background(tint.gradient, in: .circle)
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .firstTextBaseline) {
+                    // Two lines, so long names ("Iced blended coffee drink with whipped cream") are not cut off.
                     Text(component.name)
                         .font(.subheadline.weight(.semibold))
-                        .lineLimit(1)
+                        .lineLimit(2)
                     Spacer(minLength: 8)
                     if let yearly, !yearly.isEffectivelyZero {
                         Text(yearly.formattedPerYear)
                             .font(.subheadline.weight(.semibold).monospacedDigit())
                             .lineLimit(1)
+                            .fixedSize()
                     }
                 }
                 HStack(spacing: 8) {

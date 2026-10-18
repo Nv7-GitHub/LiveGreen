@@ -4,15 +4,27 @@ import GreenCore
 
 /// The captured still at its own aspect ratio, so normalized boxes map onto it directly, with `overlay` (the
 /// hotspots) drawn on the image itself. With `maxHeight`, a tall photo is shown at most that tall, centered on a
-/// blurred copy of itself, so a phone screenshot no longer fills the first screen. Barcode scans show the product's
-/// pack shot from its record; scans without any photo get a neutral 4:3 backdrop.
+/// blurred copy of itself, so a phone screenshot no longer fills the first screen. Personal text read in the photo
+/// (a name and address sticker) is blurred once on-device OCR has run (`PhotoRedaction`). Barcode scans show the
+/// product's pack shot from its record; scans without any photo get a neutral 4:3 backdrop.
 struct ResultPhoto<Overlay: View>: View {
     let data: Data?
     var mode: ScanMode = .photo
     var maxHeight: CGFloat?
     @ViewBuilder var overlay: Overlay
 
+    /// The redaction outcome and the photo it was made for.
+    @State private var redaction: (data: Data, outcome: PhotoRedaction.Outcome)?
+
     private var image: UIImage? { data.flatMap(UIImage.init(data:)) }
+
+    /// The redacted copy when there is one for this photo (from this view or the session cache), else the photo.
+    private func shown(_ image: UIImage) -> UIImage {
+        guard let data else { return image }
+        let outcome = redaction.flatMap { $0.data == data ? $0.outcome : nil } ?? PhotoRedaction.cached(data)
+        if case .image(let redacted) = outcome { return redacted }
+        return image
+    }
 
     var body: some View {
         if let image {
@@ -51,7 +63,8 @@ struct ResultPhoto<Overlay: View>: View {
         }
     }
 
-    private func photo(_ image: UIImage) -> some View {
+    private func photo(_ original: UIImage) -> some View {
+        let image = shown(original)
         let aspect = image.size.height > 0 ? image.size.width / image.size.height : 4 / 3
         return Image(uiImage: image)
             .resizable()
@@ -77,6 +90,10 @@ struct ResultPhoto<Overlay: View>: View {
                         .clipped()
                         .accessibilityHidden(true)
                 }
+            }
+            .task(id: data) {
+                guard let data else { return }
+                redaction = (data, await PhotoRedaction.outcome(for: data))
             }
     }
 }
