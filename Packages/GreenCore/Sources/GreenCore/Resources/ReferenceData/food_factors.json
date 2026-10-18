@@ -1,5 +1,5 @@
 {
- "description": "Per-kg retail-weight impacts by food group. Water is freshwater withdrawals (L), land is m²·yr, eutrophication g PO4e. stageShares map OWID supply-chain stages: land use+farm+feed→materials, processing+packaging→manufacturing, transport+retail→transport, losses→endOfLife.",
+ "description": "Per-kg retail-weight impacts by food group. Water is freshwater withdrawals (L), land is m²·yr, eutrophication g PO4e. stageShares map OWID supply-chain stages: land use+farm+feed→materials, processing+packaging→manufacturing, transport+retail→transport, losses→endOfLife. Composite rows (drinks, desserts, processed foods) are per kg of the item as served, ice included, and their notes give the recipe priced with this table's own rows.",
  "records": [
   {
    "group": "apples",
@@ -672,10 +672,7 @@
    "group": "potatoes",
    "name": "Potatoes",
    "aliases": [
-    "potato",
-    "fries",
-    "french_fries",
-    "chips"
+    "potato"
    ],
    "gPO4ePerKg": 3.48,
    "kgCO2ePerKg": 0.46,
@@ -795,7 +792,11 @@
    "name": "Soy milk",
    "aliases": [
     "soymilk",
-    "plant_milk"
+    "plant_milk",
+    "oat_milk",
+    "oatmilk",
+    "almond_milk",
+    "rice_milk"
    ],
    "gPO4ePerKg": 1.06,
    "kgCO2ePerKg": 0.98,
@@ -1081,6 +1082,383 @@
     "title": "Gleick & Cooley (2009), Energy implications of bottled water, Environ. Res. Lett. 4:014009",
     "tier": 3,
     "url": "https://iopscience.iop.org/article/10.1088/1748-9326/4/1/014009"
+   }
+  },
+  {
+   "group": "tea",
+   "name": "Tea, brewed, hot or iced, unsweetened (per kg / L)",
+   "aliases": [
+    "iced_tea",
+    "black_tea",
+    "green_tea",
+    "herbal_tea",
+    "brewed_tea",
+    "hot_tea",
+    "unsweetened_tea"
+   ],
+   "kgCO2ePerKg": 0.08,
+   "litersPerKg": 2.0,
+   "landM2YearPerKg": 0.05,
+   "gPO4ePerKg": 0.2,
+   "stageShares": {
+    "materials": 0.25,
+    "manufacturing": 0.65,
+    "transport": 0.05,
+    "endOfLife": 0.05
+   },
+   "verified": false,
+   "note": "Carbon: about 21-22 g CO2e per 250 mL cup of black tea boiling only the water needed (Berners-Lee), ~0.08 kg/kg; boiling dominates, so it sits in manufacturing. Water is the litre in the cup plus a little for ~10 g of leaf; land and eutrophication are small placeholders for that leaf. Poore & Nemecek has no tea row.",
+   "citation": {
+    "title": "Berners-Lee, How Bad Are Bananas? The Carbon Footprint of Everything (2020 ed.): a cup of tea",
+    "tier": 3
+   }
+  },
+  {
+   "group": "milk_tea",
+   "name": "Milk tea (bubble tea, Thai tea, chai or matcha latte), as served with ice",
+   "aliases": [
+    "bubble_tea",
+    "boba",
+    "boba_tea",
+    "thai_tea",
+    "thai_iced_tea",
+    "chai_latte",
+    "matcha_latte",
+    "chai",
+    "london_fog",
+    "taro_milk_tea",
+    "tea_latte"
+   ],
+   "kgCO2ePerKg": 1.32,
+   "litersPerKg": 246.0,
+   "landM2YearPerKg": 3.32,
+   "gPO4ePerKg": 4.5,
+   "stageShares": {
+    "materials": 0.6745,
+    "manufacturing": 0.0942,
+    "transport": 0.1328,
+    "endOfLife": 0.0985
+   },
+   "verified": false,
+   "note": "Composite per kg of drink as served: 0.35 kg milk (condensed milk counted as its milk), 0.06 kg sugar (mean of this table's beet and cane sugar), 0.03 kg tapioca pearls (cassava), 0.40 kg brewed tea (this table's tea row) and 0.16 kg ice. Matcha and chai lattes run richer in milk, boba made with non-dairy creamer leaner.",
+   "citation": {
+    "title": "Recipe-weighted Poore & Nemecek (2018) ingredient factors, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "latte",
+   "name": "Coffee with milk (latte, cappuccino, flat white, mocha, coffee frappé), as served",
+   "aliases": [
+    "cappuccino",
+    "flat_white",
+    "mocha",
+    "iced_latte",
+    "cafe_latte",
+    "frappuccino",
+    "frappe",
+    "cafe_au_lait",
+    "cortado",
+    "milk_coffee"
+   ],
+   "kgCO2ePerKg": 3.08,
+   "litersPerKg": 387.0,
+   "landM2YearPerKg": 6.27,
+   "gPO4ePerKg": 11.03,
+   "stageShares": {
+    "materials": 0.6375,
+    "manufacturing": 0.0808,
+    "transport": 0.077,
+    "endOfLife": 0.2047
+   },
+   "verified": false,
+   "note": "Composite per kg of drink as served, averaged over hot and iced: 0.60 kg milk, 0.04 kg coffee beans (two espresso shots in a ~450 g drink), 0.02 kg sugar and 0.34 kg ice or water. A hot latte that is ~85% milk is about 1.3x this per kg.",
+   "citation": {
+    "title": "Recipe-weighted Poore & Nemecek (2018) ingredient factors, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "juice",
+   "name": "Fruit or vegetable juice, 100% (per kg / L)",
+   "aliases": [
+    "fruit_juice",
+    "orange_juice",
+    "apple_juice",
+    "grape_juice",
+    "vegetable_juice",
+    "carrot_juice",
+    "tomato_juice",
+    "cold_pressed_juice"
+   ],
+   "kgCO2ePerKg": 0.89,
+   "litersPerKg": 240.0,
+   "landM2YearPerKg": 1.34,
+   "gPO4ePerKg": 3.32,
+   "stageShares": {
+    "materials": 0.4424,
+    "manufacturing": 0.0792,
+    "transport": 0.3579,
+    "endOfLife": 0.1205
+   },
+   "verified": false,
+   "note": "Composite: about 1.8 kg of produce per kg of juice (industrial pressing yields 50-60%) at the mean of this table's citrus and apple rows, plus ~0.15 kg CO2e and ~3 L per kg for pressing, pasteurising and chilled distribution. Cross-check: PepsiCo's certified footprint for Tropicana, 1.7 kg CO2e per half-gallon carton (~0.9 kg/kg with the carton).",
+   "citation": {
+    "title": "Recipe-weighted Poore & Nemecek (2018) ingredient factors, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "smoothie",
+   "name": "Smoothie (fruit with milk, yogurt or juice), as served",
+   "aliases": [
+    "smoothies",
+    "fruit_smoothie",
+    "berry_smoothie",
+    "green_smoothie",
+    "smoothie_bowl",
+    "acai_bowl"
+   ],
+   "kgCO2ePerKg": 1.3,
+   "litersPerKg": 282.0,
+   "landM2YearPerKg": 2.97,
+   "gPO4ePerKg": 4.75,
+   "stageShares": {
+    "materials": 0.5931,
+    "manufacturing": 0.1069,
+    "transport": 0.1724,
+    "endOfLife": 0.1276
+   },
+   "verified": false,
+   "note": "Composite per kg as served: 0.45 kg fruit (half berries, half banana, this table's rows), 0.20 kg milk or yogurt (milk row), 0.15 kg juice (juice row) and 0.20 kg ice or water. An all-fruit smoothie is ~30% lower.",
+   "citation": {
+    "title": "Recipe-weighted Poore & Nemecek (2018) ingredient factors, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "yogurt",
+   "name": "Yogurt (plain, sweetened or fruit; parfaits)",
+   "aliases": [
+    "yoghurt",
+    "greek_yogurt",
+    "fruit_yogurt",
+    "parfait",
+    "yogurt_parfait",
+    "frozen_yogurt",
+    "skyr",
+    "kefir"
+   ],
+   "kgCO2ePerKg": 3.62,
+   "litersPerKg": 691.0,
+   "landM2YearPerKg": 9.85,
+   "gPO4ePerKg": 11.72,
+   "stageShares": {
+    "materials": 0.6888,
+    "manufacturing": 0.1188,
+    "transport": 0.109,
+    "endOfLife": 0.0834
+   },
+   "verified": false,
+   "note": "Composite: about 1.1 kg of milk per kg (this table's milk row; added milk solids), plus ~0.15 kg CO2e/kg for fermentation and chilled distribution. Strained (Greek) yogurt and skyr use 2.5-3x the milk and are under-scored by this row.",
+   "citation": {
+    "title": "Recipe-weighted Poore & Nemecek (2018) ingredient factors, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "ice_cream",
+   "name": "Ice cream (dairy)",
+   "aliases": [
+    "gelato",
+    "frozen_dessert",
+    "sundae",
+    "milkshake",
+    "soft_serve",
+    "frozen_custard"
+   ],
+   "kgCO2ePerKg": 4.46,
+   "litersPerKg": 817.0,
+   "landM2YearPerKg": 11.03,
+   "gPO4ePerKg": 14.45,
+   "stageShares": {
+    "materials": 0.6482,
+    "manufacturing": 0.1434,
+    "transport": 0.1217,
+    "endOfLife": 0.0867
+   },
+   "verified": false,
+   "note": "Composite per kg: about 1.2 kg of milk-equivalent dairy (milk and cream, this table's milk row), 0.15 kg sugar (mean of beet and cane), plus ~0.3 kg CO2e/kg for freezing and frozen storage. Plant-based frozen desserts are much lower.",
+   "citation": {
+    "title": "Recipe-weighted Poore & Nemecek (2018) ingredient factors, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "baked_goods",
+   "name": "Sweet baked goods (cookies, cakes, pastries, muffins, donuts)",
+   "aliases": [
+    "cookie",
+    "cookies",
+    "biscuit",
+    "biscuits",
+    "cake",
+    "cupcake",
+    "pastry",
+    "pastries",
+    "muffin",
+    "donut",
+    "doughnut",
+    "brownie",
+    "croissant",
+    "chocolate_chip_cookie",
+    "sugar_cookie"
+   ],
+   "kgCO2ePerKg": 3.4,
+   "litersPerKg": 630.0,
+   "landM2YearPerKg": 6.24,
+   "gPO4ePerKg": 12.95,
+   "stageShares": {
+    "materials": 0.5898,
+    "manufacturing": 0.2024,
+    "transport": 0.1181,
+    "endOfLife": 0.0897
+   },
+   "verified": false,
+   "note": "Composite per kg: 0.40 kg flour (wheat & rye row), 0.25 kg sugar (mean of beet and cane), 0.20 kg fat (half butter, taken as 3x the milk row, a typical dairy-allocation ratio; half the mean of this table's four vegetable oils), 0.08 kg egg, plus ~0.3 kg CO2e/kg for baking. Bread stays wheat_rye.",
+   "citation": {
+    "title": "Recipe-weighted Poore & Nemecek (2018) ingredient factors, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "candy",
+   "name": "Candy and sweets, not chocolate (gummies, hard candy)",
+   "aliases": [
+    "sweets",
+    "gummies",
+    "gummy",
+    "gummy_candy",
+    "hard_candy",
+    "lollipop",
+    "jelly_beans",
+    "confectionery",
+    "candies",
+    "sour_candy"
+   ],
+   "kgCO2ePerKg": 2.26,
+   "litersPerKg": 317.0,
+   "landM2YearPerKg": 2.24,
+   "gPO4ePerKg": 7.75,
+   "stageShares": {
+    "materials": 0.49,
+    "manufacturing": 0.1737,
+    "transport": 0.2055,
+    "endOfLife": 0.1308
+   },
+   "verified": false,
+   "note": "Composite per kg: 0.55 kg sugar (mean of beet and cane), 0.40 kg glucose syrup taken as its weight in maize, plus ~0.2 kg CO2e/kg for cooking and moulding. Chocolate stays dark_chocolate.",
+   "citation": {
+    "title": "Recipe-weighted Poore & Nemecek (2018) ingredient factors, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "potato_crisps",
+   "name": "Potato crisps / chips (fried snack)",
+   "aliases": [
+    "chips",
+    "crisps",
+    "potato_chips",
+    "kettle_chips",
+    "tortilla_chips",
+    "corn_chips"
+   ],
+   "kgCO2ePerKg": 2.2,
+   "litersPerKg": 446.0,
+   "landM2YearPerKg": 8.39,
+   "gPO4ePerKg": 25.83,
+   "stageShares": {
+    "materials": 0.4478,
+    "manufacturing": 0.255,
+    "transport": 0.1697,
+    "endOfLife": 0.1275
+   },
+   "verified": false,
+   "note": "Carbon: Walkers' Carbon Trust label, 75 g CO2e per 34.5 g bag (2.2 kg/kg); Agribalyse's potato-crisps value is lower (~1.4) and a build-up from this table higher (~3.4). Water, land and eutrophication: ~3.75 kg of potatoes and 0.36 kg of oil per kg (10 g fat per 28 g), at this table's potato row and the mean of its sunflower and rapeseed oils.",
+   "citation": {
+    "title": "Walkers crisps Carbon Reduction Label (Carbon Trust, 2007); potato and oil factors from Poore & Nemecek (2018)",
+    "tier": 3
+   }
+  },
+  {
+   "group": "fries",
+   "name": "French fries (frozen or restaurant)",
+   "aliases": [
+    "french_fries",
+    "hash_browns",
+    "tater_tots",
+    "potato_wedges",
+    "home_fries"
+   ],
+   "kgCO2ePerKg": 1.79,
+   "litersPerKg": 206.0,
+   "landM2YearPerKg": 3.74,
+   "gPO4ePerKg": 11.93,
+   "stageShares": {
+    "materials": 0.3901,
+    "manufacturing": 0.3221,
+    "transport": 0.1659,
+    "endOfLife": 0.1219
+   },
+   "verified": false,
+   "note": "Composite per kg: about 2 kg of potatoes (this table's potato row; peeling, cutting and frying losses) and 0.14 kg of oil (mean of sunflower and rapeseed), plus ~0.35 kg CO2e/kg for par-frying, freezing and frying.",
+   "citation": {
+    "title": "Recipe-weighted Poore & Nemecek (2018) ingredient factors, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
+   }
+  },
+  {
+   "group": "preserved_vegetables",
+   "name": "Preserved vegetables (jarred, canned, pickled or marinated)",
+   "aliases": [
+    "pickles",
+    "pickled_vegetables",
+    "canned_vegetables",
+    "jarred_vegetables",
+    "marinated_vegetables",
+    "artichoke_hearts",
+    "marinated_artichokes",
+    "sauerkraut",
+    "kimchi",
+    "olives",
+    "roasted_peppers"
+   ],
+   "kgCO2ePerKg": 1.17,
+   "litersPerKg": 169.0,
+   "landM2YearPerKg": 1.2,
+   "gPO4ePerKg": 4.73,
+   "stageShares": {
+    "materials": 0.2906,
+    "manufacturing": 0.41,
+    "transport": 0.2088,
+    "endOfLife": 0.0906
+   },
+   "verified": false,
+   "note": "Composite per kg drained: about 1.3 kg of vegetables before trimming (other vegetables row) and 0.05 kg of oil (mean of sunflower and rapeseed), plus ~0.3 kg CO2e and 5 L per kg for blanching and sterilising. Low-yield hearts (artichoke) run higher. The jar or can is packaging.",
+   "citation": {
+    "title": "Recipe-weighted Poore & Nemecek (2018) ingredient factors, via Our World in Data",
+    "tier": 3,
+    "url": "https://ourworldindata.org/environmental-impacts-of-food"
    }
   }
  ]

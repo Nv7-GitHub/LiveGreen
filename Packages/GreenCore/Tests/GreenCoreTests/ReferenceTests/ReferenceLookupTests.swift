@@ -10,7 +10,7 @@ struct ReferenceLookupTests {
         #expect(try #require(store.foodFactor(group: "beef")).kgCO2ePerKg == 99.48)
         #expect(store.foodFactor(group: "Beef Burger")?.group == "beef")
         #expect(store.foodFactor(group: "chicken")?.group == "poultry")
-        #expect(store.foodFactor(group: "French fries")?.group == "potatoes")
+        #expect(store.foodFactor(group: "French fries")?.group == "fries")
         #expect(store.foodFactor(group: "soy milk")?.group == "soy_milk")
         #expect(store.foodFactor(group: "spaceship") == nil)
     }

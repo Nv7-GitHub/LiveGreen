@@ -132,6 +132,7 @@ enum ReportComponentsTool {
         var appearanceCues: String?
         var gtin: String?
         var materials: [MaterialShare]?
+        var packagingMaterials: [MaterialShare]?
         var visibleText: String?
 
         var identifiers: Identifiers {
@@ -140,7 +141,9 @@ enum ReportComponentsTool {
                                modelLine: modelLine.flatMap { Identifiers.modelLine($0, brand: brand) },
                                confidence: confidence?.trimmedNonEmpty.flatMap { IdentificationConfidence(rawValue: $0.lowercased()) },
                                appearanceCues: appearanceCues?.trimmedNonEmpty,
-                               materials: (materials ?? []).filter { $0.percent > 0 }, ocrText: visibleText?.trimmedNonEmpty)
+                               materials: (materials ?? []).filter { $0.percent > 0 },
+                               packagingMaterials: packagingMaterials.map { $0.filter { $0.percent > 0 } },
+                               ocrText: visibleText?.trimmedNonEmpty)
         }
     }
 }

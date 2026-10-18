@@ -32,8 +32,8 @@ struct FactorModelResolverTests {
         let output = try await resolve(cup)
         #expect(abs(try #require(output.metrics[.plasticMass]).value - 0.6) < 1e-9)
         #expect(abs(try #require(output.metrics[.recyclablePercent]).value - (0.95 * 68.2 + 0.05 * 4.0)) < 1e-9)
-        // The 5% polyethylene lining (20 years) outlasts the paperboard.
-        #expect(try #require(output.metrics[.decompositionTime]).value == 20)
+        // Mass-weighted: the paperboard (0.2 years) with its 5% polyethylene lining (20 years).
+        #expect(abs(try #require(output.metrics[.decompositionTime]).value - (0.95 * 0.2 + 0.05 * 20)) < 1e-9)
         #expect(abs(try #require(output.metrics[.carbon]).value - (0.95 * 0.012 * 1.1 + 0.05 * 0.012 * 1.9)) < 1e-9)
     }
 
@@ -128,7 +128,10 @@ struct FactorModelResolverTests {
         for scene in DemoScene.allCases {
             for identified in scene.identifyResponse.components {
                 let component = await ladder.resolve(identified.makeComponent(), profile: .default)
-                #expect(component.missingMetrics.isEmpty, "\(scene) \(component.name) missing \(component.missingMetrics)")
+                // Unpackaged food has nothing to recycle or leave behind.
+                let unpackaged = component.category == .food && !FoodServing.isPackaged(component)
+                let expectedMissing: Set<MetricKey> = unpackaged ? [.recyclablePercent, .decompositionTime] : []
+                #expect(Set(component.missingMetrics) == expectedMissing, "\(scene) \(component.name) missing \(component.missingMetrics)")
                 for (metric, measured) in component.metrics {
                     #expect(measured.unit == metric.unit, "\(component.name) \(metric) unit")
                     #expect(measured.value.isFinite && measured.low <= measured.value && measured.value <= measured.high)

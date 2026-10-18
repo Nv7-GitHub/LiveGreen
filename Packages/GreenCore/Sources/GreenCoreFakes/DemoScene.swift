@@ -87,9 +87,9 @@ enum DemoFixtures {
             boundingBox: NormalizedRect(x: 0.20, y: 0.30, width: 0.40, height: 0.35),
             quantities: Quantities(massKg: 0.25, servingKg: 0.12, foodGroup: "beef"),
             defaultUsage: UsageProfile(servingsPerWeek: 2),
+            // Unpackaged food has no end-of-life figures: it is eaten, and composting is not recycling.
             estimates: [.carbon: est(7.2, 4, 12), .water: est(170, 90, 300), .land: est(39, 20, 60),
-                        .waterPollution: est(36, 20, 60), .plasticMass: est(4, 1, 8),
-                        .recyclablePercent: est(10, 0, 30), .decompositionTime: est(0.1, 0.05, 0.3)],
+                        .waterPollution: est(36, 20, 60)],
             needsQuestion: [ComponentQuestion(
                 id: "servings", question: "How often do you eat this?",
                 whyItMatters: "Beef is the largest contributor here, so frequency sets the yearly total.",
@@ -100,15 +100,15 @@ enum DemoFixtures {
         IdentifiedComponent(
             name: "French fries", category: .food,
             boundingBox: NormalizedRect(x: 0.62, y: 0.38, width: 0.25, height: 0.25),
-            quantities: Quantities(massKg: 0.15, servingKg: 0.15, foodGroup: "potatoes"),
+            quantities: Quantities(massKg: 0.15, servingKg: 0.15, foodGroup: "fries"),
             defaultUsage: UsageProfile(servingsPerWeek: 2),
-            estimates: [.carbon: est(0.5, 0.3, 0.9), .water: est(9, 4, 16), .land: est(0.13, 0.08, 0.25),
-                        .waterPollution: est(0.5, 0.3, 1), .plasticMass: est(1, 0, 3),
-                        .recyclablePercent: est(20, 0, 50), .decompositionTime: est(0.1, 0.05, 0.3)]),
+            estimates: [.carbon: est(0.5, 0.3, 0.9), .water: est(30, 15, 60), .land: est(0.6, 0.3, 1.2),
+                        .waterPollution: est(1.8, 0.9, 3.5)]),
         IdentifiedComponent(
             name: "Cola can", category: .food,
             boundingBox: NormalizedRect(x: 0.05, y: 0.20, width: 0.13, height: 0.35),
-            identifiers: Identifiers(gtin: "5449000000996", brand: "Coca-Cola"),
+            identifiers: Identifiers(gtin: "5449000000996", brand: "Coca-Cola",
+                                     packagingMaterials: [MaterialShare(material: "aluminium", percent: 100)]),
             quantities: Quantities(massKg: 0.345, packagingMassG: 13, volumeLiters: 0.33, foodGroup: "soft_drinks"),
             defaultUsage: UsageProfile(servingsPerWeek: 3),
             estimates: [.carbon: est(0.17, 0.1, 0.3), .water: est(2, 1, 5), .land: est(0.05, 0.02, 0.1),

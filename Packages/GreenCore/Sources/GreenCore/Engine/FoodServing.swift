@@ -20,7 +20,7 @@ public enum FoodServing {
     public static let drinkReferenceKg = 0.355
 
     /// Food groups that are drinks even when identify gives a mass instead of a volume.
-    static let drinkGroups: Set<String> = ["bottled_water", "soft_drinks"]
+    static let drinkGroups: Set<String> = ["bottled_water", "soft_drinks", "tea", "milk_tea", "latte", "juice", "smoothie"]
 
     /// A drink is given as a volume or belongs to a drink food group.
     public static func isDrink(_ component: Component) -> Bool {
@@ -99,6 +99,54 @@ public enum FoodServing {
         return isBrewed && !isBeans ? brewedCoffeeGroundsShare : 1
     }
 
+    /// Cooked mass per kg of the dry product a group's factor is for (USDA Agriculture Handbook 102, Food Yields
+    /// Summarized by Different Stages of Preparation): boiled rice and barley ≈2.7×, pasta, noodles and couscous ≈2.3×,
+    /// cooked or canned pulses ≈2.5×, porridge ≈5×.
+    public static let cookedYield: [String: Double] = [
+        "rice": 2.7, "barley": 2.7, "wheat_rye": 2.3, "other_pulses": 2.5, "peas": 2.5, "oatmeal": 5,
+    ]
+
+    /// Groups whose dry form is never eaten as it is, so an unpackaged portion counts as cooked unless identify says
+    /// otherwise. Wheat (bread), barley (beer) and oats (muesli) are cooked only when identify says so.
+    static let cookedUnlessPackaged: Set<String> = ["rice", "other_pulses"]
+
+    /// What the serving's mass is divided by before the group's per-kg factor applies: the cooked yield for a cooked
+    /// portion, else 1. Without it a plate of boiled rice read as 2.7 times its weight in dry rice.
+    public static func cookedDivisor(group: String, component: Component) -> Double {
+        guard let yield = cookedYield[group] else { return 1 }
+        let cooked = component.quantities.cooked ?? (cookedUnlessPackaged.contains(group) && !isPackaged(component))
+        return cooked ? yield : 1
+    }
+
+    /// Whether the portion counts as cooked (`cookedDivisor`), with its group resolved through `reference`; nil when
+    /// the item is not food or its group has no cooked yield.
+    public static func isCooked(_ component: Component, reference: any ReferenceProviding) -> Bool? {
+        guard component.category == .food, let group = reference.foodFactor(group: factorKey(component))?.group,
+              cookedYield[group] != nil else { return nil }
+        return cookedDivisor(group: group, component: component) > 1
+    }
+
+    /// Groups that are one ingredient of a mixed drink, which identify sometimes gives for the whole drink.
+    static let ingredientDrinkGroups: Set<String> = ["milk", "coffee", "tea", "soft_drinks"]
+
+    /// The factor-table key for a food: its food group, else its name. A mixed drink filed under one of its
+    /// ingredients ("Iced latte" as coffee or milk, "Bubble tea" as milk) is scored with the drink's composite row,
+    /// so it is not all milk or all beans. Plant-milk drinks keep their group.
+    public static func factorKey(_ component: Component) -> String {
+        let group = component.quantities.foodGroup
+        guard group.map(ingredientDrinkGroups.contains) ?? true else { return group ?? component.name }
+        let name = component.name.lowercased()
+        let teaWithMilk = ["milk tea", "boba", "bubble tea", "thai tea", "thai iced tea", "chai", "matcha latte"]
+            .contains { name.contains($0) } || (name.contains("tea") && name.contains("milk"))
+        if teaWithMilk { return "milk_tea" }
+        let coffeeWithMilk = ["latte", "cappuccino", "flat white", "mocha", "frapp", "cafe au lait", "café au lait"]
+            .contains { name.contains($0) } || (name.contains("coffee") && name.contains("milk"))
+        if coffeeWithMilk { return "latte" }
+        if name.contains("smoothie") { return "smoothie" }
+        if name.contains("milkshake") { return "ice_cream" }
+        return group ?? component.name
+    }
+
     /// Fraction of one pack eaten per serving (0–1), for package-level values; 1 when the pack mass is unknown or
     /// the unit is the whole pack.
     public static func packageShare(servingKg: Double, packageKg: Double?) -> Double {
@@ -149,11 +197,12 @@ extension Alternative {
     /// food, bought as often: one pack of the original's net quantity at its packs a week, so the two are compared
     /// per kg eaten whatever the swap's own pack size. Its estimates are per serving of the original (the suggesters
     /// see `FoodServing.servingView`), so without a serving of its own it takes the original's; its packaging, given
-    /// for its own pack, is scaled to the original's pack size as Open Food Facts records are. Other swaps are
-    /// returned unchanged.
+    /// for its own pack, is scaled to the original's pack size as Open Food Facts records are. Other swaps are returned
+    /// unchanged.
     public func onBasis(of original: Component) -> Alternative {
-        guard kind == .product, category == .food, case .pack(let kg) = FoodServing.basis(of: original) else { return self }
+        guard kind == .product, category == .food else { return self }
         var copy = self
+        guard case .pack(let kg) = FoodServing.basis(of: original) else { return copy }
         if (copy.quantities.servingKg ?? 0) <= 0 { copy.quantities.servingKg = FoodServing.servingKg(original) }
         if let ownPack = quantities.packNetKg ?? quantities.massKg ?? quantities.volumeLiters, ownPack > 0 {
             let share = kg / ownPack

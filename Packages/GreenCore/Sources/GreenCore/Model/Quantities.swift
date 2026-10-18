@@ -20,10 +20,13 @@ public struct Quantities: Codable, Sendable, Hashable {
     /// record states it; the food's metrics are then for the whole pack instead of one serving (`FoodServing.basis`).
     /// Nil in scans saved by older builds, which stay per serving.
     public var packNetKg: Double?
+    /// Food: true when the portion was cooked from a dry grain, pasta or pulse, so its mass includes absorbed water
+    /// (`FoodServing.cookedYield`); false for the dry product; nil when identify did not say.
+    public var cooked: Bool?
 
     public init(massKg: Double? = nil, servingKg: Double? = nil, packagingMassG: Double? = nil,
                 screenSizeInches: Double? = nil, ratedPowerW: Double? = nil, volumeLiters: Double? = nil,
-                foodGroup: String? = nil, deviceType: String? = nil, packNetKg: Double? = nil) {
+                foodGroup: String? = nil, deviceType: String? = nil, packNetKg: Double? = nil, cooked: Bool? = nil) {
         self.massKg = massKg
         self.servingKg = servingKg
         self.packagingMassG = packagingMassG
@@ -33,5 +36,6 @@ public struct Quantities: Codable, Sendable, Hashable {
         self.foodGroup = foodGroup
         self.deviceType = deviceType
         self.packNetKg = packNetKg
+        self.cooked = cooked
     }
 }

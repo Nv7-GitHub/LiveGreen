@@ -27,14 +27,15 @@ public struct FactorModelResolver: MetricResolver {
     // MARK: Food (per serving, or per pack for a barcoded pack of known size)
 
     func food(_ component: Component) -> ResolverOutput {
-        let q = component.quantities
         var metrics: [MetricKey: Measured] = [:]
         var stages: [LifecycleStage: Double] = [:]
         let unitKg = FoodServing.unitKg(component)
-        if let factor = store.foodFactor(group: q.foodGroup ?? component.name), let unitKg, unitKg > 0 {
+        if let factor = store.foodFactor(group: FoodServing.factorKey(component)), let unitKg, unitKg > 0 {
             let sources = [factor.citation]
-            // Coffee's factor is per kg of beans; a brewed cup holds only its grounds' worth.
+            // Coffee's factor is per kg of beans, so a brewed cup holds only its grounds' worth; the dry-commodity
+            // factors (rice, pasta, pulses) count a cooked portion by its dry weight.
             let factorKg = unitKg * FoodServing.dryIngredientShare(group: factor.group, component: component)
+                / FoodServing.cookedDivisor(group: factor.group, component: component)
             func perUnit(_ perKg: Double, _ unit: MetricUnit) -> Measured {
                 FactorRanges.multiplicative(perKg * factorKg, factor: 1.6, unit: unit, sources: sources)
             }
@@ -53,15 +54,12 @@ public struct FactorModelResolver: MetricResolver {
             endOfLife[.plasticMass] = endOfLife[.plasticMass]?.scaled(by: share)
             metrics.merge(endOfLife) { current, _ in current }
             packagingShare = 1
-        } else if component.identifiers.materials.isEmpty, !FoodServing.isPackaged(component),
-                  let organic = store.materialFactor(material: "food_organic") {
-            // Unpackaged food: only the food itself is left at end of life. A barcoded item whose packaging
-            // is unknown is not unpackaged, so it gets no plastic figure here rather than a false zero.
-            let sources = [organic.citation]
-            metrics[.plasticMass] = Measured.exact(0, unit: .grams, tier: .factorModel, sources: sources)
-            metrics[.recyclablePercent] = FactorRanges.percent(organic.endOfLife.recyclablePercent, spread: 5, sources: sources)
-            metrics[.decompositionTime] = FactorRanges.multiplicative(organic.endOfLife.decompositionYears, factor: 2,
-                                                                      unit: .years, sources: sources)
+        } else if !FoodServing.isPackaged(component) {
+            // Unpackaged food leaves no plastic. It gets no recyclability or decomposition time either: the food is
+            // eaten, and composting scraps is not recycling. A barcoded item whose packaging is unknown is not
+            // unpackaged, so it gets no plastic figure here rather than a false zero.
+            let source = Source(title: "Unpackaged food: no packaging pictured", tier: .factorModel)
+            metrics[.plasticMass] = Measured.exact(0, unit: .grams, tier: .factorModel, sources: [source])
         }
         return ResolverOutput(metrics: metrics, stageShares: stages, plasticPackagingShare: packagingShare)
     }
@@ -83,11 +81,36 @@ public struct FactorModelResolver: MetricResolver {
         return ResolverOutput(metrics: blend.endOfLifeMetrics(), plasticPackagingShare: 1)
     }
 
-    /// Packaging items may give either mass; for food and personal care `massKg` includes the contents,
-    /// so only an explicit packaging mass counts.
+    /// A packaging item is its own materials and may give either mass. Anything else (food, drinks, personal care,
+    /// household refills) carries its packaging in `packagingMassG`, since `massKg` includes the contents. That
+    /// packaging is identify's `packagingMaterials`; else the item's own materials without what is used up (food, a
+    /// formula), which older answers gave for the whole pack; else plastic of unknown kind. The food's own split
+    /// (96% food, 4% film) is never applied to the package.
     func packagingBlend(_ component: Component) -> MaterialBlend? {
-        let q = component.quantities
-        let mass = component.category == .packaging ? (q.packagingMassG ?? q.massKg.map { $0 * 1000 }) : q.packagingMassG
-        return MaterialBlend(materials: component.identifiers.materials, massG: mass ?? 0, store: store)
+        let q = component.quantities, ids = component.identifiers
+        if component.category == .packaging {
+            return MaterialBlend(materials: discarded(ids.materials), massG: q.packagingMassG ?? q.massKg.map { $0 * 1000 } ?? 0,
+                                 store: store)
+        }
+        guard let massG = q.packagingMassG, massG > 0 else { return nil }
+        let candidates = [discarded(ids.packagingMaterials ?? []), discarded(ids.materials), Self.unknownPackaging]
+        return candidates.lazy.compactMap { MaterialBlend(materials: $0, massG: massG, store: self.store) }.first
+    }
+
+    /// Packaging whose materials nobody reported.
+    static let unknownPackaging = [MaterialShare(material: "other_plastic", percent: 100)]
+
+    /// The materials that are thrown away rather than used up.
+    func discarded(_ materials: [MaterialShare]) -> [MaterialShare] {
+        materials.filter { store.materialFactor(material: $0.material)?.isConsumed != true }
+    }
+
+    /// Outside food, a product's own liquid tagged as food (`food_organic`) is its formula: food has no production
+    /// footprint here and would make a cleaner read as compost.
+    func outsideFood(_ materials: [MaterialShare]) -> [MaterialShare] {
+        materials.map { share in
+            store.materialFactor(material: share.material)?.endOfLife.material == "food_organic"
+                ? MaterialShare(material: "detergent_formula", percent: share.percent) : share
+        }
     }
 }

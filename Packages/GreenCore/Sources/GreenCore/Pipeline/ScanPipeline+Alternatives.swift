@@ -98,10 +98,15 @@ extension ScanPipeline {
 
     /// One swap resolved on the same footing as the item it replaces: filed as household when reusable, kept over the
     /// original's lifespan unless it is meant to last a different time, resolved like an original (`resolveAlternative`),
-    /// then given washing for each use (reusables) or its second-hand share of production impacts.
+    /// then given washing for each use (reusables) or its second-hand share of production impacts. A food swap that
+    /// does not say whether it is cooked is prepared like the original (lentil pilaf for barley pilaf), so a cooked
+    /// portion is never compared with a dry one.
     func resolve(_ alternative: Alternative, replacing original: Component) async -> Alternative {
         var swap = alternative
         swap.category = Alternative.scoredCategory(alternative.category, isReusable: alternative.isReusable)
+        if swap.category == .food, swap.quantities.cooked == nil {
+            swap.quantities.cooked = FoodServing.isCooked(original, reference: engine.reference)
+        }
         var component = Component(id: swap.id, name: swap.name, category: swap.category, identifiers: swap.identifiers,
                                   quantities: swap.quantities, usage: swap.usage ?? original.usage,
                                   fallbackEstimates: swap.fallbackEstimates)
