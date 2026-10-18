@@ -148,7 +148,7 @@ docs/                             this file, the spec, screenshots
    greener image for scenes with more than two items, so the swaps screen opens instantly.
 8. **Feedback**: the results screen has an optional note field ("the TV was actually a monitor"). Notes are
    stored in SwiftData (`StoredFeedback`, `FeedbackStore`) with the scan's id, item names and categories, and
-   managed in Settings → Scan feedback. Each identify call gets up to five relevant notes
+   managed in Settings → Scan feedback ("Erase all data" clears them too). Each identify call gets up to five relevant notes
    (`ScanFeedback.relevant`: shared words with the OCR text or a hinted category first, then newest) as a
    separate "Recent user corrections (hints only)" block, at most 600 characters, which tells the model to
    apply a correction only when the photo agrees and never to relabel every similar item. Claude and Grok both
