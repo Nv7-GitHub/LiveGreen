@@ -1,5 +1,5 @@
 /// T3: reference-table factors × the quantities from identification (spec §5.4). Values follow the
-/// per-unit conventions documented on `ImpactEngine` (per serving, per unit, or per item lifetime).
+/// per-unit conventions documented on `ImpactEngine` (per serving or pack, per unit, or per item lifetime).
 public struct FactorModelResolver: MetricResolver {
     public let tier = Tier.factorModel
     public let name = "Reference factor model"
@@ -24,31 +24,32 @@ public struct FactorModelResolver: MetricResolver {
                               stageShares: output.stageShares, plasticPackagingShare: output.plasticPackagingShare)
     }
 
-    // MARK: Food (per serving)
+    // MARK: Food (per serving, or per pack for a barcoded pack of known size)
 
     func food(_ component: Component) -> ResolverOutput {
         let q = component.quantities
         var metrics: [MetricKey: Measured] = [:]
         var stages: [LifecycleStage: Double] = [:]
-        let servingKg = FoodServing.servingKg(component)
-        if let factor = store.foodFactor(group: q.foodGroup ?? component.name), let servingKg, servingKg > 0 {
+        let unitKg = FoodServing.unitKg(component)
+        if let factor = store.foodFactor(group: q.foodGroup ?? component.name), let unitKg, unitKg > 0 {
             let sources = [factor.citation]
             // Coffee's factor is per kg of beans; a brewed cup holds only its grounds' worth.
-            let factorKg = servingKg * FoodServing.dryIngredientShare(group: factor.group, component: component)
-            func perServing(_ perKg: Double, _ unit: MetricUnit) -> Measured {
+            let factorKg = unitKg * FoodServing.dryIngredientShare(group: factor.group, component: component)
+            func perUnit(_ perKg: Double, _ unit: MetricUnit) -> Measured {
                 FactorRanges.multiplicative(perKg * factorKg, factor: 1.6, unit: unit, sources: sources)
             }
-            metrics[.carbon] = perServing(factor.kgCO2ePerKg, .kgCO2e)
-            metrics[.water] = perServing(factor.litersPerKg, .liters)
-            metrics[.land] = perServing(factor.landM2YearPerKg, .squareMeterYears)
-            metrics[.waterPollution] = perServing(factor.gPO4ePerKg, .gramsPO4e)
+            metrics[.carbon] = perUnit(factor.kgCO2ePerKg, .kgCO2e)
+            metrics[.water] = perUnit(factor.litersPerKg, .liters)
+            metrics[.land] = perUnit(factor.landM2YearPerKg, .squareMeterYears)
+            metrics[.waterPollution] = perUnit(factor.gPO4ePerKg, .gramsPO4e)
             stages = factor.stageShares
         }
         var packagingShare: Double?
         if let blend = packagingBlend(component) {
-            // The packaging is the whole pack's; one serving carries its share of the plastic.
+            // The packaging is the whole pack's; one serving carries its share of the plastic, a pack all of it. A swap's
+            // packaging is already on the original's pack size (`Alternative.onBasis`), as OFF records are scaled.
             var endOfLife = blend.endOfLifeMetrics()
-            let share = servingKg.map { FoodServing.packageShare(servingKg: $0, packageKg: FoodServing.packageKg(component)) } ?? 1
+            let share = unitKg.map { FoodServing.packageShare(servingKg: $0, packageKg: FoodServing.packageKg(component)) } ?? 1
             endOfLife[.plasticMass] = endOfLife[.plasticMass]?.scaled(by: share)
             metrics.merge(endOfLife) { current, _ in current }
             packagingShare = 1

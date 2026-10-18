@@ -135,18 +135,15 @@ public struct PerCapitaBaseline: Codable, Sendable, Hashable {
     public var medians: [MetricKey: Double]
     /// Lognormal σ per metric from published inequality figures.
     public var sigmas: [MetricKey: Double]
-    /// Multiplier on the median by diet.
-    public var dietModifiers: [Diet: Double]
     /// Median scales with householdSize^(exponent - 1) for shared-household economies of scale.
     public var householdSizeExponent: Double
     public var citation: Source
 
     public init(region: String, medians: [MetricKey: Double], sigmas: [MetricKey: Double],
-                dietModifiers: [Diet: Double] = [:], householdSizeExponent: Double = 1, citation: Source) {
+                householdSizeExponent: Double = 1, citation: Source) {
         self.region = region
         self.medians = medians
         self.sigmas = sigmas
-        self.dietModifiers = dietModifiers
         self.householdSizeExponent = householdSizeExponent
         self.citation = citation
     }

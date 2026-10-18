@@ -89,6 +89,6 @@ The flags are set in Settings and persisted in UserDefaults. Launch arguments ov
 
 Launch-only arguments: `-SkipOnboarding YES` and `-InMemoryStore YES` (a throwaway SwiftData store, used by UI tests).
 
-The peer "friends" on the Compare leaderboard are a **simulated network** sampled from the modeled cohort.
+The "friends" on the Leaderboard tab are generated from the region's per-person footprints, not real accounts.
 
 See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for architecture, measured model choices, API details and known gaps.

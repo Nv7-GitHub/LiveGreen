@@ -9,7 +9,25 @@ nonisolated enum CohortMetric {
     static func basis(_ metric: MetricKey) -> String {
         switch metric {
         case .yearlyElectricity: "Yearly home electricity"
+        case .water: "Yearly water use"
+        case .land: "Yearly land use"
         default: "Whole yearly footprint"
+        }
+    }
+
+    /// Whose numbers the peers are: the land baseline is one world farmland average, the rest are regional.
+    static func peers(_ metric: MetricKey) -> String {
+        metric == .land ? "worldwide" : "in your region"
+    }
+
+    /// Source of the per-capita figure behind `metric`, as cited in `per_capita.json`. Nil for carbon, whose
+    /// source is the baseline's own citation.
+    static func baselineSource(_ metric: MetricKey) -> String? {
+        switch metric {
+        case .water: "Our World in Data / FAO AQUASTAT, Water withdrawals per capita"
+        case .land: "Our World in Data / FAO, Agricultural land per capita (world average)"
+        case .yearlyElectricity: "Our World in Data / Ember, Per capita electricity demand"
+        default: nil
         }
     }
 

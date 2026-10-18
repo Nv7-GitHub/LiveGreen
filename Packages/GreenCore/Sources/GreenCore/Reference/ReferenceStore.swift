@@ -36,7 +36,7 @@ public struct ReferenceStore: ReferenceProviding {
         foods = AliasIndex([]); fibers = AliasIndex([]); materials = AliasIndex([]); devices = AliasIndex([])
         grids = [:]; regions = RegionResolver(); countryBaselines = [:]; stateCarbonRatios = [:]; asus = [:]
         materialsByResin = [:]; garment = nil
-        cohort = CohortReference(categoryShares: [:], clothingModifiers: [:], commuteModifiers: [:], citations: [])
+        cohort = CohortReference(categoryShares: [:], commuteModifiers: [:], citations: [])
         recordInfo = []
     }
 
@@ -161,6 +161,31 @@ public struct ReferenceStore: ReferenceProviding {
         if let prefixMatch { return asus[prefixMatch] }
         guard key.count >= 6 else { return nil }
         return asus.keys.filter { $0.hasPrefix(key) }.sorted().first.flatMap { asus[$0] }
+    }
+
+    /// At most this many records may share a model line; a line that matches more is too vague to stand for them.
+    static let maxASUSLineMatches = 4
+
+    /// Records of one model line, sorted by model, for a laptop recognized by its design rather than a printed model
+    /// number: the marketing name has every word of the line and no other line word, apart from an OLED panel
+    /// ("Zenbook 14" → the Zenbook 14 and 14 OLED reports, not the Zenbook S 14). Words that do not narrow the line
+    /// ("ASUS", "laptop", "inch", a year) are ignored. A line of fewer than two words or without a name word, or one
+    /// matching more than `maxASUSLineMatches` records, matches nothing.
+    public func asusDetails(modelLine: String) -> [ASUSPCFDetail] {
+        func words(_ text: String) -> Set<String> {
+            Set(ReferenceKey.normalize(text).split(separator: "_").map(String.init))
+        }
+        let ignored: Set<String> = ["asus", "laptop", "notebook", "inch", "in", "series", "the"]
+        let line = words(modelLine).filter { word in
+            !ignored.contains(word) && !(word.count == 4 && word.hasPrefix("20") && word.allSatisfy(\.isNumber))
+        }
+        guard line.count >= 2, line.contains(where: { $0.contains(where: \.isLetter) }) else { return [] }
+        let matches = asus.values.filter { detail in
+            let name = words(detail.name)
+            let nameLine = name.subtracting(["asus", "oled", detail.record.model.lowercased()])
+            return line.isSubset(of: name) && nameLine.isSubset(of: line)
+        }.sorted { $0.record.model < $1.record.model }
+        return matches.count <= Self.maxASUSLineMatches ? matches : []
     }
 
     /// Grid intensity for a profile region: grid zone, then ZIP, then US state, then country.

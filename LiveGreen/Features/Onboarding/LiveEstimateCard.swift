@@ -12,10 +12,20 @@ struct LiveEstimateCard: View {
     @State private var delta: Double = 0
 
     /// The region is resolved from the ZIP as it is typed, so the baseline follows the location answer.
-    private var estimate: LifestyleEstimate {
+    private var resolvedProfile: UserProfile {
         var resolved = profile
         resolved.region = USRegionLookup.resolved(profile.region)
-        return LifestyleEstimate(profile: resolved)
+        return resolved
+    }
+
+    private var estimate: LifestyleEstimate { LifestyleEstimate(profile: resolvedProfile) }
+
+    /// Yearly kg CO2e one more unit of an answer adds to `part` (the modifiers are linear in each answer).
+    private func marginalKg(_ part: LifestyleEstimate.Part, _ set: (inout UserProfile, Int) -> Void) -> Double {
+        var none = resolvedProfile, one = resolvedProfile
+        set(&none, 0)
+        set(&one, 1)
+        return (LifestyleEstimate(profile: one).kgPerYear[part] ?? 0) - (LifestyleEstimate(profile: none).kgPerYear[part] ?? 0)
     }
 
     var body: some View {
@@ -112,16 +122,19 @@ struct LiveEstimateCard: View {
         case .household:
             return "Home energy: \(amount(.homeEnergy)) a year. Sharing a home splits appliances and heating, so more people means less each."
         case .diet:
-            return "Food: \(amount(.food)) a year. Meat is the biggest driver; a vegan diet is about half an omnivore's."
+            let meat = DisplayUnits.carbon(kg: marginalKg(.food) { $0.meatMealsPerWeek = $1; $0.dairyMealsPerWeek = 0 })
+            let dairy = DisplayUnits.carbon(kg: marginalKg(.food) { $0.dairyMealsPerWeek = $1; $0.meatMealsPerWeek = 0 })
+            return "Food: \(amount(.food)) a year. Each weekly meat meal adds about \(meat) a year; a dairy meal about \(dairy)."
         case .commute:
             let car = DisplayUnits.system == .imperial
                 ? "\(Measured.format((LifestyleEstimate.kgPerKm[.car] ?? 0) * 1.609_34 * DisplayUnits.poundsPerKilogram)) lb per mile"
                 : "\(Measured.format(LifestyleEstimate.kgPerKm[.car] ?? 0)) kg per km"
-            return "Getting around: \(amount(.travel)) a year. A typical car emits about \(car); bikes and walking are close to zero."
+            return "Getting around: \(amount(.travel)) a year. A typical car emits about \(car); walking and cycling are zero."
         case .home:
-            return "Home energy: \(amount(.homeEnergy)) a year. Bigger homes and electric heating raise it."
+            return "Home energy: \(amount(.homeEnergy)) a year. A bigger home raises it; a heat pump emits less than gas, oil or resistance heat."
         case .clothing:
-            return "Clothing: \(amount(.clothing)) a year. Buying mostly second-hand cuts it by about 40%."
+            let item = DisplayUnits.carbon(kg: marginalKg(.clothing) { $0.newClothesPerYear = Double($1) })
+            return "Clothing: \(amount(.clothing)) a year. Each new item a year adds about \(item); second-hand avoids most of it."
         case .chargers:
             return "This doesn't change your estimate. Later, LiveGreen can run these on the cleanest hours with a smart plug."
         }

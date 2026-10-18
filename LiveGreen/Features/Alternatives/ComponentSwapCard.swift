@@ -17,7 +17,8 @@ struct ComponentSwapCard: View {
                     Label(component.name, systemImage: component.category.systemImage).font(.headline)
                     Spacer()
                     if let carbon = component.displayable(.carbon) {
-                        Text(carbon.formatted).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        Text([carbon.formatted, component.basisLabel].compactMap(\.self).joined(separator: " "))
+                            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                     }
                 }
                 ForEach(alternatives) { alternative in
@@ -30,6 +31,9 @@ struct ComponentSwapCard: View {
                     Text("Current vs. \(pick.kind == .smartPlugScheduling ? "scheduled charging" : pick.name)")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
+                    if pick.kind == .product, let note = sameFoodNote {
+                        Text(note).font(.caption2).foregroundStyle(.secondary)
+                    }
                     ComparisonChart(component: component, alternative: pick, charging: charging)
                 } else {
                     Text("Keeping the original.").font(.caption).foregroundStyle(.secondary)
@@ -37,6 +41,15 @@ struct ComponentSwapCard: View {
             }
         }
         .animation(.smooth, value: pick?.id)
+    }
+
+    /// A food swap for a per-pack item covers the same amount of food at the same rate (`Alternative.onBasis`).
+    private var sameFoodNote: String? {
+        guard FoodServing.isPerPack(component), let basis = component.basisLabel,
+              let packs = ImpactEngine().editableUsage(for: component).first(where: { $0.field == .packsPerWeek }) else {
+            return nil
+        }
+        return "Both \(basis), \(UsageField.packsPerWeek.customLabel(packs.value)): the same amount of food."
     }
 }
 

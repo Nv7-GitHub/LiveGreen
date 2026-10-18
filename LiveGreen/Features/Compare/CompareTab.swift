@@ -1,7 +1,7 @@
 import SwiftUI
 import GreenCore
 
-/// The Leaderboard tab (spec §9): how you rank among friends, then your percentile, cohort curve and trend.
+/// The Leaderboard tab (spec §9): how you rank among friends, then your percentile and cohort curve.
 struct CompareTab: View {
     /// Read in `body` so converted numbers refresh when Settings switches units.
     @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
@@ -33,8 +33,9 @@ struct CompareTab: View {
                         content(for: analysis)
                     }
                 }
+                // No implicit animation on `metric`: it animated every card, the chart and the glass chips on each
+                // switch, so taps landed mid-animation and the new metric showed late.
                 .padding()
-                .animation(.smooth, value: metric)
             }
             .navigationTitle("Leaderboard")
             .settingsToolbarButton()
@@ -59,9 +60,8 @@ struct CompareTab: View {
             PercentileHeroCard(metric: metric, greenerThan: comparison.greenerThan, userValue: comparison.userValue,
                                peerMedian: comparison.cohortMedian)
             CohortDistributionChart(metric: metric, distribution: distribution, userValue: comparison.userValue)
-            PercentileTrendCard(points: analysis.trend[metric] ?? [])
-            if let citation = analysis.cohort?.baseline.citation {
-                Text("Simulated network: friends are drawn from your region's per-person footprints. Your number is estimated from your answers (diet, getting around, home, household, clothing), and a scanned category counts when it's more than that estimate. Baseline: \(citation.title).")
+            if let source = CohortMetric.baselineSource(metric) ?? analysis.cohort?.baseline.citation.title {
+                Text("Your number is estimated from your answers (diet, getting around, home, household, clothing), and a scanned category counts when it's more than that estimate. Baseline: \(source).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -87,13 +87,14 @@ struct CompareTab: View {
     }
 }
 
-/// Glass chips for the leaderboard metrics, each showing its percentile; tapping selects the metric.
+/// Glass chips for the leaderboard metrics in one row, each showing its percentile; tapping selects the metric.
 private struct MetricChips: View {
     @Binding var selection: MetricKey
     let analysis: CompareAnalysis
 
     var body: some View {
-        GlassEffectContainer(spacing: 8) {
+        // No blending distance: at 8 pt a pressed chip's glass merged with its neighbours.
+        GlassEffectContainer(spacing: 0) {
             HStack(spacing: 8) {
                 ForEach(CohortMetric.all, id: \.self) { metric in
                     chip(for: metric)
@@ -108,15 +109,19 @@ private struct MetricChips: View {
         return Button { selection = metric } label: {
             VStack(spacing: 2) {
                 Image(systemName: metric.systemImage).font(.subheadline)
-                Text(percent).font(.subheadline.weight(.bold).monospacedDigit())
+                Text(percent).font(.subheadline.weight(.bold).monospacedDigit()).lineLimit(1).minimumScaleFactor(0.7)
                 Text(CohortMetric.shortName(metric)).font(.caption2).lineLimit(1).minimumScaleFactor(0.7)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
+            .padding(.horizontal, 4)
             .foregroundStyle(isSelected ? .white : .primary)
+            // Glass is drawn, not hit-tested: without a content shape only the icon and text took taps.
+            .contentShape([.interaction, .accessibility], .rect(cornerRadius: 18))
             .glassEffect(.regular.tint(isSelected ? Theme.leaf : nil).interactive(), in: .rect(cornerRadius: 18))
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("leaderboard.metric.\(metric.rawValue)")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityLabel("\(CohortMetric.shortName(metric)), greener than \(percent)")
     }

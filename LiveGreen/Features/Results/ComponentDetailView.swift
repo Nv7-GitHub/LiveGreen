@@ -72,6 +72,7 @@ struct ComponentDetailView: View {
             parts.append(ids.materials.map { "\(Int($0.percent))% \($0.material.replacingOccurrences(of: "_", with: " "))" }
                 .joined(separator: ", "))
         }
+        if let basis = component.basisTitle { parts.append(basis) }
         return parts.joined(separator: " · ")
     }
 

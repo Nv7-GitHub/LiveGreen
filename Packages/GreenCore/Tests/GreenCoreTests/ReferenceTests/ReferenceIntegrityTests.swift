@@ -108,11 +108,24 @@ struct ReferenceIntegrityTests {
                 #expect((baseline.medians[metric] ?? 0) > 0, "\(info.key) median for \(metric)")
                 #expect((baseline.sigmas[metric] ?? 0) > 0)
             }
-            #expect(Set(baseline.dietModifiers.keys) == Set(Diet.allCases))
         }
         for metric in CohortModel.comparedMetrics {
             let total = Category.allCases.reduce(0) { $0 + store.cohort.share(of: $1, for: metric) }
             #expect(total > 0 && total < 1, "\(metric) category shares total \(total)")
         }
+        // Lifestyle factors are complete, and the typical answers give the average diet and wardrobe.
+        let cohort = store.cohort
+        for metric in [MetricKey.carbon, .land, .water] {
+            #expect(cohort.meals.plantBasedShare[metric] != nil, "plant-based food share for \(metric)")
+            #expect(abs(cohort.meals.modifier(meatMeals: UserProfile.typicalMeatMealsPerWeek,
+                                              dairyMeals: UserProfile.typicalDairyMealsPerWeek, metric: metric) - 1) < 1e-9)
+        }
+        #expect(abs(cohort.clothing.modifier(newItemsPerYear: UserProfile.typicalNewClothesPerYear) - 1) < 1e-9)
+        #expect(Set(cohort.homeSize.typicalFloorAreaM2.keys) == Set(HomeType.allCases))
+        #expect((0.3...0.7).contains(cohort.homeSize.spaceConditioningShare))
+        #expect(Set(cohort.heatingModifiers.keys) == Set(HeatingSource.allCases))
+        #expect(Set(cohort.heatingCarbonModifiers.keys) == Set(HeatingSource.allCases))
+        #expect(cohort.heatingCarbonModifiers.values.allSatisfy { (0.3...2).contains($0) })
+        #expect(Set(cohort.commuteModifiers.keys) == Set(CommuteMode.allCases))
     }
 }

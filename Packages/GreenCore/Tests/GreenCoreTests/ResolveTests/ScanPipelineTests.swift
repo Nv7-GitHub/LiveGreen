@@ -1,4 +1,6 @@
+import CoreGraphics
 import Foundation
+import ImageIO
 import Testing
 @testable import GreenCore
 import GreenCoreFakes
@@ -146,6 +148,58 @@ struct ScanPipelineTests {
         #expect(after.usage?.hoursOnPerDay == 2)
         #expect(try #require(after.metrics[.yearlyElectricity]).value < monitor.metrics[.yearlyElectricity]!.value)
         #expect(try #require(updated.totals[.carbon]).value < result.totals[.carbon]!.value)
+    }
+
+    private struct PhotoRecordingVision: VisionIdentifier {
+        let images = Recorder<Data>()
+        func identify(image: Data, hints: OCRHints, profile: UserProfile) async throws -> IdentifyResponse {
+            images.append(image)
+            return DemoScene.deskSetup.identifyResponse
+        }
+    }
+
+    @Test func identifyGetsTheFullPhotoAndTheResultKeepsASmallerCopy() async throws {
+        let photo = try Self.jpeg(width: 2576, height: 1932)
+        let vision = PhotoRecordingVision()
+        let result = try await pipeline(vision: vision).run(image: photo, hints: .none, mode: .photo)
+        #expect(vision.images.values == [photo])
+        let stored = try #require(result.photo)
+        let size = try #require(Self.pixelSize(stored))
+        #expect(size.width == ScanPhoto.maxLongEdge && abs(size.height - 1176) <= 1)
+        #expect(stored.count < photo.count)
+        // The copy is the same every time: the AR view finds the saved scan of its capture by comparing it.
+        #expect(ScanPhoto.stored(photo) == stored)
+        // A photo that already fits keeps its bytes (demo scenes are matched by them), as does unreadable data.
+        let small = try Self.jpeg(width: 1200, height: 900)
+        #expect(ScanPhoto.stored(small) == small)
+        #expect(ScanPhoto.stored(Data([1])) == Data([1]))
+    }
+
+    /// A JPEG with some detail in it, as the camera would hand over.
+    static func jpeg(width: Int, height: Int) throws -> Data {
+        let context = try #require(CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                                             space: CGColorSpaceCreateDeviceRGB(),
+                                             bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue))
+        for row in 0..<12 {
+            for column in 0..<16 {
+                context.setFillColor(red: Double(row) / 12, green: Double(column) / 16, blue: 0.5, alpha: 1)
+                context.fill(CGRect(x: column * width / 16, y: row * height / 12, width: width / 16, height: height / 12))
+            }
+        }
+        let image = try #require(context.makeImage())
+        let output = NSMutableData()
+        let destination = try #require(CGImageDestinationCreateWithData(output, "public.jpeg" as CFString, 1, nil))
+        CGImageDestinationAddImage(destination, image, [kCGImageDestinationLossyCompressionQuality: 0.85] as CFDictionary)
+        #expect(CGImageDestinationFinalize(destination))
+        return output as Data
+    }
+
+    static func pixelSize(_ jpeg: Data) -> (width: Int, height: Int)? {
+        guard let source = CGImageSourceCreateWithData(jpeg as CFData, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? Int,
+              let height = properties[kCGImagePropertyPixelHeight] as? Int else { return nil }
+        return (width, height)
     }
 }
 

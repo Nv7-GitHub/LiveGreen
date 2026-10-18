@@ -3,7 +3,7 @@ import SwiftData
 
 /// SwiftData container setup (local only, spec §2).
 enum Persistence {
-    static let schema = Schema([StoredScan.self, CachedMetrics.self, StoredProfile.self])
+    static let schema = Schema([StoredScan.self, CachedMetrics.self, StoredProfile.self, StoredFeedback.self])
 
     static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemory)

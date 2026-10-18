@@ -1,5 +1,6 @@
-/// T2: cited spec-sheet values researched on the web (spec §5.4). Only components with a brand and model
-/// are researched, and at most `maxConcurrent` research calls run at once across the scan (spec §11).
+/// T2: cited spec-sheet values researched on the web (spec §5.4). Only components with a brand and a model number
+/// or a model line identified with more than low confidence are researched, and at most `maxConcurrent` research
+/// calls run at once across the scan (spec §11).
 public struct SpecResearchResolver: MetricResolver {
     public let tier = Tier.researchedSpec
     public let name = "Spec research"
@@ -13,8 +14,9 @@ public struct SpecResearchResolver: MetricResolver {
 
     public func resolve(_ request: ResolutionRequest) async throws -> ResolverOutput {
         let component = request.component
-        guard let brand = component.identifiers.brand, !brand.isEmpty,
-              let model = component.identifiers.model, !model.isEmpty, !request.metrics.isEmpty else { return .empty }
+        let ids = component.identifiers
+        guard let brand = ids.brand, !brand.isEmpty, !(ids.model ?? "").isEmpty || ids.confidentModelLine != nil,
+              !request.metrics.isEmpty else { return .empty }
         let metrics = request.metrics.sorted { $0.rawValue < $1.rawValue }
         let spec = try await limiter.run {
             try await researcher.research(name: component.name, category: component.category,

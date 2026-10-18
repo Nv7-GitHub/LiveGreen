@@ -74,7 +74,7 @@ struct CohortDistributionChart: View {
                 .accessibilityLabel("Peer distribution of \(CohortMetric.shortName(metric))")
                 .accessibilityValue("You: \(YearlyValue.format(userValue, metric: metric)); median \(YearlyValue.format(distribution.median, metric: metric))")
 
-                Text("\(CohortMetric.basis(metric)) per person in your region, \(DisplayUnits.symbol(metric.unit)) · green = people with a larger footprint")
+                Text("\(CohortMetric.basis(metric)) per person \(CohortMetric.peers(metric)), \(DisplayUnits.symbol(metric.unit)) · green = people with a larger footprint")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

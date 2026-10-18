@@ -21,6 +21,7 @@ struct ScanStore {
         try context.save()
     }
 
+    /// Deletes the scan's row; SwiftData removes its externally stored photo and greener image with it.
     func deleteScan(id: UUID) throws {
         try context.delete(model: StoredScan.self, where: #Predicate { $0.id == id })
         try context.save()

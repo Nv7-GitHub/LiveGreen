@@ -10,6 +10,8 @@ public struct ScanPipeline: Sendable {
     public var ladder: EvidenceLadder
     public var engine: ImpactEngine
     public var profile: UserProfile
+    /// Notes the user left on earlier scans; identify gets the few most relevant as weak hints.
+    public var feedback: [ScanFeedback] = []
 
     /// The ladder phases and the progress step each one reports.
     static let phases: [(step: PipelineStep, tiers: ClosedRange<Tier>)] = [
@@ -45,6 +47,11 @@ public struct ScanPipeline: Sendable {
         let deferrable = Dictionary(uniqueKeysWithValues: zip(components.map(\.id), identified.map(\.deferrableLoad)))
         emit(.componentsIdentified(components))
         emit(.stepFinished(.identifying))
+        // Record lookups start here: a packaged food's basis may need its record before the cache is read.
+        emit(.stepStarted(.lookingUpRecords))
+        let basis = await onPackBasis(components, records: records)
+        components = basis.components
+        let ladder = ladder.reusing(basis.answers)
 
         // A cache hit skips the ladder, so the same identifier always gives the same numbers.
         var cachedIDs = Set<UUID>()
@@ -55,8 +62,8 @@ public struct ScanPipeline: Sendable {
             }
         }
         for phase in Self.phases {
-            emit(.stepStarted(phase.step))
-            components = await resolveAll(components, tiers: phase.tiers, skipping: cachedIDs, emit: emit)
+            if phase.step != .lookingUpRecords { emit(.stepStarted(phase.step)) }
+            components = await resolveAll(components, ladder: ladder, tiers: phase.tiers, skipping: cachedIDs, emit: emit)
             emit(.stepFinished(phase.step))
         }
         // A generic item that still only has an estimate takes the one cached for its kind, so it reads the same.
@@ -67,7 +74,10 @@ public struct ScanPipeline: Sendable {
                 cachedIDs.insert(hit.id)
             }
         }
-        for component in components where !cachedIDs.contains(component.id) { await ladder.remember(component) }
+        // An item whose basis lookup failed is per serving only for want of a connection, so it is not cached.
+        for component in components where !cachedIDs.contains(component.id) && !basis.unchecked.contains(component.id) {
+            await ladder.remember(component)
+        }
 
         components = components.map { completed($0, deferrable: deferrable[$0.id] ?? nil) }
         let pending = QuestionGate.pendingQuestions(for: components)
@@ -76,8 +86,10 @@ public struct ScanPipeline: Sendable {
         let details = await specQuestions(for: components)
         if !details.isEmpty { emit(.specQuestionsNeeded(details)) }
 
+        // Identify had the full photo; the result keeps a smaller copy (`ScanPhoto`).
         var result = ScanResult(id: id, date: date, title: response.sceneTitle ?? components.first?.name ?? "Scan",
-                                mode: mode, photo: image.isEmpty ? await productPhoto : image, components: components)
+                                mode: mode, photo: image.isEmpty ? await productPhoto : ScanPhoto.stored(image),
+                                components: components)
         result.updateTotals(engine: engine)
         return result
     }
@@ -92,7 +104,7 @@ public struct ScanPipeline: Sendable {
             guard let index = updated.components.firstIndex(where: { $0.id == suggestion.componentID }) else { continue }
             var resolved: [Alternative] = []
             for alternative in suggestion.alternatives where alternative.kind == .product {
-                resolved.append(await resolve(alternative))
+                resolved.append(await resolve(alternative.onBasis(of: updated.components[index])))
             }
             updated.components[index].alternatives = GreenScore.ranked(resolved, replacing: updated.components[index],
                                                                         engine: engine)
@@ -189,14 +201,15 @@ public struct ScanPipeline: Sendable {
 
     private func identifyWithRetry(image: Data, hints: OCRHints,
                                    progress: @escaping @Sendable (IdentifyProgress) -> Void) async throws -> IdentifyResponse {
+        let notes = ScanFeedback.relevant(feedback, to: hints)
         do {
-            return try await vision.identify(image: image, hints: hints, profile: profile, progress: progress)
+            return try await vision.identify(image: image, hints: hints, profile: profile, feedback: notes, progress: progress)
         } catch is CancellationError {
             throw CancellationError()
         } catch GreenCoreError.missingAPIKey(let key) {
             throw GreenCoreError.missingAPIKey(key)
         } catch {
-            return try await vision.identify(image: image, hints: hints, profile: profile, progress: progress)
+            return try await vision.identify(image: image, hints: hints, profile: profile, feedback: notes, progress: progress)
         }
     }
 
@@ -208,9 +221,8 @@ public struct ScanPipeline: Sendable {
         return records
     }
 
-    private func resolveAll(_ components: [Component], tiers: ClosedRange<Tier>, skipping: Set<UUID>,
+    private func resolveAll(_ components: [Component], ladder: EvidenceLadder, tiers: ClosedRange<Tier>, skipping: Set<UUID>,
                             emit: @escaping @Sendable (PipelineEvent) -> Void) async -> [Component] {
-        let ladder = ladder
         let profile = profile
         return await withTaskGroup(of: (Int, Component).self) { group in
             for (index, component) in components.enumerated() where !skipping.contains(component.id) {

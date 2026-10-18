@@ -131,8 +131,8 @@ struct ARScanView: View {
     /// The explicit result, or the saved scan whose photo is this view's last capture.
     private var anchoredResult: ScanResult? {
         if let result { return result }
-        guard let jpeg = snapshot?.jpeg else { return nil }
-        return model.scans.prefix(5).first { $0.photo == jpeg }
+        guard let photo = snapshot?.storedPhoto else { return nil }
+        return model.scans.prefix(5).first { $0.photo == photo }
     }
 
     private func capture() {

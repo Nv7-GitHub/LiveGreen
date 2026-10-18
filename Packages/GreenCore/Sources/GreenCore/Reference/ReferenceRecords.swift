@@ -41,27 +41,123 @@ public struct GarmentProcessing: Codable, Sendable, Hashable {
 public struct CohortReference: Sendable, Hashable {
     /// Share of the per-capita total attributable to each scanned category, per metric.
     public var categoryShares: [MetricKey: [Category: Double]]
-    public var clothingModifiers: [ClothingHabit: Double]
     public var commuteModifiers: [CommuteMode: Double]
     /// Household electricity (and appliance carbon) by housing type, relative to the average home.
     public var homeTypeModifiers: [HomeType: Double]
-    /// Household electricity by main heating source, relative to the average home.
+    /// Household electricity by heating source, relative to the average home.
     public var heatingModifiers: [HeatingSource: Double]
+    /// Home-energy carbon by heating source, relative to the average home: burning fuel or running resistance
+    /// heaters adds carbon that a heat pump or an unheated home does not.
+    public var heatingCarbonModifiers: [HeatingSource: Double]
+    /// Food's footprint from meat and dairy meals a week.
+    public var meals: MealFactors
+    /// Clothing's footprint from new clothes bought a year.
+    public var clothing: ClothingFactors
+    /// Home energy from floor area against a typical home of the same type.
+    public var homeSize: HomeSizeFactors
     public var citations: [Source]
 
-    public init(categoryShares: [MetricKey: [Category: Double]], clothingModifiers: [ClothingHabit: Double],
-                commuteModifiers: [CommuteMode: Double], homeTypeModifiers: [HomeType: Double] = [:],
-                heatingModifiers: [HeatingSource: Double] = [:], citations: [Source]) {
+    public init(categoryShares: [MetricKey: [Category: Double]], commuteModifiers: [CommuteMode: Double],
+                homeTypeModifiers: [HomeType: Double] = [:], heatingModifiers: [HeatingSource: Double] = [:],
+                heatingCarbonModifiers: [HeatingSource: Double] = [:], meals: MealFactors = MealFactors(),
+                clothing: ClothingFactors = ClothingFactors(), homeSize: HomeSizeFactors = HomeSizeFactors(),
+                citations: [Source]) {
         self.categoryShares = categoryShares
-        self.clothingModifiers = clothingModifiers
         self.commuteModifiers = commuteModifiers
         self.homeTypeModifiers = homeTypeModifiers
         self.heatingModifiers = heatingModifiers
+        self.heatingCarbonModifiers = heatingCarbonModifiers
+        self.meals = meals
+        self.clothing = clothing
+        self.homeSize = homeSize
         self.citations = citations
     }
 
     public func share(of category: Category, for metric: MetricKey) -> Double {
         categoryShares[metric]?[category] ?? 0
+    }
+
+    /// The heating sources' modifiers averaged evenly (each source taken to heat an equal part of the home);
+    /// no sources means an unheated home (`.none`). Carbon uses `heatingCarbonModifiers`, every other metric
+    /// the electricity table.
+    public func heatingModifier(for sources: Set<HeatingSource>, metric: MetricKey = .yearlyElectricity) -> Double {
+        let table = metric == .carbon ? heatingCarbonModifiers : heatingModifiers
+        let used = sources.subtracting([.none])
+        guard !used.isEmpty else { return table[.none] ?? 1 }
+        return used.reduce(0) { $0 + (table[$1] ?? 1) } / Double(used.count)
+    }
+}
+
+/// Food's footprint from how many meals a week have meat or dairy as an important component, relative to the
+/// average diet. A plant-based diet keeps `plantBasedShare` of it; the rest (the animal-product part) scales
+/// with the meal counts, a meat meal weighing `kgCO2ePerMeatMeal` against a dairy meal's `kgCO2ePerDairyMeal`.
+/// The average counts give 1.
+public struct MealFactors: Sendable, Hashable {
+    /// Share of the average diet's footprint left on a plant-based diet, per metric (carbon, land, water).
+    public var plantBasedShare: [MetricKey: Double]
+    /// kg CO2e a meal centred on meat (or on dairy) adds over a plant-based meal.
+    public var kgCO2ePerMeatMeal: Double
+    public var kgCO2ePerDairyMeal: Double
+    /// The average diet's meals a week with meat and with dairy.
+    public var averageMeatMealsPerWeek: Double
+    public var averageDairyMealsPerWeek: Double
+
+    public init(plantBasedShare: [MetricKey: Double] = [:], kgCO2ePerMeatMeal: Double = 0, kgCO2ePerDairyMeal: Double = 0,
+                averageMeatMealsPerWeek: Double = 0, averageDairyMealsPerWeek: Double = 0) {
+        self.plantBasedShare = plantBasedShare
+        self.kgCO2ePerMeatMeal = kgCO2ePerMeatMeal
+        self.kgCO2ePerDairyMeal = kgCO2ePerDairyMeal
+        self.averageMeatMealsPerWeek = averageMeatMealsPerWeek
+        self.averageDairyMealsPerWeek = averageDairyMealsPerWeek
+    }
+
+    /// Multiplier on food's share of the per-capita total for `metric`; 1 without data for the metric.
+    public func modifier(meatMeals: Int, dairyMeals: Int, metric: MetricKey) -> Double {
+        let average = averageMeatMealsPerWeek * kgCO2ePerMeatMeal + averageDairyMealsPerWeek * kgCO2ePerDairyMeal
+        guard let plant = plantBasedShare[metric], average > 0 else { return 1 }
+        let yours = Double(meatMeals) * kgCO2ePerMeatMeal + Double(dairyMeals) * kgCO2ePerDairyMeal
+        return plant + (1 - plant) * yours / average
+    }
+}
+
+/// Clothing's footprint from new clothes bought a year, relative to the average buyer: `baseShare` (shoes,
+/// second-hand finds, upkeep) stays and the rest scales with new items.
+public struct ClothingFactors: Sendable, Hashable {
+    public var averageNewItemsPerYear: Double
+    public var baseShare: Double
+
+    public init(averageNewItemsPerYear: Double = 0, baseShare: Double = 0) {
+        self.averageNewItemsPerYear = averageNewItemsPerYear
+        self.baseShare = baseShare
+    }
+
+    /// Multiplier on clothing's share of the per-capita total; 1 without data.
+    public func modifier(newItemsPerYear: Double) -> Double {
+        guard averageNewItemsPerYear > 0 else { return 1 }
+        return baseShare + (1 - baseShare) * max(0, newItemsPerYear) / averageNewItemsPerYear
+    }
+}
+
+/// Home energy from floor area: space heating and cooling (`spaceConditioningShare` of household energy)
+/// scale with area against the typical home of the same type; water heating, appliances and lighting do not.
+public struct HomeSizeFactors: Sendable, Hashable {
+    /// Average floor area by home type, m².
+    public var typicalFloorAreaM2: [HomeType: Double]
+    public var spaceConditioningShare: Double
+
+    /// Area ratios beyond this are clamped, so a stray answer cannot scale home energy without bound.
+    static let ratioRange = 0.2...5.0
+
+    public init(typicalFloorAreaM2: [HomeType: Double] = [:], spaceConditioningShare: Double = 0) {
+        self.typicalFloorAreaM2 = typicalFloorAreaM2
+        self.spaceConditioningShare = spaceConditioningShare
+    }
+
+    /// Multiplier on home energy for a home of `areaM2`; 1 for nil (typical size) or without data.
+    public func modifier(areaM2: Double?, homeType: HomeType) -> Double {
+        guard let areaM2, let typical = typicalFloorAreaM2[homeType], typical > 0 else { return 1 }
+        let ratio = min(max(areaM2 / typical, Self.ratioRange.lowerBound), Self.ratioRange.upperBound)
+        return 1 + spaceConditioningShare * (ratio - 1)
     }
 }
 

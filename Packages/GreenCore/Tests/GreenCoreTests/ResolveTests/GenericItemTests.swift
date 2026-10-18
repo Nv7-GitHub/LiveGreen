@@ -43,8 +43,9 @@ struct GenericItemTests {
         #expect(Identifiers.genericKey(name: "Brown rice", category: .food) == nil)
         #expect(Identifiers.genericKey(name: "Black TV", category: .electronic) == nil)
         #expect(Identifiers.genericKey(name: "Blue", category: .clothing) == nil)
-        #expect(Identifiers(genericKey: "backpack").resolutionKey == "item:backpack")
-        #expect(Identifiers(brand: "A", model: "B", genericKey: "backpack").resolutionKey == "bm:a|b")
+        #expect(Identifiers(genericKey: "backpack").resolutionKey(category: .clothing, quantities: Quantities()) == "item:backpack")
+        #expect(Identifiers(brand: "A", model: "B", genericKey: "backpack")
+            .resolutionKey(category: .clothing, quantities: Quantities()) == "bm:a|b")
     }
 
     @Test func theGuessesAloneWouldGiveDifferentNumbers() async throws {
@@ -137,20 +138,55 @@ struct GenericItemTests {
         #expect(prepared[2].quantities.massKg == 1.1)
     }
 
-    @Test func inferredModelNamesAreDropped() {
-        func model(_ model: String, hints: OCRHints = .none) -> String? {
+    @Test func inferredModelNamesBecomeModelLines() {
+        func checked(_ model: String, line: String? = nil, confidence: IdentificationConfidence? = .high,
+                     cues: String? = nil, hints: OCRHints = .none) -> Identifiers {
             let sneaker = IdentifiedComponent(name: "Sneakers", category: .clothing, boundingBox: .full,
-                                              identifiers: Identifiers(brand: "Acme", model: model))
-            let checked = ScanPipeline.droppingUnreadModel(from: sneaker, hints: hints)
-            #expect(checked.identifiers.brand == "Acme")
-            return checked.identifiers.model
+                                              identifiers: Identifiers(brand: "Acme", model: model, modelLine: line,
+                                                                       confidence: confidence, appearanceCues: cues))
+            let checked = ScanPipeline.demotingUnreadModel(from: sneaker, hints: hints).identifiers
+            #expect(checked.brand == "Acme")
+            return checked
         }
-        // A product-line name nothing on the item backs up.
-        #expect(model("Runner Max") == nil)
-        #expect(model("Runner Max 90") == nil)
-        // A printed-looking code, or a name the on-device text contains, is kept.
-        #expect(model("RM-90X") == "RM-90X")
-        #expect(model("Runner Max 90", hints: OCRHints(textLines: ["ACME RUNNER MAX 90"])) == "Runner Max 90")
-        #expect(model("Runner Max", hints: OCRHints(modelNumbers: ["RUNNERMAX"])) == "Runner Max")
+        // A product-line name nothing on the item backs up is not a model number, but it still names the line.
+        #expect(checked("Runner Max").model == nil)
+        #expect(checked("Runner Max").modelLine == "Runner Max")
+        #expect(checked("Runner Max 90").model == nil)
+        #expect(checked("Runner Max 90", line: "Runner Max").modelLine == "Runner Max", "a stated line wins")
+        // The moved line drops a repeated brand, as identify's own lines do, so both give one line key.
+        #expect(checked("ACME Runner Max").modelLine == "Runner Max")
+        // Identify's confidence was in a model nothing backs up: the line keeps at most medium, and only with the
+        // design cues it was told from; without them it is a guess, so it is neither researched nor cached.
+        #expect(checked("Runner Max", cues: "side stripe, waffle sole").confidence == .medium)
+        #expect(checked("Runner Max", confidence: .medium, cues: "side stripe").confidence == .medium)
+        #expect(checked("Runner Max", confidence: .low, cues: "side stripe").confidence == .low)
+        #expect(checked("Runner Max", confidence: nil, cues: "side stripe").confidence == nil)
+        #expect(checked("Runner Max").confidence == .low)
+        #expect(checked("Runner Max").confidentModelLine == nil)
+        #expect(checked("Runner Max 90", line: "Runner Max").confidence == .high, "a stated line keeps its confidence")
+        // A name the on-device text contains is kept.
+        #expect(checked("Runner Max 90", hints: OCRHints(textLines: ["ACME RUNNER MAX 90"])).model == "Runner Max 90")
+        #expect(checked("Runner Max", hints: OCRHints(modelNumbers: ["RUNNERMAX"])).model == "Runner Max")
+        #expect(checked("RM-90X", confidence: nil, hints: OCRHints(textLines: ["RM-90X"])).model == "RM-90X")
+    }
+
+    @Test func unreadCodesStayModelsOnlyWhenTranscribedWithHighConfidence() {
+        func checked(_ model: String, confidence: IdentificationConfidence?, visibleText: String?) -> Identifiers {
+            let laptop = IdentifiedComponent(name: "Laptop", category: .electronic, boundingBox: .full,
+                                             identifiers: Identifiers(brand: "Apple", model: model, confidence: confidence,
+                                                                      ocrText: visibleText))
+            return ScanPipeline.demotingUnreadModel(from: laptop, hints: .none).identifiers
+        }
+        // Read off the item's label by identify, at high confidence: a model number.
+        #expect(checked("A2681", confidence: .high, visibleText: "Model A2681 EMC 4074").model == "A2681")
+        // A chip or line code looks printed but names no single product ("M2" fits many Macs), so without both it
+        // is neither looked up as a model nor cached under brand|model.
+        let unbacked: [(IdentificationConfidence?, String?)] = [(.medium, "M2"), (.high, nil), (nil, "M2"), (.high, "MacBook Air")]
+        for (confidence, text) in unbacked {
+            let ids = checked("M2", confidence: confidence, visibleText: text)
+            #expect(ids.model == nil)
+            #expect(ids.cacheKey == nil)
+            #expect(ids.modelLine == "M2" && ids.confidence == .low, "a line guessed without cues")
+        }
     }
 }

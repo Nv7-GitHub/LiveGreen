@@ -54,6 +54,8 @@ public struct ClaudeClient: Sendable {
 
     public var configuration: Configuration
     let transport: any HTTPTransport
+    /// Notes from earlier scans that identify sends as weak hints; set per call by `identify(…feedback:progress:)`.
+    var identifyFeedback: [ScanFeedback] = []
 
     public init(configuration: Configuration, transport: any HTTPTransport = URLSessionTransport()) {
         self.configuration = configuration

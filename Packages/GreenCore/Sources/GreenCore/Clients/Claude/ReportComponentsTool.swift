@@ -46,7 +46,7 @@ enum ReportComponentsTool {
     }()
 
     static let component = SchemaParts.object([
-        "name": SchemaParts.string("Plain item name, e.g. '27-inch monitor', 'Beef burger', 'Cotton T-shirt'; with a brand only when identifiers.brand is set."),
+        "name": SchemaParts.string("Item name, as specific as the identification: brand and model line first when confidence is medium or high, else a plain name such as '27-inch monitor', 'Beef burger', 'Cotton T-shirt'."),
         "category": SchemaParts.enumeration(SchemaParts.categories, "Category; decides which metrics apply."),
         "bounding_box": SchemaParts.object([
             "x": SchemaParts.number("Left edge, fraction of image width (0-1)."),
@@ -54,7 +54,7 @@ enum ReportComponentsTool {
             "width": SchemaParts.number("Width, fraction of image width."),
             "height": SchemaParts.number("Height, fraction of image height."),
         ], required: ["x", "y", "width", "height"], description: "Tight box around the item in normalized image coordinates."),
-        "identifiers": SchemaParts.identifiersSchema(brand: SchemaParts.legibleBrand),
+        "identifiers": SchemaParts.identifyIdentifiers,
         "quantities": SchemaParts.quantities,
         "default_usage": SchemaParts.usage,
         "deferrable_load": SchemaParts.enumeration(DeferrableLoadType.allCases.map(\.rawValue),
@@ -73,7 +73,7 @@ enum ReportComponentsTool {
                                               "Metrics the answer changes."),
         "options": SchemaParts.array(of: SchemaParts.object([
             "label": SchemaParts.string("Chip label, e.g. '~2 h', 'Weekly'."),
-            "field": SchemaParts.enumeration(UsageField.allCases.map(\.rawValue), "Usage field the answer sets.", nullable: true),
+            "field": SchemaParts.enumeration(UsageField.askable.map(\.rawValue), "Usage field the answer sets.", nullable: true),
             "value": SchemaParts.nullableNumber("Value assigned to the field."),
         ], required: ["label", "field", "value"]), "2-4 answer chips."),
     ], required: ["id", "question", "why_it_matters", "affected_metrics", "options"])
@@ -127,13 +127,20 @@ enum ReportComponentsTool {
     struct IdentifiersPayload: Decodable {
         var brand: String?
         var model: String?
+        var modelLine: String?
+        var confidence: String?
+        var appearanceCues: String?
         var gtin: String?
         var materials: [MaterialShare]?
         var visibleText: String?
 
         var identifiers: Identifiers {
-            Identifiers(gtin: gtin.flatMap(GTINDigits.normalized), brand: brand?.trimmedNonEmpty, model: model?.trimmedNonEmpty,
-                        materials: (materials ?? []).filter { $0.percent > 0 }, ocrText: visibleText?.trimmedNonEmpty)
+            let brand = brand?.trimmedNonEmpty
+            return Identifiers(gtin: gtin.flatMap(GTINDigits.normalized), brand: brand, model: model?.trimmedNonEmpty,
+                               modelLine: modelLine.flatMap { Identifiers.modelLine($0, brand: brand) },
+                               confidence: confidence?.trimmedNonEmpty.flatMap { IdentificationConfidence(rawValue: $0.lowercased()) },
+                               appearanceCues: appearanceCues?.trimmedNonEmpty,
+                               materials: (materials ?? []).filter { $0.percent > 0 }, ocrText: visibleText?.trimmedNonEmpty)
         }
     }
 }

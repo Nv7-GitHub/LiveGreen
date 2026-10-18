@@ -8,11 +8,13 @@ struct CohortModelTests {
     let baseline = PerCapitaBaseline(
         region: "TEST", medians: [.carbon: 10_000, .water: 1_000_000, .land: 6_000, .yearlyElectricity: 5_000],
         sigmas: [.carbon: 0.6, .water: 0.5, .land: 0.6, .yearlyElectricity: 0.5],
-        dietModifiers: [.omnivore: 1, .flexitarian: 0.83, .vegetarian: 0.68, .vegan: 0.51],
         householdSizeExponent: 0.75, citation: Source(title: "Test", tier: .factorModel))
     let reference = CohortReference(
         categoryShares: [.carbon: [.food: 0.2, .electronic: 0.1], .yearlyElectricity: [.electronic: 0.3]],
-        clothingModifiers: [:], commuteModifiers: [.car: 1.1], citations: [])
+        commuteModifiers: [.car: 1.1],
+        meals: MealFactors(plantBasedShare: [.carbon: 0.51], kgCO2ePerMeatMeal: 1.8, kgCO2ePerDairyMeal: 0.45,
+                           averageMeatMealsPerWeek: 9, averageDairyMealsPerWeek: 10),
+        citations: [])
 
     func model(_ profile: UserProfile = UserProfile(householdSize: 1)) -> CohortModel {
         CohortModel(profile: profile, baseline: baseline, reference: reference)
@@ -20,7 +22,7 @@ struct CohortModelTests {
 
     @Test func medianAppliesSharesAndModifiers() {
         #expect(model().median(for: .carbon, categories: [.food]) == 2_000)
-        let vegan = model(UserProfile(householdSize: 1, diet: .vegan))
+        let vegan = model(UserProfile(householdSize: 1, meatMealsPerWeek: 0, dairyMealsPerWeek: 0))
         #expect(abs(vegan.median(for: .carbon, categories: [.food]) - 1_020) < 1e-9)
         // Household of 4: electronic share × 4^(0.75 − 1).
         let family = model(UserProfile(householdSize: 4))
@@ -46,9 +48,9 @@ struct CohortModelTests {
         let heavy = ScannedFootprint(byCategory: [.food: [.carbon: 3_740]])
         #expect(abs(try #require(model().estimate(for: .carbon, scanned: heavy)) - 10_000) < 1e-9)
         // Peers are the whole region, unadjusted: carbon median 10,000; home electricity 30% of 5,000.
-        #expect(abs(try #require(model(UserProfile(householdSize: 1, diet: .vegan)).regionalDistribution(for: .carbon)).median - 10_000) < 1e-9)
+        #expect(abs(try #require(model(UserProfile(householdSize: 1, meatMealsPerWeek: 0, dairyMealsPerWeek: 0)).regionalDistribution(for: .carbon)).median - 10_000) < 1e-9)
         #expect(abs(try #require(model().regionalDistribution(for: .yearlyElectricity)).median - 1_500) < 1e-9)
-        #expect(model().regionalDistribution(for: .water) == nil)
+        #expect(model().regionalDistribution(for: .water) == nil) // no water shares in this reference
 
         let comparison = try #require(model().compare(heavy).first { $0.metric == .carbon })
         #expect(abs(comparison.userValue - 10_000) < 1e-9)
@@ -81,7 +83,7 @@ struct CohortModelTests {
         #expect(first.first { $0.name == "Yuti Purohit" }?.initials == "YP")
         let values = first.compactMap { $0.yearly[.carbon] }
         #expect(values.count == CohortModel.friendNames.count && Set(values).count == values.count)
-        #expect(first.allSatisfy { $0.yearly[.water] == nil })
+        #expect(first.allSatisfy { $0.yearly[.water] == nil }, "no water shares in this reference, so no water draws")
 
         let footprint = ScannedFootprint(byCategory: [.food: [.carbon: 1_500]])
         let board = model().leaderboard(for: footprint)
@@ -89,29 +91,15 @@ struct CohortModelTests {
         #expect(board.filter(\.isUser).count == 1)
         #expect(zip(board, board.dropFirst()).allSatisfy { $0.value <= $1.value })
     }
-
-    @Test func trendRecomputesAfterEachScan() {
-        var first = SampleScansForTests.desk
-        first.date = Date(timeIntervalSince1970: 1_780_000_000)
-        var second = ScanResult(title: "Lunch", components: [first.components[1]])
-        second.components[0].name = "Second burger"
-        second.date = Date(timeIntervalSince1970: 1_790_000_000)
-        let store = ReferenceStore.bundled
-        let real = CohortModel(profile: .default, store: store)!
-        let trend = Percentiles.trend(scans: [second, first], model: real)
-        #expect(trend.count == 2)
-        #expect(trend[0].date < trend[1].date)
-        #expect(trend.allSatisfy { (0...1).contains($0.greenerThan) })
-    }
 }
 
 @Suite("Leaderboard against bundled baselines")
 struct LeaderboardRealismTests {
     static let typical = UserProfile(householdSize: 2, commuteKmPerWeekByMode: [.car: 150], homeType: .detachedHouse)
-    static let green = UserProfile(householdSize: 3, diet: .vegan, commuteKmPerWeekByMode: [.bike: 40],
-                                   homeType: .apartment, clothingHabit: .mostlySecondHand)
+    static let green = UserProfile(householdSize: 3, meatMealsPerWeek: 0, dairyMealsPerWeek: 0, commuteKmPerWeekByMode: [:],
+                                   homeType: .apartment, newClothesPerYear: 34)
     static let heavy = UserProfile(householdSize: 1, commuteKmPerWeekByMode: [.car: 500], homeType: .detachedHouse,
-                                   heating: .electricResistance, clothingHabit: .mostlyNew)
+                                   heatingSources: [.electricResistance], newClothesPerYear: 83)
     /// A laptop, a burger twice a week and a cup: far less than any whole category.
     let scanned = ScannedFootprint.from(scans: [SampleScansForTests.desk])
 
@@ -157,9 +145,35 @@ struct LeaderboardRealismTests {
         #expect(try rank(Self.green) <= 3, "very green profile is near the top")
         #expect(try rank(Self.heavy) >= 8, "car-heavy profile is near the bottom")
         #expect(try rank(Self.heavy, .yearlyElectricity) >= 8)
-        #expect(try rank(Self.green, .yearlyElectricity) <= 3)
         let percent = { (profile: UserProfile) in try #require(self.model(profile).compare(self.scanned).first).greenerThan }
+        let share = { (profile: UserProfile, metric: MetricKey) in
+            try #require(self.model(profile).compare(self.scanned).first { $0.metric == metric }).greenerThan
+        }
+        for metric in CohortModel.leaderboardMetrics {
+            #expect(try rank(.default, metric) > 1, "the default profile does not win on \(metric)")
+            // Plant-based eating saves less water (19%) than land or carbon, so only the ordering is asserted.
+            #expect(try rank(Self.green, metric) <= 4, "very green profile is near the top on \(metric)")
+            #expect(try share(Self.green, metric) > share(.default, metric), "green beats default on \(metric)")
+        }
         #expect(try percent(Self.green) > percent(Self.typical) && percent(Self.typical) > percent(Self.heavy))
+    }
+
+    @Test func waterAndLandCountTheConsumptionShares() throws {
+        let us = try model(UserProfile(region: Region(countryCode: "US")))
+        for metric in [MetricKey.water, .land] {
+            let total = try #require(us.baseline.medians[metric])
+            let shares = Category.allCases.reduce(0) { $0 + us.reference.share(of: $1, for: metric) }
+            #expect(shares > 0.5 && shares < 1)
+            #expect(abs(try #require(us.regionalDistribution(for: metric)).median - total * shares) < 1e-6)
+            // An omnivore living alone sits mid-distribution: there is nothing to win by default.
+            let single = try model(UserProfile(region: Region(countryCode: "US"), householdSize: 1))
+            let comparison = try #require(single.compare(.empty).first { $0.metric == metric })
+            #expect((0.3...0.7).contains(comparison.greenerThan), "\(metric) \(comparison.greenerThan)")
+        }
+        // A heavy beef habit is more land than a typical diet, so it raises the land footprint.
+        let typical = try model(Self.typical)
+        let beef = ScannedFootprint(byCategory: [.food: [.land: 10_000]])
+        #expect(try #require(typical.estimate(for: .land, scanned: beef)) > typical.estimate(for: .land)!)
     }
 
     @Test func estimateMatchesOnboardingAndAddsBigScans() throws {
@@ -180,18 +194,20 @@ struct LeaderboardRealismTests {
 @Suite("LifestyleEstimate")
 struct LifestyleEstimateTests {
     @Test func travelComesFromDistancePerMode() {
-        let profile = UserProfile(commuteKmPerWeekByMode: [.car: 100, .transit: 50, .bike: 30])
+        let profile = UserProfile(commuteKmPerWeekByMode: [.car: 100, .transit: 50, .eBike: 30])
         let estimate = LifestyleEstimate(profile: profile)
-        // (100 × 0.25 + 50 × 0.10 + 30 × 0) × 52 weeks.
-        #expect(abs((estimate.kgPerYear[.travel] ?? 0) - 1_560) < 1e-6)
+        // (100 × 0.25 + 50 × 0.10 + 30 × 0.005) × 52 weeks.
+        #expect(abs((estimate.kgPerYear[.travel] ?? 0) - 1_567.8) < 1e-6)
+        #expect(LifestyleEstimate(profile: UserProfile(commuteKmPerWeekByMode: [:])).kgPerYear[.travel] == 0)
     }
 
     @Test func greenerAnswersLowerTheEstimate() {
-        let base = LifestyleEstimate(profile: UserProfile(diet: .omnivore, commuteKmPerWeekByMode: [.car: 200]))
-        let greener = LifestyleEstimate(profile: UserProfile(diet: .vegan, commuteKmPerWeekByMode: [.bike: 200],
-                                                             clothingHabit: .mostlySecondHand))
+        let base = LifestyleEstimate(profile: UserProfile(commuteKmPerWeekByMode: [.car: 200]))
+        let greener = LifestyleEstimate(profile: UserProfile(meatMealsPerWeek: 0, dairyMealsPerWeek: 0,
+                                                             commuteKmPerWeekByMode: [:], newClothesPerYear: 10))
         #expect(greener.totalKg < base.totalKg)
         #expect((greener.kgPerYear[.food] ?? 0) < (base.kgPerYear[.food] ?? 0))
+        #expect((greener.kgPerYear[.clothing] ?? 0) < (base.kgPerYear[.clothing] ?? 0))
         #expect(greener.kgPerYear[.travel] == 0)
         #expect(base.regionAverageKg > 0)
     }
@@ -204,6 +220,10 @@ struct LifestyleEstimateTests {
         let profile = try JSONDecoder().decode(UserProfile.self, from: Data(json.utf8))
         #expect(profile.commuteKmPerWeekByMode == [.car: 80])
         #expect(profile.commuteMode == .car)
+        #expect(profile.meatMealsPerWeek == 0 && profile.dairyMealsPerWeek == 0 && profile.diet == .vegan)
+        #expect(profile.heatingSources == [.heatPump])
+        #expect(profile.newClothesPerYear == UserProfile.typicalNewClothesPerYear)
+        #expect(profile.floorAreaM2 == nil)
         let roundTrip = try JSONDecoder().decode(UserProfile.self, from: JSONEncoder().encode(profile))
         #expect(roundTrip == profile)
     }

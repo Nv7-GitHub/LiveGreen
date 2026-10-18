@@ -17,7 +17,7 @@ extension ScanPipeline {
         var askedKinds = Set<String>()
         for component in estimated where questions.count < Self.maxSpecQuestions {
             // Items of one kind share their details, so one answer covers them all (`refining`).
-            if let key = component.identifiers.resolutionKey, !askedKinds.insert(key).inserted { continue }
+            if let key = component.resolutionKey, !askedKinds.insert(key).inserted { continue }
             for var candidate in SpecQuestionCatalog.candidates(for: component, store: store) {
                 var working: [SpecOption] = []
                 for option in candidate.options where await resolvesCarbon(option.applied(to: Self.clearingEstimates(component))) {
@@ -41,11 +41,11 @@ extension ScanPipeline {
         var updated = result
         for answer in specAnswers {
             guard let answered = updated.components.first(where: { $0.id == answer.componentID }) else { continue }
-            let key = answered.identifiers.resolutionKey
+            let key = answered.resolutionKey
             for index in updated.components.indices {
                 let component = updated.components[index]
                 guard component.id == answered.id
-                    || (key != nil && component.identifiers.resolutionKey == key && component.metrics[.carbon]?.tier == .estimate)
+                    || (key != nil && component.resolutionKey == key && component.metrics[.carbon]?.tier == .estimate)
                 else { continue }
                 let refined = await refined(component, with: answer.option)
                 updated.components[index] = refined

@@ -15,8 +15,10 @@ extension ImpactEngine {
     public func annualBasis(for component: Component) -> AnnualBasis {
         let usage = component.usage
         switch component.category {
+        case .food where FoodServing.isPerPack(component):
+            return .unitsPerYear(FoodServing.packsPerWeek(of: component) * Self.weeksPerYear)
         case .food:
-            return .unitsPerYear((usage?.servingsPerWeek ?? 1) * Self.weeksPerYear)
+            return .unitsPerYear((usage?.servingsPerWeek ?? FoodServing.defaultServingsPerWeek) * Self.weeksPerYear)
         case .packaging, .personalCare:
             return .unitsPerYear((usage?.usesPerWeek ?? 1) * Self.weeksPerYear)
         case .electronic, .clothing, .household:

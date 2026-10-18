@@ -2,30 +2,23 @@ import Foundation
 import GreenCore
 
 /// Everything the Leaderboard tab shows, derived from saved scans, the profile and the bundled reference tables
-/// through GreenCore's `CohortModel` (spec §9).
+/// through GreenCore's `CohortModel` (spec §9). Built off the main actor once per change of scans or profile, with
+/// every metric's board ready, so switching metrics is only a lookup.
 nonisolated struct CompareAnalysis: Sendable {
     let footprint: ScannedFootprint
     /// Nil when there is no per-capita baseline for the profile's region.
     let cohort: CohortModel?
     let comparisons: [MetricKey: CohortComparison]
-    let trend: [MetricKey: [TrendPoint]]
+    let leaderboards: [MetricKey: [LeaderboardEntry]]
 
-    struct TrendPoint: Identifiable, Hashable, Sendable {
-        let index: Int
-        let date: Date
-        /// Share (0–1) of peers with a larger footprint at that point.
-        let greenerThan: Double
-        var id: Int { index }
-    }
-
-    static let empty = CompareAnalysis(footprint: .empty, cohort: nil, comparisons: [:], trend: [:])
+    static let empty = CompareAnalysis(footprint: .empty, cohort: nil, comparisons: [:], leaderboards: [:])
 
     init(footprint: ScannedFootprint, cohort: CohortModel?, comparisons: [MetricKey: CohortComparison],
-         trend: [MetricKey: [TrendPoint]]) {
+         leaderboards: [MetricKey: [LeaderboardEntry]]) {
         self.footprint = footprint
         self.cohort = cohort
         self.comparisons = comparisons
-        self.trend = trend
+        self.leaderboards = leaderboards
     }
 
     init(scans: [ScanResult], profile: UserProfile, store: ReferenceStore = .bundled) {
@@ -33,15 +26,12 @@ nonisolated struct CompareAnalysis: Sendable {
         let footprint = ScannedFootprint.from(scans: scans, engine: engine)
         let cohort = CohortModel(profile: profile, store: store)
         var comparisons: [MetricKey: CohortComparison] = [:]
-        var trend: [MetricKey: [TrendPoint]] = [:]
+        var leaderboards: [MetricKey: [LeaderboardEntry]] = [:]
         if let cohort {
             for comparison in cohort.compare(footprint) { comparisons[comparison.metric] = comparison }
-            for metric in CohortMetric.all {
-                let points = Percentiles.trend(scans: scans, model: cohort, metric: metric, engine: engine)
-                trend[metric] = points.enumerated().map { TrendPoint(index: $0, date: $1.date, greenerThan: $1.greenerThan) }
-            }
+            for metric in CohortMetric.all { leaderboards[metric] = cohort.leaderboard(for: footprint, metric: metric) }
         }
-        self.init(footprint: footprint, cohort: cohort, comparisons: comparisons, trend: trend)
+        self.init(footprint: footprint, cohort: cohort, comparisons: comparisons, leaderboards: leaderboards)
     }
 
     var isEmpty: Bool { footprint.yearly.isEmpty }
@@ -53,7 +43,5 @@ nonisolated struct CompareAnalysis: Sendable {
 
     func greenerThan(for metric: MetricKey) -> Double? { comparisons[metric]?.greenerThan }
 
-    func leaderboard(for metric: MetricKey) -> [LeaderboardEntry] {
-        cohort?.leaderboard(for: footprint, metric: metric) ?? []
-    }
+    func leaderboard(for metric: MetricKey) -> [LeaderboardEntry] { leaderboards[metric] ?? [] }
 }

@@ -1,5 +1,6 @@
 import ARKit
 import CoreImage
+import GreenCore
 import UIKit
 import simd
 
@@ -34,6 +35,8 @@ nonisolated struct ARCapturedCamera: Sendable {
 /// One captured AR frame: an upright JPEG for the pipeline plus the camera it came from.
 struct ARCaptureSnapshot {
     let jpeg: Data
+    /// The copy of `jpeg` the scan result keeps (`ScanPhoto.stored`), to find the saved scan of this capture.
+    let storedPhoto: Data
     let image: CGImage
     let camera: ARCapturedCamera
 
@@ -56,7 +59,7 @@ struct ARCaptureSnapshot {
         let sensorToUpright = frame.displayTransform(for: orientation, viewportSize: uprightSize)
         let camera = ARCapturedCamera(transform: frame.camera.transform, intrinsics: frame.camera.intrinsics,
                                       imageResolution: resolution, uprightToSensor: sensorToUpright.inverted())
-        return ARCaptureSnapshot(jpeg: jpeg, image: cgImage, camera: camera)
+        return ARCaptureSnapshot(jpeg: jpeg, storedPhoto: ScanPhoto.stored(jpeg), image: cgImage, camera: camera)
     }
 }
 

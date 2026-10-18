@@ -4,7 +4,7 @@ import Foundation
 /// a forced `report_components` tool, temperature 0). Reports identifiers and quantities, not impacts.
 public protocol VisionIdentifier: Sendable {
     /// - Parameters:
-    ///   - image: JPEG, long edge ≤ 1568 px.
+    ///   - image: JPEG within `IdentifyImage` limits (long edge ≤ 2576 px, ~3.7 MP).
     ///   - hints: On-device OCR/barcode pre-pass output.
     ///   - profile: User context for default usage assumptions.
     func identify(image: Data, hints: OCRHints, profile: UserProfile) async throws -> IdentifyResponse
@@ -13,12 +13,22 @@ public protocol VisionIdentifier: Sendable {
     /// use the default, which reports nothing.
     func identify(image: Data, hints: OCRHints, profile: UserProfile,
                   progress: @escaping @Sendable (IdentifyProgress) -> Void) async throws -> IdentifyResponse
+
+    /// Same streaming call with notes the user left on earlier scans, which the model may take as weak hints
+    /// (`ScanFeedback.promptSection`). Identifiers that cannot use them keep the default, which ignores them.
+    func identify(image: Data, hints: OCRHints, profile: UserProfile, feedback: [ScanFeedback],
+                  progress: @escaping @Sendable (IdentifyProgress) -> Void) async throws -> IdentifyResponse
 }
 
 extension VisionIdentifier {
     public func identify(image: Data, hints: OCRHints, profile: UserProfile,
                          progress: @escaping @Sendable (IdentifyProgress) -> Void) async throws -> IdentifyResponse {
         try await identify(image: image, hints: hints, profile: profile)
+    }
+
+    public func identify(image: Data, hints: OCRHints, profile: UserProfile, feedback: [ScanFeedback],
+                         progress: @escaping @Sendable (IdentifyProgress) -> Void) async throws -> IdentifyResponse {
+        try await identify(image: image, hints: hints, profile: profile, progress: progress)
     }
 }
 

@@ -49,17 +49,30 @@ enum SchemaParts {
 
     static let identifiers = identifiersSchema(brand: "Brand exactly as printed or recognizable; null if not visible.")
 
-    /// Identify's brand rule: read off the item, never inferred from its look (a guessed brand mislabels the item).
-    static let legibleBrand = "Brand only if its name or logo is legible in the photo or hints, never inferred from shape or style; else null."
+    /// Identify's identifiers: the brand may come from a legible logo or from distinctive design, the product line
+    /// goes in `model_line` with a `confidence`, and `model` stays an exact printed model number. `appearance_cues`
+    /// sorts first, so the evidence is written before the brand it supports. No example names: the fast models copy them.
+    static let identifyIdentifiers = identifiersSchema(
+        brand: "Maker, from a legible logo or name or from distinctive design cues; null for unbranded or unrecognizable items.",
+        model: "Exact model number as printed on the item or in the OCR hints; null if none is legible. Never guess one or derive it from the model line.",
+        lineLevel: [
+            "appearance_cues": nullableString("A few words on what identifies the maker and line (legible logo or text, distinctive design); null for plain unbranded goods."),
+            "model_line": nullableString("Product line or family as the maker markets it, plus the size, generation or capacity the cues support. Not a model number. Null if unknown."),
+            "confidence": enumeration(IdentificationConfidence.allCases.map(\.rawValue),
+                "For the most specific of model, model_line and brand: high = printed or a design unique to that line; medium = strong design cues, variant uncertain; low = best guess.",
+                nullable: true),
+        ])
 
-    static func identifiersSchema(brand: String) -> JSONValue {
+    static func identifiersSchema(brand: String,
+                                  model: String = "Model number/name exactly as printed on the item or in the OCR hints; null if none is legible. Never guess one.",
+                                  lineLevel: [String: JSONValue] = [:]) -> JSONValue {
         object([
             "brand": nullableString(brand),
-            "model": nullableString("Model number/name exactly as printed on the item or in the OCR hints; null if none is legible. Never guess one."),
+            "model": nullableString(model),
             "gtin": nullableString("GTIN/EAN/UPC digits if a barcode hint or printed number belongs to this item; else null."),
             "materials": materials,
             "visible_text": nullableString("Short label text read from this item (energy label, care label, nutrition panel), if any."),
-        ], required: ["brand", "model", "gtin", "materials"])
+        ].merging(lineLevel) { _, line in line }, required: ["brand", "model", "gtin", "materials"] + lineLevel.keys.sorted())
     }
 
     static let quantities = object([

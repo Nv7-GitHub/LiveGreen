@@ -24,8 +24,8 @@ struct FootprintAndTotalsTests {
 
     @Test func homeTypeAndHeatingShapeTheElectricityMedian() throws {
         let store = ReferenceStore.bundled
-        let gas = try #require(CohortModel(profile: UserProfile(householdSize: 1, heating: .naturalGas), store: store))
-        let electric = try #require(CohortModel(profile: UserProfile(householdSize: 1, heating: .electricResistance), store: store))
+        let gas = try #require(CohortModel(profile: UserProfile(householdSize: 1, heatingSources: [.naturalGas]), store: store))
+        let electric = try #require(CohortModel(profile: UserProfile(householdSize: 1, heatingSources: [.electricResistance]), store: store))
         let house = try #require(CohortModel(profile: UserProfile(householdSize: 1, homeType: .detachedHouse), store: store))
         let apartment = try #require(CohortModel(profile: UserProfile(householdSize: 1, homeType: .apartment), store: store))
         #expect(electric.median(for: .yearlyElectricity, categories: [.electronic])

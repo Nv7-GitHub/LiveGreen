@@ -9,7 +9,7 @@ extension ProductRecord {
     }
 
     /// T1 metrics for one item of `massKg` (defaults to the product's net quantity). Packaging plastic is
-    /// for the whole pack, so it is scaled by `packageShare` (one serving's share of the pack).
+    /// for the whole pack, so it is scaled by `packageShare` (one serving's share of the pack, or 1 for the pack).
     /// Only metrics the record actually supports are returned.
     public func measuredMetrics(massKg: Double? = nil, packageShare: Double = 1) -> [MetricKey: Measured] {
         var metrics: [MetricKey: Measured] = [:]

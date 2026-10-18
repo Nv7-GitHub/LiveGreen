@@ -2,7 +2,7 @@ import SwiftUI
 import GreenCore
 
 /// Leaderboard of your friends plus you, greenest first (spec §9). Each person gets a circle with their
-/// initials. The friends are a simulated network, and the header says so.
+/// initials, and the header says what the numbers stand for.
 struct FriendsLeaderboard: View {
     let metric: MetricKey
     /// Greenest first, from `CohortModel.leaderboard`.
@@ -13,7 +13,7 @@ struct FriendsLeaderboard: View {
             VStack(alignment: .leading, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Friends").font(.headline)
-                    Text("Simulated network · \(CohortMetric.basis(metric).lowercased())")
+                    Text(CohortMetric.basis(metric))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

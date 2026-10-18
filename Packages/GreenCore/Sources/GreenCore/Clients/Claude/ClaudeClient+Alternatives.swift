@@ -83,7 +83,10 @@ extension ClaudeClient: AlternativeSuggester {
         var usage: UsageProfile?
         var currentMetrics: [String: Double]
 
-        init(_ component: Component) {
+        /// Food is described per serving, as identify estimates it, so the swaps' fallback estimates come back per
+        /// serving; the pipeline puts swaps for a per-pack item back on its pack (`Alternative.onBasis`).
+        init(_ item: Component) {
+            let component = FoodServing.servingView(of: item)
             id = component.id.uuidString
             name = component.name
             category = component.category.rawValue

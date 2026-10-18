@@ -13,7 +13,6 @@ struct PerCapitaBuilder {
             throw GreenCoreError.decoding("per_capita.json: missing sigmas or category shares")
         }
         let sigmas = Self.keyed(sigmaValues, MetricKey.init(rawValue:))
-        let diet = Self.keyed(file.dietModifiers.resolved ?? [:], Diet.init(rawValue:))
         let exponent = file.householdSizeExponent.resolved ?? 1
 
         for country in file.countries {
@@ -26,7 +25,7 @@ struct PerCapitaBuilder {
                 result[entry.key] = entry.value * exp(-sigma * sigma / 2)
             }
             countries[country.region.uppercased()] = PerCapitaBaseline(
-                region: country.region, medians: medians, sigmas: sigmas, dietModifiers: diet,
+                region: country.region, medians: medians, sigmas: sigmas,
                 householdSizeExponent: exponent, citation: country.citation)
             info.append(ReferenceRecordInfo(table: "per_capita", key: country.region, verified: country.verified,
                                             citation: country.citation))
@@ -43,24 +42,45 @@ struct PerCapitaBuilder {
             guard let key = MetricKey(rawValue: metric) else { continue }
             shares[key] = Self.keyed(byCategory, Category.init(rawValue:))
         }
+        let mealCarbon = file.mealCarbon.resolved ?? [:]
+        let averageMeals = file.averageMealsPerWeek.resolved ?? [:]
+        let meals = MealFactors(
+            plantBasedShare: Self.keyed(file.plantBasedFoodShares.resolved ?? [:], MetricKey.init(rawValue:)),
+            kgCO2ePerMeatMeal: mealCarbon["meat"] ?? 0, kgCO2ePerDairyMeal: mealCarbon["dairy"] ?? 0,
+            averageMeatMealsPerWeek: averageMeals["meat"] ?? 0, averageDairyMealsPerWeek: averageMeals["dairy"] ?? 0)
+        let clothing = file.clothingPurchases.resolved ?? [:]
         cohort = CohortReference(
             categoryShares: shares,
-            clothingModifiers: Self.keyed(file.clothingModifiers.resolved ?? [:], ClothingHabit.init(rawValue:)),
             commuteModifiers: Self.keyed(file.commuteModifiers.resolved ?? [:], CommuteMode.init(rawValue:)),
             homeTypeModifiers: Self.keyed(file.homeTypeModifiers.resolved ?? [:], HomeType.init(rawValue:)),
             heatingModifiers: Self.keyed(file.heatingModifiers.resolved ?? [:], HeatingSource.init(rawValue:)),
-            citations: [file.categoryShares.citation, file.dietModifiers.citation, file.clothingModifiers.citation,
+            heatingCarbonModifiers: Self.keyed(file.heatingCarbonModifiers.resolved ?? [:], HeatingSource.init(rawValue:)),
+            meals: meals,
+            clothing: ClothingFactors(averageNewItemsPerYear: clothing["averageNewItemsPerYear"] ?? 0,
+                                      baseShare: clothing["baseShare"] ?? 0),
+            homeSize: HomeSizeFactors(
+                typicalFloorAreaM2: Self.keyed(file.typicalFloorAreaM2.resolved ?? [:], HomeType.init(rawValue:)),
+                spaceConditioningShare: file.spaceConditioningShare.resolved ?? 0),
+            citations: [file.categoryShares.citation, file.plantBasedFoodShares.citation, file.mealCarbon.citation,
+                        file.averageMealsPerWeek.citation, file.clothingPurchases.citation,
                         file.commuteModifiers.citation, file.householdSizeExponent.citation,
-                        file.homeTypeModifiers.citation, file.heatingModifiers.citation, file.sigmas.citation])
+                        file.homeTypeModifiers.citation, file.typicalFloorAreaM2.citation,
+                        file.spaceConditioningShare.citation, file.heatingModifiers.citation,
+                        file.heatingCarbonModifiers.citation, file.sigmas.citation])
 
         let cited: [(String, Bool, Source)] = [
             ("sigmas", file.sigmas.verified, file.sigmas.citation),
-            ("dietModifiers", file.dietModifiers.verified, file.dietModifiers.citation),
-            ("clothingModifiers", file.clothingModifiers.verified, file.clothingModifiers.citation),
+            ("plantBasedFoodShares", file.plantBasedFoodShares.verified, file.plantBasedFoodShares.citation),
+            ("mealCarbon", file.mealCarbon.verified, file.mealCarbon.citation),
+            ("averageMealsPerWeek", file.averageMealsPerWeek.verified, file.averageMealsPerWeek.citation),
+            ("clothingPurchases", file.clothingPurchases.verified, file.clothingPurchases.citation),
             ("commuteModifiers", file.commuteModifiers.verified, file.commuteModifiers.citation),
             ("householdSizeExponent", file.householdSizeExponent.verified, file.householdSizeExponent.citation),
             ("homeTypeModifiers", file.homeTypeModifiers.verified, file.homeTypeModifiers.citation),
+            ("typicalFloorAreaM2", file.typicalFloorAreaM2.verified, file.typicalFloorAreaM2.citation),
+            ("spaceConditioningShare", file.spaceConditioningShare.verified, file.spaceConditioningShare.citation),
             ("heatingModifiers", file.heatingModifiers.verified, file.heatingModifiers.citation),
+            ("heatingCarbonModifiers", file.heatingCarbonModifiers.verified, file.heatingCarbonModifiers.citation),
             ("categoryShares", file.categoryShares.verified, file.categoryShares.citation),
         ]
         info += cited.map { ReferenceRecordInfo(table: "per_capita", key: $0.0, verified: $0.1, citation: $0.2) }
