@@ -16,6 +16,12 @@ struct SummaryHeader: View {
                 } else {
                     allTotals
                 }
+                if let basisNote {
+                    Label(basisNote, systemImage: "fork.knife")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("summaryBasis")
+                }
                 ConfidenceMeter(components: result.components)
             }
         }
@@ -46,6 +52,35 @@ struct SummaryHeader: View {
         guard !consumables.isEmpty, let yearly = engine.yearlyTotals(consumables, seed: result.totalsSeed)[metric],
               !yearly.isEffectivelyZero else { return nil }
         return yearly
+    }
+
+    /// What the scan's food figures cover (`FoodServing.basis`): barcoded packs of known size count as the whole
+    /// pack, other food per serving. Nil without food.
+    private var basisNote: String? {
+        let food = result.components.filter { $0.category == .food }
+        let labels = food.compactMap(\.basisLabel)
+        guard let first = labels.first else { return nil }
+        if Set(labels).count == 1 { return "Food figures are \(first)" }
+        switch food.filter(FoodServing.isPerPack).count {
+        case food.count: return "Food figures are per pack"
+        case 0: return "Food figures are per serving"
+        default: return "Barcoded packs count per pack, other food per serving"
+        }
+    }
+
+    /// What the per-item total beside the yearly carbon covers: one pack or serving for a single food item, a whole
+    /// life when the scan has a durable item, else one of each item pictured.
+    private var perItemTitle: String {
+        if result.components.count == 1, let basis = FoodServing.basis(of: result.components[0]) {
+            if case .pack = basis { return "Per pack" }
+            return "Per serving"
+        }
+        let engine = ImpactEngine()
+        let hasDurable = result.components.contains {
+            if case .lifetime = engine.annualBasis(for: $0) { return true }
+            return false
+        }
+        return hasDurable ? "Lifetime" : "As pictured"
     }
 
     /// Totals only for metrics some item shows (see `Component.displayable`), so "0 oz plastic" never appears.
@@ -90,7 +125,7 @@ struct SummaryHeader: View {
                         .foregroundStyle(.secondary)
                 }
                 HStack(spacing: 10) {
-                    if perYear != nil { stat("Lifetime", Measured.format(total.displayValue), unit: total.displaySymbol) }
+                    if perYear != nil { stat(perItemTitle, Measured.format(total.displayValue), unit: total.displaySymbol) }
                     if let repeats = repeatPurchases(metric) {
                         stat("Per year, re-buying", Measured.format(repeats.displayValue), unit: repeats.displaySymbol)
                     }

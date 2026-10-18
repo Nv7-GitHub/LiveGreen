@@ -8,6 +8,7 @@ extension UsageField {
         case .servingsPerWeek, .chargesPerWeek: 0...21
         case .wearsPerYear: 0...365
         case .usesPerWeek: 0...50
+        case .packsPerWeek: 0...14
         }
     }
 
@@ -15,6 +16,7 @@ extension UsageField {
         switch self {
         case .hoursOnPerDay, .standbyHoursPerDay: 0.5
         case .wearsPerYear: 5
+        case .packsPerWeek: 0.5
         default: 1
         }
     }
@@ -23,7 +25,7 @@ extension UsageField {
         let number = value.rounded() == value ? String(Int(value)) : String(format: "%.1f", value)
         switch self {
         case .hoursOnPerDay, .standbyHoursPerDay: return "\(number) h a day"
-        case .servingsPerWeek: return "\(number) a week"
+        case .servingsPerWeek, .packsPerWeek: return "\(number) a week"
         case .chargesPerWeek: return "\(number) charges a week"
         case .wearsPerYear: return "\(number) wears a year"
         case .usesPerWeek: return "\(number) uses a week"

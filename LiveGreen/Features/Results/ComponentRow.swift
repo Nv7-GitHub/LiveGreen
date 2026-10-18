@@ -63,12 +63,11 @@ struct ComponentRow: View {
         .accessibilityIdentifier("componentRow.\(component.name)")
     }
 
+    /// Share of the selected metric (or the metric count), then for food what the value covers: one pack or serving.
     private var subtitle: String {
         let shareText = share > 0 && share < 0.005 ? "<1%" : "\(Int((share * 100).rounded()))%"
-        guard filter != .all else {
-            let count = component.displayableMetrics.count
-            return count == 1 ? "1 metric" : "\(count) metrics"
-        }
-        return shareText
+        let count = component.displayableMetrics.count
+        let lead = filter != .all ? shareText : count == 1 ? "1 metric" : "\(count) metrics"
+        return [lead, component.basisLabel].compactMap(\.self).joined(separator: " · ")
     }
 }

@@ -34,3 +34,22 @@ extension Measured {
         return number.formatted(.number.precision(.significantDigits(1...2)))
     }
 }
+
+extension Component {
+    /// What one unit of a food item's figures covers (`FoodServing.basis`), e.g. "per pack (12 oz)" for a barcoded
+    /// pack or "per serving (1 oz)"; nil for other categories.
+    var basisLabel: String? {
+        guard let basis = FoodServing.basis(of: self) else { return nil }
+        let drink = FoodServing.isDrink(self)
+        switch basis {
+        case .pack(let kg): return "per pack (\(DisplayUnits.foodAmount(kg: kg, isDrink: drink)))"
+        case .serving(let kg?): return "per serving (\(DisplayUnits.foodAmount(kg: kg, isDrink: drink)))"
+        case .serving(nil): return "per serving"
+        }
+    }
+
+    /// The basis label as a title, e.g. "Per pack (12 oz)".
+    var basisTitle: String? {
+        basisLabel.map { $0.prefix(1).uppercased() + $0.dropFirst() }
+    }
+}

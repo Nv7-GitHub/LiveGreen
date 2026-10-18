@@ -7,15 +7,19 @@ public struct UsageProfile: Codable, Sendable, Hashable {
     public var usesPerWeek: Double?
     /// Charges per week for deferrable loads (e-bike, scooter…).
     public var chargesPerWeek: Double?
+    /// Packs per week for food scored per pack (`FoodServing.basis`).
+    public var packsPerWeek: Double?
 
     public init(hoursOnPerDay: Double? = nil, standbyHoursPerDay: Double? = nil, servingsPerWeek: Double? = nil,
-                wearsPerYear: Double? = nil, usesPerWeek: Double? = nil, chargesPerWeek: Double? = nil) {
+                wearsPerYear: Double? = nil, usesPerWeek: Double? = nil, chargesPerWeek: Double? = nil,
+                packsPerWeek: Double? = nil) {
         self.hoursOnPerDay = hoursOnPerDay
         self.standbyHoursPerDay = standbyHoursPerDay
         self.servingsPerWeek = servingsPerWeek
         self.wearsPerYear = wearsPerYear
         self.usesPerWeek = usesPerWeek
         self.chargesPerWeek = chargesPerWeek
+        self.packsPerWeek = packsPerWeek
     }
 
     public subscript(field: UsageField) -> Double? {
@@ -27,6 +31,7 @@ public struct UsageProfile: Codable, Sendable, Hashable {
             case .wearsPerYear: wearsPerYear
             case .usesPerWeek: usesPerWeek
             case .chargesPerWeek: chargesPerWeek
+            case .packsPerWeek: packsPerWeek
             }
         }
         set {
@@ -37,6 +42,7 @@ public struct UsageProfile: Codable, Sendable, Hashable {
             case .wearsPerYear: wearsPerYear = newValue
             case .usesPerWeek: usesPerWeek = newValue
             case .chargesPerWeek: chargesPerWeek = newValue
+            case .packsPerWeek: packsPerWeek = newValue
             }
         }
     }
@@ -57,4 +63,9 @@ public enum UsageField: String, Codable, Sendable, Hashable, CaseIterable {
     case wearsPerYear
     case usesPerWeek
     case chargesPerWeek
+    case packsPerWeek
+
+    /// Fields identify may ask about. Packs per week only exists for food the app scores per pack, which identify
+    /// cannot know about, so its questions stay in servings (`ImpactEngine.applyingAnswer` converts them).
+    public static var askable: [UsageField] { allCases.filter { $0 != .packsPerWeek } }
 }

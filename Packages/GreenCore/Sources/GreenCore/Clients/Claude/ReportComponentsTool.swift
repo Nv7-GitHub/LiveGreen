@@ -73,7 +73,7 @@ enum ReportComponentsTool {
                                               "Metrics the answer changes."),
         "options": SchemaParts.array(of: SchemaParts.object([
             "label": SchemaParts.string("Chip label, e.g. '~2 h', 'Weekly'."),
-            "field": SchemaParts.enumeration(UsageField.allCases.map(\.rawValue), "Usage field the answer sets.", nullable: true),
+            "field": SchemaParts.enumeration(UsageField.askable.map(\.rawValue), "Usage field the answer sets.", nullable: true),
             "value": SchemaParts.nullableNumber("Value assigned to the field."),
         ], required: ["label", "field", "value"]), "2-4 answer chips."),
     ], required: ["id", "question", "why_it_matters", "affected_metrics", "options"])

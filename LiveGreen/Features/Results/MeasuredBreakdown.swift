@@ -15,8 +15,7 @@ struct MeasuredBreakdown: Identifiable, Hashable {
         if let lifetime = views.lifetime {
             parts.append(MeasuredBreakdown(label: "Lifetime", measured: lifetime))
         } else {
-            parts.append(MeasuredBreakdown(label: component.category == .food ? "Per serving" : "Per unit",
-                                           measured: views.perUnit))
+            parts.append(MeasuredBreakdown(label: component.basisTitle ?? "Per unit", measured: views.perUnit))
         }
         return parts
     }

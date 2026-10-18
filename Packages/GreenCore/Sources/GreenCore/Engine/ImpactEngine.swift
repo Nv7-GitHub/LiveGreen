@@ -3,7 +3,8 @@ import Foundation
 /// Deterministic impact derivations and uncertainty-aware totals (spec §5.6).
 ///
 /// Per-unit semantics of a component's metrics:
-/// - food: per serving; a year is `servingsPerWeek × 52` servings.
+/// - food: per serving, a year being `servingsPerWeek × 52` servings; or, for a barcoded pack whose net quantity is
+///   on record, per whole pack, a year being `packsPerWeek × 52` packs (`FoodServing.basis`).
 /// - packaging, personal care: per unit consumed; a year is `usesPerWeek × 52` units.
 /// - electronic, clothing, household (durables): per item over its whole life; carbon includes the use phase
 ///   (embodied + yearly use × lifespan), so a year is the lifetime value ÷ lifespan.

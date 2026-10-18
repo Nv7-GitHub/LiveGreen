@@ -1,6 +1,6 @@
 /// T1: Open Food Facts by GTIN (spec §5.4) for food, drink, packaging and personal care. For food, carbon and
-/// packaging plastic are scaled to one serving (per-unit convention on `ImpactEngine`), else to the item.
-/// OFF counts packaging only, so all of its plastic is packaging.
+/// packaging plastic are for the item's unit (`FoodServing.basis`): the whole pack when it is scored per pack, else
+/// one serving; other items are taken as they are. OFF counts packaging only, so all of its plastic is packaging.
 public struct OpenFoodFactsResolver: MetricResolver {
     public let tier = Tier.exactRecord
     public let name = "Open Food Facts"
@@ -19,8 +19,12 @@ public struct OpenFoodFactsResolver: MetricResolver {
               let record = try await products.product(gtin: gtin) else { return .empty }
         var mass = component.quantities.massKg
         var share = 1.0
-        if component.category == .food, let serving = FoodServing.servingKg(component, recordServingKg: record.servingKg,
-                                                                          recordNetKg: record.netMassKg) {
+        if component.category == .food, case .pack(let pack) = FoodServing.basis(of: component) {
+            // The record's packaging is for its own pack; a swap put on the original's pack size scales with it.
+            mass = pack
+            share = record.netMassKg.map { $0 > 0 ? pack / $0 : 1 } ?? 1
+        } else if component.category == .food,
+                  let serving = FoodServing.servingKg(component, recordServingKg: record.servingKg, recordNetKg: record.netMassKg) {
             mass = serving
             share = FoodServing.packageShare(servingKg: serving,
                                              packageKg: FoodServing.packageKg(component, recordNetKg: record.netMassKg))
