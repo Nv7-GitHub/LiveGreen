@@ -33,6 +33,7 @@ struct AlternativesView: View {
                         noSwapsCard
                     case .ready:
                         swapCards
+                        if !itemsWithoutSwaps.isEmpty { noOptionCard }
                         ProjectedSavingsCard(savings: SwapMath.projectedSavings(screen.result, selection: selection),
                                              swapCount: selection.count)
                         if screen.showsGreenerImage { imageSection.id(Self.imageAnchor) }
@@ -79,13 +80,37 @@ struct AlternativesView: View {
     private var noSwapsCard: some View {
         GlassCard {
             VStack(alignment: .leading, spacing: 6) {
-                Label("No greener swaps found", systemImage: "leaf").font(.headline)
-                Text("Every swap we checked made at least one thing a lot worse, so none is suggested.")
+                Label("No lower-impact option found", systemImage: "leaf").font(.headline)
+                Text("Every swap we checked made at least one thing a lot worse, or was the same item under another name, so none is suggested.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .accessibilityIdentifier("alternatives.none")
+    }
+
+    /// Items with nothing to offer, biggest yearly carbon first, so the main item is never silently missing (S10:
+    /// the camera was 92% of the scene and had no card).
+    private var itemsWithoutSwaps: [Component] {
+        screen.result.components
+            .filter { screen.alternatives(for: $0, plugFeatures: plugFeatures).isEmpty }
+            .sorted { (SwapMath.yearlyCarbon(of: $0)?.value ?? 0) > (SwapMath.yearlyCarbon(of: $1)?.value ?? 0) }
+    }
+
+    private var noOptionCard: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 8) {
+                Label("No lower-impact option found", systemImage: "leaf").font(.headline)
+                ForEach(itemsWithoutSwaps) { component in
+                    Label(component.name, systemImage: component.category.systemImage)
+                        .font(.subheadline)
+                }
+                Text("We looked for swaps for these too, but none was clearly better without making something else worse.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityIdentifier("alternatives.noOption")
     }
 
     private func failureCard(_ message: String) -> some View {
@@ -99,20 +124,21 @@ struct AlternativesView: View {
         }
     }
 
-    /// Biggest yearly saving first (`SwapMath.byYearlySaving`), not the order items were spotted in.
+    /// Biggest yearly saving first (`SwapMath.byYearlySaving`), not the order items were spotted in; items offered
+    /// the same swaps share a card (`AlternativesModel.swapGroups`).
     @ViewBuilder private var swapCards: some View {
         let ordered = SwapMath.byYearlySaving(screen.result.components) {
             screen.alternatives(for: $0, plugFeatures: plugFeatures)
         }
-        ForEach(ordered) { component in
+        ForEach(AlternativesModel.swapGroups(ordered, plugFeatures: plugFeatures), id: \.first?.id) { group in
+            let component = group[0]
+            let others = Array(group.dropFirst())
             let options = screen.alternatives(for: component, plugFeatures: plugFeatures)
-            if !options.isEmpty {
-                ComponentSwapCard(component: component, alternatives: options,
-                                  pick: selection[component.id].flatMap { id in options.first { $0.id == id } },
-                                  charging: screen.charging[component.id],
-                                  onSelect: { screen.toggle($0, for: component, app: app) },
-                                  onPair: { app.selectedTab = .plugs })
-            }
+            ComponentSwapCard(component: component, others: others, alternatives: options,
+                              pick: selection[component.id].flatMap { id in options.first { $0.id == id } },
+                              charging: screen.charging[component.id],
+                              onSelect: { screen.toggle($0, for: component, others: others, app: app) },
+                              onPair: { app.selectedTab = .plugs })
         }
     }
 

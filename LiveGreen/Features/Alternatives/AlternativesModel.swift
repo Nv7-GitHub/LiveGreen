@@ -61,6 +61,31 @@ final class AlternativesModel {
         }
     }
 
+    /// Items offered exactly the same swaps (same category, the same names in the same order) share one card, so a
+    /// shared bike room is one "Buy a used bicycle" card, not four. Groups keep the given order; the first item of
+    /// each leads. Items with nothing to offer are left out.
+    static func swapGroups(_ components: [Component], plugFeatures: Bool) -> [[Component]] {
+        var groups: [[Component]] = []
+        var positions: [String: Int] = [:]
+        for component in components {
+            let options = alternatives(for: component, plugFeatures: plugFeatures)
+            guard !options.isEmpty else { continue }
+            let key = ([component.category.rawValue] + options.map { $0.name.lowercased() }).joined(separator: "|")
+            if let position = positions[key] {
+                groups[position].append(component)
+            } else {
+                positions[key] = groups.count
+                groups.append([component])
+            }
+        }
+        return groups
+    }
+
+    /// The member's own alternative with the same name as one of the lead's.
+    static func matching(_ alternative: Alternative, in member: Component) -> Alternative? {
+        member.alternatives.first { $0.name.lowercased() == alternative.name.lowercased() && $0.kind == alternative.kind }
+    }
+
     func pick(for component: Component) -> Alternative? {
         guard let id = selection[component.id] else { return nil }
         return component.alternatives.first { $0.id == id }
@@ -114,12 +139,20 @@ final class AlternativesModel {
 
     /// Spec §7 default picks for components without one, unless the user kept the original
     /// (`SwapMath.defaultPick`: the best GreenScore among swaps that do not add carbon).
+    /// Items sharing a card take the lead item's pick, so the card and the savings agree.
     static func defaultPicks(for result: ScanResult, selection: [UUID: UUID], kept: Set<UUID>,
                              plugFeatures: Bool) -> [UUID: UUID] {
         var picks = selection
         for component in result.components where picks[component.id] == nil && !kept.contains(component.id) {
             let options = alternatives(for: component, plugFeatures: plugFeatures)
             if let best = SwapMath.defaultPick(for: component, among: options) { picks[component.id] = best.id }
+        }
+        let ordered = SwapMath.byYearlySaving(result.components) { alternatives(for: $0, plugFeatures: plugFeatures) }
+        for group in swapGroups(ordered, plugFeatures: plugFeatures) where group.count > 1 {
+            let leadPick = picks[group[0].id].flatMap { id in group[0].alternatives.first { $0.id == id } }
+            for member in group.dropFirst() where !kept.contains(member.id) {
+                picks[member.id] = leadPick.flatMap { matching($0, in: member)?.id }
+            }
         }
         return picks
     }
@@ -141,14 +174,20 @@ final class AlternativesModel {
 
     // MARK: - Selection
 
-    /// Picks an alternative; tapping the current pick keeps the original instead.
-    func toggle(_ alternative: Alternative, for component: Component, app: AppModel) {
-        if selection[component.id] == alternative.id {
-            selection[component.id] = nil
-            keptOriginals.insert(component.id)
-        } else {
-            selection[component.id] = alternative.id
-            keptOriginals.remove(component.id)
+    /// Picks an alternative; tapping the current pick keeps the original instead. Items sharing the card (`others`)
+    /// take the same-named swap, or keep their originals with the lead.
+    func toggle(_ alternative: Alternative, for component: Component, others: [Component] = [], app: AppModel) {
+        let keeping = selection[component.id] == alternative.id
+        let members: [(Component, Alternative?)] = [(component, alternative)]
+            + others.map { ($0, Self.matching(alternative, in: $0)) }
+        for (member, swap) in members {
+            if keeping || swap == nil {
+                selection[member.id] = nil
+                keptOriginals.insert(member.id)
+            } else {
+                selection[member.id] = swap?.id
+                keptOriginals.remove(member.id)
+            }
         }
         if case .ready = imageState { imageState = .idle }
         result.greenerImage = nil

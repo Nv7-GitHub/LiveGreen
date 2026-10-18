@@ -127,6 +127,11 @@ public enum SwapMath {
         component.metrics[.carbon].map { $0.scaled(by: yearlyFactor(.carbon, for: component)) }
     }
 
+    /// Whether the item is kept for years (amortized over its lifespan) rather than bought again and again.
+    public static func isDurable(_ component: Component) -> Bool {
+        GreenScore.isDurable(component, engine: engine)
+    }
+
     /// The alternative as a component, so it annualizes by its own category and lifespan; usage it does not
     /// state is the original's.
     public static func component(for alternative: Alternative, replacing component: Component) -> Component {

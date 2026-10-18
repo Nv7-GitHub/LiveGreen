@@ -22,9 +22,15 @@ enum SuggestAlternativesTool {
     ]
 
     static let alternative = SchemaParts.object([
-        "name": SchemaParts.string("Specific swap, e.g. 'Refurbished Dell P2722H monitor', 'Lentil burger', 'Reusable steel cup'."),
+        "name": SchemaParts.string("""
+            One specific swap as a short title, e.g. 'Lentil burger', 'Reusable steel cup': no sizes or specs, no \
+            examples in brackets, no 'X or Y'.
+            """),
         "category": SchemaParts.enumeration(SchemaParts.categories, "Category of the alternative."),
-        "rationale": SchemaParts.string("One plain sentence on why it is greener overall. No invented statistics."),
+        "rationale": SchemaParts.string("""
+            One plain sentence on what is different about the swap (material, ingredients, condition, use). No \
+            numbers or metric comparisons, no mention of the user's profile.
+            """),
         "cost": SchemaParts.enumeration(Practicality.CostTier.allCases.map(\.rawValue), "Upfront or ongoing cost versus the original."),
         "effort": SchemaParts.enumeration(Practicality.Effort.allCases.map(\.rawValue), "Effort to switch."),
         "identifiers": SchemaParts.identifiers,

@@ -3,11 +3,23 @@ import GreenCore
 
 /// Cost tier and effort capsules for an alternative.
 struct PracticalityTags: View {
+    /// What the cost tier is measured against, so a purchase never reads as "saves money" next to keeping what the
+    /// user already has (S11: "Buy a used bicycle · Saves money", "Saves money" on the smart plug).
+    enum Framing {
+        /// Bought again and again (food, cups, packaging): the cost over a year of buying it.
+        case ongoing
+        /// Buying an item in place of a durable one the user owns: cheaper or pricier than buying that new.
+        case replacement
+        /// An extra bought on top of the item (the smart plug).
+        case addOn
+    }
+
     let practicality: Practicality
+    var framing: Framing = .ongoing
 
     var body: some View {
         HStack(spacing: 6) {
-            tag(practicality.cost.label, systemImage: "dollarsign.circle", color: practicality.cost.color)
+            tag(practicality.cost.label(framing), systemImage: "dollarsign.circle", color: practicality.cost.color(framing))
             tag(practicality.effort.label, systemImage: "figure.walk", color: practicality.effort.color)
         }
     }
@@ -25,19 +37,23 @@ struct PracticalityTags: View {
 }
 
 extension Practicality.CostTier {
-    var label: String {
-        switch self {
-        case .lower: "Saves money"
-        case .similar: "Similar cost"
-        case .higher: "Costs more"
+    func label(_ framing: PracticalityTags.Framing) -> String {
+        switch (framing, self) {
+        case (.addOn, _): "One-time cost"
+        case (.replacement, .lower): "Cheaper than new"
+        case (.replacement, .similar): "Similar price to new"
+        case (.replacement, .higher): "Pricier than new"
+        case (.ongoing, .lower): "Saves money"
+        case (.ongoing, .similar): "Similar cost"
+        case (.ongoing, .higher): "Costs more"
         }
     }
 
-    var color: Color {
-        switch self {
-        case .lower: Theme.leaf
-        case .similar: .secondary
-        case .higher: Theme.warning
+    func color(_ framing: PracticalityTags.Framing) -> Color {
+        switch (framing, self) {
+        case (.addOn, _), (_, .similar): .secondary
+        case (_, .lower): Theme.leaf
+        case (_, .higher): Theme.warning
         }
     }
 }
@@ -63,6 +79,7 @@ extension Practicality.Effort {
 #Preview {
     VStack {
         PracticalityTags(practicality: Practicality(cost: .lower, effort: .easy))
+        PracticalityTags(practicality: Practicality(cost: .lower, effort: .moderate), framing: .replacement)
         PracticalityTags(practicality: Practicality(cost: .higher, effort: .hard))
     }
 }

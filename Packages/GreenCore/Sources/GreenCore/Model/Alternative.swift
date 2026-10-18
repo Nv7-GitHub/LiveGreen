@@ -113,6 +113,34 @@ public struct Alternative: Codable, Sendable, Hashable, Identifiable {
     public static func scoredCategory(_ stated: Category, isReusable: Bool) -> Category {
         isReusable && (stated == .packaging || stated == .personalCare) ? .household : stated
     }
+
+    /// Whether taking the swap means buying something: a used or refurbished item, a "Buy …" swap or the smart plug.
+    /// Keeping, repairing or using what you have differently is not. For an item the user already owns, a purchase
+    /// is never "saves money" next to keeping it, only next to buying a new one.
+    public var isPurchase: Bool {
+        kind == .smartPlugScheduling || condition != .new || name.lowercased().hasPrefix("buy ")
+    }
+
+    // MARK: - Safety gear
+
+    /// Gear whose protection hidden damage or age can undo: makers and safety bodies (CPSC, NHTSA, helmet makers)
+    /// say not to buy it second-hand or keep it past its life.
+    static let safetyGearTerms = ["helmet", "car seat", "child seat", "booster seat", "infant seat", "baby seat",
+                                  "crib", "harness", "life jacket", "life vest", "smoke alarm", "smoke detector",
+                                  "carbon monoxide"]
+
+    /// A second-hand, refurbished or kept-longer swap for safety gear ("Second-hand bike helmet", "Keep your helmet
+    /// longer"), which is never suggested. The swap's whole name counts (a used bike "with child seat" includes a used
+    /// seat); of the original only what comes before "with", so a used bike for a "bicycle with child seat" is fine.
+    public func isUnsafeSecondHand(replacing original: Component) -> Bool {
+        let swapName = name.lowercased()
+        let originalHead = original.name.lowercased().components(separatedBy: " with ").first ?? ""
+        let isGear = Self.safetyGearTerms.contains { swapName.contains($0) }
+            || (category == original.category && Self.safetyGearTerms.contains { originalHead.contains($0) })
+        guard isGear else { return false }
+        let keptLonger = lifespanYears != nil || swapName.contains("keep") || swapName.contains("longer")
+        return condition != .new || Condition(name: name) != .new || keptLonger
+    }
 }
 
 /// Cost and effort of adopting an alternative.
