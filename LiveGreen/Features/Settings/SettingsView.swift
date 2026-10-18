@@ -53,13 +53,11 @@ struct SettingsView: View {
 
             Section {
                 Toggle("Smart plug features", isOn: $model.flags.plugFeaturesEnabled)
-                Toggle("Use mock plug", isOn: $model.flags.useMockPlug)
-                    .disabled(!model.flags.plugFeaturesEnabled)
             } header: {
                 Text("Smart plug")
             } footer: {
                 Text(model.flags.plugFeaturesEnabled
-                     ? "The mock plug simulates a Shelly plug's power draw for demos."
+                     ? "Scans recommend a Shelly plug for chargers, and the Plugs tab pairs and schedules one."
                      : "Plug recommendations and the Plugs tab are hidden.")
             }
 

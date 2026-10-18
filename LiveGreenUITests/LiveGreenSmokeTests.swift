@@ -87,8 +87,8 @@ final class LiveGreenSmokeTests: XCTestCase {
     }
 
     @MainActor
-    func testEBikeOffersSmartPlugAndMockPlugDashboard() {
-        let app = launch(["-MockPlug", "YES"])
+    func testEBikeOffersSmartPlugAndPairing() {
+        let app = launch()
         app.buttons["E-bike corner"].tap()
         XCTAssertTrue(waitForResults("E-bike corner", in: app))
         skipQuestions(in: app)
@@ -100,8 +100,10 @@ final class LiveGreenSmokeTests: XCTestCase {
             .firstMatch.waitForExistence(timeout: 20))
 
         app.tabBars.buttons["Plugs"].tap()
-        // The mock plug is paired automatically, so the list offers pairing another one.
-        XCTAssertTrue(app.buttons["Pair another plug"].waitForExistence(timeout: 10))
+        let pair = app.buttons["plugs.pair"]
+        XCTAssertTrue(pair.waitForExistence(timeout: 10))
+        pair.tap()
+        XCTAssertTrue(app.buttons["pairing.find"].waitForExistence(timeout: 5), "Pairing starts with the setup steps")
     }
 
     @MainActor

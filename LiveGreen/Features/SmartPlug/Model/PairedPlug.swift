@@ -6,8 +6,6 @@ nonisolated struct PairedPlug: Codable, Identifiable, Hashable, Sendable {
     enum Kind: Codable, Hashable, Sendable {
         /// A Shelly Gen2+ plug reached over its local RPC API.
         case shelly(PlugEndpoint)
-        /// The simulated plug used for demos.
-        case mock
     }
 
     var id = UUID()
@@ -29,15 +27,12 @@ nonisolated struct PairedPlug: Codable, Identifiable, Hashable, Sendable {
     /// First failed poll since the last success; nil while reachable.
     var offlineSince: Date?
 
-    var isMock: Bool { kind == .mock }
-
     /// Keychain account holding the device password, if any.
     var passwordAccount: String { "shelly-\(id.uuidString)" }
 
     var hostDescription: String {
         switch kind {
         case .shelly(let endpoint): endpoint.port == 80 ? endpoint.host : "\(endpoint.host):\(endpoint.port)"
-        case .mock: "Simulated"
         }
     }
 }

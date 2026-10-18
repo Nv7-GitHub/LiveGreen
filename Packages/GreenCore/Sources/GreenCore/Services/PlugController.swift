@@ -1,6 +1,6 @@
 import Foundation
 
-/// Controls one smart plug (spec §8: Shelly Gen2+ local RPC, or the mock plug).
+/// Controls one smart plug (spec §8: Shelly Gen2+ local RPC).
 public protocol PlugController: Sendable {
     /// `Shelly.GetDeviceInfo`. Throws `GreenCoreError.unsupported` for Gen1 devices.
     func deviceInfo() async throws -> PlugDeviceInfo

@@ -241,8 +241,8 @@ Measured on the desk photo (Sonnet 5.5, Oct 2026):
   maps to `US48`; Hawaii, Alaska and non-US zones have no EIA data and fall back to the bundled 24-hour shapes.
 - Electricity Maps (optional key): free tier is non-commercial with only the last 24 h of history.
 - Shelly: Gen2+ local RPC (`Shelly.GetDeviceInfo`, `Switch.GetStatus`, `Switch.Set`, `Schedule.*`) with
-  digest auth. Schedules are written to the plug so it follows them with the app closed. A mock plug exists
-  for demos (Settings → Use mock plug). Real hardware pairing has not been tested.
+  digest auth. Schedules are written to the plug so it follows them with the app closed. Pairing has been
+  tried with a Shelly Plug Gen4 on an iPhone Personal Hotspot (enter the plug's `172.20.10.x` IP by hand).
 
 ## 8. Units and how metrics are framed
 
@@ -310,7 +310,7 @@ tab bar never covers it. The detail sheet shows the flow (Sankey), usage card, p
 - Live API checks were done with temporary Swift tests gated on environment variables (for example
   `LIVE_XAI`), deleted afterwards. Never commit keys or live tests that need them.
 - Simulator driving tips: launch arguments `-DemoMode YES`, `-SkipOnboarding YES`, `-InMemoryStore YES`,
-  `-ScanMode photo|ar|barcode`, `-AIProvider grok|claude`, `-MockPlug YES`. `xcrun simctl addmedia` puts a
+  `-ScanMode photo|ar|barcode`, `-AIProvider grok|claude`. `xcrun simctl addmedia` puts a
   test photo in the library; `xcrun simctl ui <device> appearance dark` switches appearance. Taps right after
   `launch` often land before the app is ready; wait a couple of seconds.
 

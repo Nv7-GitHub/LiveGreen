@@ -1,7 +1,7 @@
 import XCTest
 
 /// End-to-end demo tour: onboarding → demo scan → results, component flow and inspector → questions →
-/// greener swaps and image → Compare → mock plug pairing and schedule → History → Settings.
+/// greener swaps and image → Compare → plug pairing → History → Settings.
 /// Screenshots are attached at each stop so light and dark runs can be reviewed from the result bundle.
 final class LiveGreenTourTests: XCTestCase {
     override func setUp() {
@@ -12,7 +12,7 @@ final class LiveGreenTourTests: XCTestCase {
     func testFullDemoTour() {
         let app = XCUIApplication()
         app.launchArguments = ["-DemoMode", "YES", "-InMemoryStore", "YES", "-ScanMode", "photo",
-                               "-MockPlug", "NO", "-PlugFeatures", "YES"]
+                               "-PlugFeatures", "YES"]
         app.launch()
 
         completeOnboarding(app)
@@ -21,7 +21,7 @@ final class LiveGreenTourTests: XCTestCase {
         inspectComponent(app)
         exploreAlternatives(app)
         checkCompare(app)
-        pairMockPlugAndApplySchedule(app)
+        openPlugPairing(app)
         checkHistory(app)
         checkSettings(app)
     }
@@ -140,31 +140,17 @@ final class LiveGreenTourTests: XCTestCase {
         snap("10b-compare-leaderboard")
     }
 
+    /// Pairing needs a real Shelly on the network, so the tour stops at the setup steps.
     @MainActor
-    private func pairMockPlugAndApplySchedule(_ app: XCUIApplication) {
+    private func openPlugPairing(_ app: XCUIApplication) {
         selectTab("Plugs", in: app)
         let pair = app.buttons["plugs.pair"]
         XCTAssertTrue(pair.waitForExistence(timeout: 10))
         snap("11-plugs")
         pair.tap()
-        let mock = app.buttons["pairing.useMock"]
-        XCTAssertTrue(mock.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["pairing.find"].waitForExistence(timeout: 5))
         snap("12-pairing")
-        mock.tap()
-        let save = app.buttons["pairing.save"]
-        XCTAssertTrue(save.waitForExistence(timeout: 10))
-        snap("13-pairing-name")
-        save.tap()
-        let apply = app.buttons["plug.applySchedule"]
-        XCTAssertTrue(apply.waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] %@", "CO₂e/"))
-            .firstMatch.waitForExistence(timeout: 15), "Grid outlook loads")
-        snap("14-plug-dashboard")
-        for _ in 0..<4 where !apply.isHittable { app.swipeUp() }
-        apply.tap()
-        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH %@", "On the plug since"))
-            .firstMatch.waitForExistence(timeout: 10), "Schedule is written to the mock plug")
-        snap("15-plug-scheduled")
+        app.buttons["Cancel"].tap()
     }
 
     @MainActor

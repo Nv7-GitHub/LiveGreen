@@ -7,12 +7,11 @@ struct PlugStatusCard: View {
     let status: PlugStatus?
     let isSwitching: Bool
     let onToggle: (Bool) -> Void
-    let onUseMock: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label(plug.name, systemImage: plug.isMock ? "cpu" : "powerplug.fill")
+                Label(plug.name, systemImage: "powerplug.fill")
                     .font(.headline)
                 Spacer()
                 Text(plug.hostDescription).font(.caption).foregroundStyle(.secondary)
@@ -35,7 +34,7 @@ struct PlugStatusCard: View {
                 reading(Measured.format(status.totalEnergyWh / 1000), "kWh", "Energy total")
                 if let temperature = status.temperatureC {
                     let shown = DisplayUnits.temperature(celsius: temperature)
-                    reading(Measured.format(shown.value), shown.unit, "Temp")
+                    reading(Measured.format(shown.value), shown.unit, "Inside plug")
                 }
             }
             Toggle(isOn: Binding(get: { status.isOn }, set: onToggle)) {
@@ -63,10 +62,6 @@ struct PlugStatusCard: View {
             Text("Schedules already on the plug keep running. Check the plug is powered and on this Wi-Fi.")
                 .font(.footnote).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            if !plug.isMock {
-                Button("Use the mock plug", systemImage: "cpu", action: onUseMock)
-                    .buttonStyle(.glass)
-            }
         }
     }
 }

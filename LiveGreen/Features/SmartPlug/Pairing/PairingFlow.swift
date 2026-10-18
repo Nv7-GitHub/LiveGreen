@@ -1,7 +1,7 @@
 import SwiftUI
 import GreenCore
 
-/// Pair a Shelly plug or the mock plug (spec §8.2). Present as a sheet.
+/// Pair a Shelly plug (spec §8.2). Present as a sheet.
 struct PairingFlow: View {
     var preselectedComponentID: UUID?
     var onFinish: (PairedPlug) -> Void = { _ in }

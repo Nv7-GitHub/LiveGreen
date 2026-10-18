@@ -33,6 +33,7 @@ struct PlugSavingsCard: View {
                     .font(.subheadline)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .glassCard(tint: Theme.leaf.opacity(0.12))
     }
 }
