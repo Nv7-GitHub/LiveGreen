@@ -1,0 +1,390 @@
+{
+ "hits": [
+  {
+   "code": "5000169052846",
+   "product_name": "Salt and malt vinegar crisps",
+   "product_name_en": "Salt and malt vinegar crisps",
+   "brands": [
+    "Waitrose"
+   ],
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "07872510",
+   "product_name": "lays salt and vinegar chips",
+   "product_name_en": "lays salt and vinegar chips",
+   "brands": [
+    "Lay's"
+   ]
+  },
+  {
+   "code": "0028400017503",
+   "product_name": "Lays Chips Salt & Vinegar",
+   "product_name_en": "Lays Chips Salt & Vinegar",
+   "brands": [
+    "Lay's"
+   ],
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "8901063017634",
+   "product_name": "Britannia 5050",
+   "product_name_en": "Britannia 50-50",
+   "quantity": "105g",
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:fats",
+    "en:salty-snacks"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "0028400258173",
+   "product_name": "Lay's Salt and Vinegar Chips",
+   "product_name_en": "Lay's Salt and Vinegar Chips",
+   "brands": [
+    "Frito Lay"
+   ],
+   "quantity": "35.4 g",
+   "categories_tags": [
+    "en:snacks",
+    "en:salty-snacks",
+    "en:appetizers",
+    "en:chips-and-fries",
+    "en:crisps"
+   ]
+  },
+  {
+   "code": "6009510804775",
+   "product_name": "Potato Chips Salt & Vinegar Flavour",
+   "brands": [
+    "Lay's",
+    "Simba"
+   ],
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "5017764901219",
+   "product_name": "Kettle Chips Salt and Balsamic Vinegar of Moderna",
+   "product_name_en": "Kettle Chips Salt and Balsamic Vinegar of Moderna",
+   "brands": [
+    "Kettle Chips"
+   ],
+   "quantity": "80g",
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "5000237048092",
+   "product_name": "Mc Coy's",
+   "product_name_en": "Mc Coy's",
+   "brands": [
+    "Mc Coy's"
+   ],
+   "quantity": "50g",
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "3560070359653",
+   "product_name": "Chips goût Vinaigre",
+   "brands": [
+    "Carrefour"
+   ],
+   "quantity": "135 g",
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "3497911105127",
+   "product_name": "Chips saveur Sel & Vinaigre",
+   "product_name_en": "Chips saveur Sel & Vinaigre",
+   "brands": [
+    "Brets"
+   ],
+   "quantity": "125 g",
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "0006400303857",
+   "product_name": "Lay's Salt & Vinegar",
+   "product_name_en": "Lay's Salt & Vinegar",
+   "brands": [
+    "Lay's"
+   ],
+   "quantity": "2 5/8 oz"
+  },
+  {
+   "code": "7892840823382",
+   "product_name": "Lays salt & vinegar",
+   "product_name_en": "Lays salt & vinegar",
+   "brands": [
+    "Lay's"
+   ]
+  },
+  {
+   "code": "0045200040180",
+   "product_name": "Lay's Salt & Vinegar",
+   "product_name_en": "Lay's Salt & Vinegar"
+  },
+  {
+   "code": "0211604708302",
+   "product_name": "Lay's Salt & Vinegar",
+   "product_name_en": "Lay's Salt & Vinegar"
+  },
+  {
+   "code": "0006169000622",
+   "product_name": "Lays salt &vinegar",
+   "product_name_en": "Lays salt &vinegar"
+  },
+  {
+   "code": "5290052000942",
+   "product_name": "Lays Salt and Vinegar",
+   "product_name_en": "Lays Salt and Vinegar",
+   "brands": [
+    "Lay's"
+   ]
+  },
+  {
+   "code": "0060410010914",
+   "product_name": "Lays salt & vinegar",
+   "product_name_en": "Lays salt & vinegar",
+   "brands": [
+    "Lay's"
+   ],
+   "quantity": "180g",
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "0064100111417",
+   "product_name": "Pringles",
+   "product_name_en": "Pringles",
+   "brands": [
+    "Pringles"
+   ],
+   "quantity": "156g",
+   "categories_tags": [
+    "en:snacks",
+    "en:condiments",
+    "en:salty-snacks",
+    "en:appetizers",
+    "en:chips-and-fries",
+    "en:crisps"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.587567974,
+     "co2_agriculture": 0.85124335,
+     "co2_processing": 0.29801521,
+     "co2_packaging": 0.28132688,
+     "co2_transportation": 0.13754464,
+     "co2_distribution": 0.019437894,
+     "co2_consumption": 0,
+     "name_en": "Salty snacks, made from potato"
+    }
+   }
+  },
+  {
+   "code": "5400101080683",
+   "product_name": "Chips sel",
+   "brands": [
+    "Carrefour"
+   ],
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "5290052001703",
+   "product_name": "Lay's Chips Salt & Vinegar 90g",
+   "product_name_en": "Lay's Chips Salt & Vinegar 90g",
+   "brands": [
+    "Lay's"
+   ],
+   "quantity": "90g"
+  }
+ ],
+ "page": 1,
+ "page_size": 20,
+ "count": 10000
+}

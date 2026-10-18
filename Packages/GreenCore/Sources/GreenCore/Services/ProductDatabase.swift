@@ -1,14 +1,18 @@
 import Foundation
 
-/// T1 packaged-goods lookup by GTIN (spec §5.4: Open Food Facts).
+/// T1 packaged-goods lookup by GTIN (spec §5.4: Open Food Facts), and by brand and name for food without one.
 public protocol ProductDatabase: Sendable {
     /// Returns nil when the GTIN is unknown.
     func product(gtin: String) async throws -> ProductRecord?
+    /// The record a brand and product name confidently stand for, with a carbon figure (`ProductNameMatch`), or
+    /// nil when no record matches well enough.
+    func searchProduct(brand: String, name: String) async throws -> ProductRecord?
     /// The record's front-of-pack photo, or nil when it has none or the download fails.
     func productImage(for record: ProductRecord) async -> Data?
 }
 
 extension ProductDatabase {
+    public func searchProduct(brand: String, name: String) async throws -> ProductRecord? { nil }
     public func productImage(for record: ProductRecord) async -> Data? { nil }
 }
 
