@@ -59,9 +59,9 @@ extension ImpactEngine {
             let hoursOn = usage?.hoursOnPerDay ?? typical
             return [(.hoursOnPerDay, hoursOn), (.standbyHoursPerDay, usage?.standbyHoursPerDay ?? max(0, 24 - hoursOn))]
         case .food where FoodServing.isPerPack(component):
-            return [(.packsPerWeek, usage?.packsPerWeek ?? 1)]
+            return [(.packsPerWeek, FoodServing.packsPerWeek(of: component))]
         case .food:
-            return [(.servingsPerWeek, usage?.servingsPerWeek ?? 1)]
+            return [(.servingsPerWeek, usage?.servingsPerWeek ?? FoodServing.defaultServingsPerWeek)]
         case .packaging, .personalCare:
             return [(.usesPerWeek, usage?.usesPerWeek ?? 1)]
         case .clothing, .household:

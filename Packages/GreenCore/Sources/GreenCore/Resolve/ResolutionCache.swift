@@ -8,14 +8,19 @@ public struct CachedResolution: Codable, Sendable, Hashable {
     /// The pack size food metrics were resolved per (`Quantities.packNetKg`); nil for per-serving food, other
     /// items and entries saved by older builds.
     public var packNetKg: Double?
+    /// The serving a per-pack item was scored with, so a rescan that hits the cache without its record turns servings
+    /// into packs the same way; nil otherwise.
+    public var servingKg: Double?
 
     public init(metrics: [MetricKey: Measured], stageShares: [LifecycleStage: Double] = [:],
-                plasticPackagingShare: Double? = nil, category: Category? = nil, packNetKg: Double? = nil) {
+                plasticPackagingShare: Double? = nil, category: Category? = nil, packNetKg: Double? = nil,
+                servingKg: Double? = nil) {
         self.metrics = metrics
         self.stageShares = stageShares
         self.plasticPackagingShare = plasticPackagingShare
         self.category = category
         self.packNetKg = packNetKg
+        self.servingKg = servingKg
     }
 }
 

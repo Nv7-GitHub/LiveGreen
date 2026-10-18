@@ -47,7 +47,11 @@ public struct ScanPipeline: Sendable {
         let deferrable = Dictionary(uniqueKeysWithValues: zip(components.map(\.id), identified.map(\.deferrableLoad)))
         emit(.componentsIdentified(components))
         emit(.stepFinished(.identifying))
-        components = await onPackBasis(components, records: records)
+        // Record lookups start here: a packaged food's basis may need its record before the cache is read.
+        emit(.stepStarted(.lookingUpRecords))
+        let basis = await onPackBasis(components, records: records)
+        components = basis.components
+        let ladder = ladder.reusing(basis.answers)
 
         // A cache hit skips the ladder, so the same identifier always gives the same numbers.
         var cachedIDs = Set<UUID>()
@@ -58,8 +62,8 @@ public struct ScanPipeline: Sendable {
             }
         }
         for phase in Self.phases {
-            emit(.stepStarted(phase.step))
-            components = await resolveAll(components, tiers: phase.tiers, skipping: cachedIDs, emit: emit)
+            if phase.step != .lookingUpRecords { emit(.stepStarted(phase.step)) }
+            components = await resolveAll(components, ladder: ladder, tiers: phase.tiers, skipping: cachedIDs, emit: emit)
             emit(.stepFinished(phase.step))
         }
         // A generic item that still only has an estimate takes the one cached for its kind, so it reads the same.
@@ -70,7 +74,10 @@ public struct ScanPipeline: Sendable {
                 cachedIDs.insert(hit.id)
             }
         }
-        for component in components where !cachedIDs.contains(component.id) { await ladder.remember(component) }
+        // An item whose basis lookup failed is per serving only for want of a connection, so it is not cached.
+        for component in components where !cachedIDs.contains(component.id) && !basis.unchecked.contains(component.id) {
+            await ladder.remember(component)
+        }
 
         components = components.map { completed($0, deferrable: deferrable[$0.id] ?? nil) }
         let pending = QuestionGate.pendingQuestions(for: components)
@@ -214,9 +221,8 @@ public struct ScanPipeline: Sendable {
         return records
     }
 
-    private func resolveAll(_ components: [Component], tiers: ClosedRange<Tier>, skipping: Set<UUID>,
+    private func resolveAll(_ components: [Component], ladder: EvidenceLadder, tiers: ClosedRange<Tier>, skipping: Set<UUID>,
                             emit: @escaping @Sendable (PipelineEvent) -> Void) async -> [Component] {
-        let ladder = ladder
         let profile = profile
         return await withTaskGroup(of: (Int, Component).self) { group in
             for (index, component) in components.enumerated() where !skipping.contains(component.id) {

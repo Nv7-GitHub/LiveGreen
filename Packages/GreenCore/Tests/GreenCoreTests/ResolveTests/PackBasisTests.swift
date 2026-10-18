@@ -21,9 +21,10 @@ struct PackBasisTests {
     }
 
     private func pipeline(_ records: [ProductRecord], scene: DemoScene = .deskSetup,
-                          cache: (any ResolutionCache)? = nil) -> ScanPipeline {
+                          cache: (any ResolutionCache)? = nil, products: (any ProductDatabase)? = nil) -> ScanPipeline {
         let store = ReferenceStore.bundled
-        let products = FakeProductDatabase(records: Dictionary(uniqueKeysWithValues: records.map { ($0.gtin, $0) }))
+        let products = products
+            ?? FakeProductDatabase(records: Dictionary(uniqueKeysWithValues: records.map { ($0.gtin, $0) }))
         let ladder = EvidenceLadder(resolvers: [OpenFoodFactsResolver(products: products), FactorModelResolver(store: store),
                                                 EstimateResolver()], cache: cache)
         return ScanPipeline(vision: FakeVisionIdentifier(scene: scene), alternatives: FakeAlternativeSuggester(),
@@ -45,13 +46,15 @@ struct PackBasisTests {
         #expect(bag.plasticPackagingShare == 1)
         #expect(try #require(bag.metrics[.water]).value > 0)
 
-        // A year is packs a week × 52 × the pack (one pack a week by default).
+        // A year is packs a week × 52 × the pack. With no rate stated, the default one serving a week is given in
+        // packs, so the year counts the same food as per serving did, not a whole pack a week.
         let engine = ImpactEngine()
         #expect(engine.editableUsage(for: bag).map(\.field) == [.packsPerWeek])
-        #expect(engine.editableUsage(for: bag).first?.value == 1)
+        #expect(abs((engine.editableUsage(for: bag).first?.value ?? 0) - 0.028 / 0.34) < 1e-9)
         let yearly = try #require(engine.yearly(.carbon, of: bag))
-        #expect(abs(yearly.value - 1 * 52 * 2.5 * 0.34) < 1e-9)
+        #expect(abs(yearly.value - 1 * 52 * 2.5 * 0.028) < 1e-9)
         #expect(abs(try #require(scan.yearlyTotals[.carbon]).value - yearly.value) < 1e-9)
+        #expect(abs(try #require(engine.yearly(.plasticMass, of: bag)).value - 52 * 12 * 0.028 / 0.34) < 1e-9)
 
         let twice = engine.applyingAnswer(AnswerOption(label: "2", field: .packsPerWeek, value: 2), to: bag, profile: .default)
         #expect(abs(try #require(engine.yearly(.carbon, of: twice)).value - 2 * 52 * 2.5 * 0.34) < 1e-9)
@@ -125,6 +128,59 @@ struct PackBasisTests {
         #expect(output.metrics[.recyclablePercent]?.value == 20)
     }
 
+    @Test func plasticEstimatesAreForThePackageAlready() async throws {
+        // A 200 g bag of 28 g servings: carbon per serving is scaled up, the package's 4 g of plastic is not.
+        let bag = Component(name: "Chips", category: .food, identifiers: Identifiers(gtin: "0000000000017"),
+                            quantities: Quantities(servingKg: 0.028, packNetKg: 0.2),
+                            fallbackEstimates: [.carbon: EstimateRange(value: 0.05, low: 0.04, high: 0.06),
+                                                .plasticMass: EstimateRange(value: 4, low: 2, high: 6)])
+        let output = try await EstimateResolver().resolve(
+            ResolutionRequest(component: bag, metrics: [.carbon, .plasticMass], profile: .default))
+        #expect(abs(try #require(output.metrics[.carbon]).value - 0.05 * 0.2 / 0.028) < 1e-9)
+        #expect(output.metrics[.plasticMass]?.value == 4)
+        // The identify prompt says which basis each estimate is on.
+        let prompt = ClaudeClient.identifySystemPrompt(vocabulary: .default)
+        #expect(prompt.contains("are for ONE serving (serving_kg), even when a whole pack is pictured"))
+        #expect(prompt.contains("`plasticMass` is all the plastic in the package pictured"))
+    }
+
+    @Test func aSwapWithoutAServingIsScaledByTheOriginalsServings() async throws {
+        // The suggester's estimates are per 28 g serving of the original; the swap gives no serving of its own.
+        let original = Component(name: "Chips", category: .food, identifiers: Identifiers(gtin: "0000000000017"),
+                                 quantities: Quantities(servingKg: 0.028, packNetKg: 0.2))
+        let swap = Alternative(name: "Lentil chips", category: .food, quantities: Quantities(massKg: 0.2),
+                               rationale: "", fallbackEstimates: [.carbon: EstimateRange(value: 0.03, low: 0.02, high: 0.04)])
+            .onBasis(of: original)
+        #expect(swap.quantities.servingKg == 0.028)
+        let asComponent = Component(name: swap.name, category: .food, quantities: swap.quantities,
+                                    fallbackEstimates: swap.fallbackEstimates)
+        #expect(abs(FoodServing.servingsPerPack(asComponent) - FoodServing.servingsPerPack(original)) < 1e-9)
+        let output = try await EstimateResolver().resolve(
+            ResolutionRequest(component: asComponent, metrics: [.carbon], profile: .default))
+        #expect(abs(try #require(output.metrics[.carbon]).value - 0.03 * 0.2 / 0.028) < 1e-9)
+    }
+
+    @Test func aSwapsPackagingIsPutOnTheOriginalsPackSize() throws {
+        // A 400 g swap pack with 20 g of film, compared on the original's 200 g pack: half the film, as OFF scales.
+        let original = Component(name: "Rice", category: .food, identifiers: Identifiers(gtin: "0000000000017"),
+                                 quantities: Quantities(servingKg: 0.1, packNetKg: 0.2))
+        let film = [MaterialShare(material: "pp", percent: 100)]
+        let swap = Alternative(name: "Lentils", category: .food, identifiers: Identifiers(materials: film),
+                               quantities: Quantities(massKg: 0.4, servingKg: 0.1, packagingMassG: 20, foodGroup: "pulses"),
+                               rationale: "", fallbackEstimates: [.plasticMass: EstimateRange(value: 20, low: 10, high: 30)])
+        let onBasis = swap.onBasis(of: original)
+        #expect(onBasis.quantities.packagingMassG == 10)
+        #expect(onBasis.fallbackEstimates[.plasticMass]?.value == 10)
+        let resolver = FactorModelResolver(store: .bundled)
+        let ownPack = Component(name: swap.name, category: .food, identifiers: swap.identifiers,
+                                quantities: Quantities(servingKg: 0.1, packagingMassG: 20, foodGroup: "pulses", packNetKg: 0.4))
+        let onOriginal = Component(name: swap.name, category: .food, identifiers: swap.identifiers,
+                                   quantities: onBasis.quantities)
+        let own = try #require(resolver.food(ownPack).metrics[.plasticMass]).value
+        #expect(own > 0)
+        #expect(abs(try #require(resolver.food(onOriginal).metrics[.plasticMass]).value - own / 2) < 1e-9)
+    }
+
     @Test func aPerServingCacheEntryIsAMissForThePack() async throws {
         let cache = InMemoryResolutionCache()
         await cache.store(CachedResolution(metrics: [.carbon: .exact(0.07, unit: .kgCO2e, tier: .exactRecord)],
@@ -134,6 +190,45 @@ struct PackBasisTests {
         // The per-pack numbers replace the old entry, so a rescan reads them back.
         let again = try #require(try await barcodeScan(Self.chips, cache: cache).components.first)
         #expect(again.metrics == bag.metrics)
+    }
+
+    @Test func aPhotoScanLooksEachGTINUpOnce() async throws {
+        // The pack basis needs the cola can's record before the cache; T1 reuses it rather than asking again.
+        let products = CountingProducts(Array(FakeProductDatabase.defaultRecords.values))
+        let scan = try await pipeline([], scene: .meal, products: products).run(image: Data([1]), hints: .none, mode: .photo)
+        let can = try #require(scan.components.first { $0.name == "Cola can" })
+        #expect(FoodServing.basis(of: can) == .pack(kg: 0.33))
+        #expect(can.metrics[.carbon]?.tier == .exactRecord)
+        #expect(products.lookups == 1)
+    }
+
+    @Test func aCachedPackNeedsNoLookupAndAFailedOneIsNotCached() async throws {
+        let cache = InMemoryResolutionCache()
+        let records = Array(FakeProductDatabase.defaultRecords.values)
+        let online = try await pipeline([], scene: .meal, cache: cache, products: CountingProducts(records))
+            .run(image: Data([1]), hints: .none, mode: .photo)
+        let can = try #require(online.components.first { $0.name == "Cola can" })
+
+        // Offline, the cache entry gives the basis, so the rescan is a hit with the same numbers and no lookup.
+        let offline = CountingProducts(records, failing: true)
+        let rescan = try await pipeline([], scene: .meal, cache: cache, products: offline)
+            .run(image: Data([1]), hints: .none, mode: .photo)
+        let cached = try #require(rescan.components.first { $0.name == "Cola can" })
+        #expect(cached.quantities.packNetKg == 0.33)
+        #expect(cached.usage?.packsPerWeek == can.usage?.packsPerWeek)
+        #expect(cached.metrics == can.metrics)
+        #expect(offline.lookups == 0)
+
+        // Offline with nothing cached, the can stays per serving and is not remembered, so the per-serving numbers
+        // never stand in for the pack's; its one failed lookup is not repeated by T1.
+        let empty = InMemoryResolutionCache()
+        let failed = CountingProducts(records, failing: true)
+        let unchecked = try await pipeline([], scene: .meal, cache: empty, products: failed)
+            .run(image: Data([1]), hints: .none, mode: .photo)
+        let perServing = try #require(unchecked.components.first { $0.name == "Cola can" })
+        #expect(perServing.quantities.packNetKg == nil)
+        #expect(await empty.cachedResolution(forKey: "gtin:5449000000996") == nil)
+        #expect(failed.lookups == 1)
     }
 
     @Test func swapsForAPackCoverTheSameFoodAtTheSameRate() async throws {
@@ -157,9 +252,12 @@ struct PackBasisTests {
                             usage: UsageProfile(packsPerWeek: 0.5))
         bag.metrics = [.carbon: .exact(0.85, unit: .kgCO2e, tier: .exactRecord),
                        .recyclablePercent: .exact(40, unit: .percent, tier: .exactRecord)]
+        bag.metrics[.plasticMass] = .exact(12, unit: .grams, tier: .exactRecord)
         let view = FoodServing.servingView(of: bag)
         #expect(view.quantities.packNetKg == nil)
         #expect(abs(try #require(view.metrics[.carbon]).value - 0.085) < 1e-9)
+        // Plastic is the package's whatever the basis, as the prompts define it.
+        #expect(view.metrics[.plasticMass]?.value == 12)
         #expect(view.metrics[.recyclablePercent]?.value == 40)
         #expect(view.usage?.servingsPerWeek == 5)
         #expect(view.usage?.packsPerWeek == nil)
@@ -176,5 +274,25 @@ struct PackBasisTests {
                               quantities: quantities)
         #expect(FoodServing.basis(of: saved) == .serving(kg: 0.028))
         #expect(!UsageField.askable.contains(.packsPerWeek))
+    }
+}
+
+/// Product lookups counted, and all failing when `failing`, as Open Food Facts does offline.
+final class CountingProducts: ProductDatabase, @unchecked Sendable {
+    private let lock = NSLock()
+    private var count = 0
+    private let records: [String: ProductRecord]
+    private let failing: Bool
+    var lookups: Int { lock.withLock { count } }
+
+    init(_ records: [ProductRecord], failing: Bool = false) {
+        self.records = Dictionary(uniqueKeysWithValues: records.map { ($0.gtin, $0) })
+        self.failing = failing
+    }
+
+    func product(gtin: String) async throws -> ProductRecord? {
+        lock.withLock { count += 1 }
+        if failing { throw GreenCoreError.timeout }
+        return records[gtin]
     }
 }

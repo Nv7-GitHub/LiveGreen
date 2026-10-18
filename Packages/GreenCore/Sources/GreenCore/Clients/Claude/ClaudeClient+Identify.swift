@@ -32,14 +32,17 @@ extension ClaudeClient: VisionIdentifier {
         let estimates = carbonEstimateOnly
             ? """
             Fallback estimate (last resort only)
-            - Give exactly one entry, for `carbon`: value, low and high in kg CO2e for one item as pictured. Keep it \
-            rough; the app replaces it whenever a record or factor table exists.
+            - Give exactly one entry, for `carbon`: value, low and high in kg CO2e for one item as pictured (food: \
+            one serving, even when a whole pack is pictured). Keep it rough; the app replaces it whenever a record or \
+            factor table exists.
             """
             : """
             Fallback estimates (last resort only)
             - For every metric that applies to the component's category, give value, low and high in the canonical \
             unit below. Make the range honest: wide enough that the true value falls inside ~90% of the time. These \
             are placeholders the app discards whenever a better source exists; do not spend effort refining them.
+            - Food: `carbon`, `water`, `land` and `waterPollution` are for ONE serving (serving_kg), even when a \
+            whole pack is pictured; `plasticMass` is all the plastic in the package pictured.
             \(PromptParts.metricDefinitions)
             """
         return """
