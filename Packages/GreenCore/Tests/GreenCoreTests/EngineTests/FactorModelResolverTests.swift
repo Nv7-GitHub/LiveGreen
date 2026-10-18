@@ -128,7 +128,10 @@ struct FactorModelResolverTests {
         for scene in DemoScene.allCases {
             for identified in scene.identifyResponse.components {
                 let component = await ladder.resolve(identified.makeComponent(), profile: .default)
-                #expect(component.missingMetrics.isEmpty, "\(scene) \(component.name) missing \(component.missingMetrics)")
+                // Unpackaged food has nothing to recycle or leave behind.
+                let unpackaged = component.category == .food && !FoodServing.isPackaged(component)
+                let expectedMissing: Set<MetricKey> = unpackaged ? [.recyclablePercent, .decompositionTime] : []
+                #expect(Set(component.missingMetrics) == expectedMissing, "\(scene) \(component.name) missing \(component.missingMetrics)")
                 for (metric, measured) in component.metrics {
                     #expect(measured.unit == metric.unit, "\(component.name) \(metric) unit")
                     #expect(measured.value.isFinite && measured.low <= measured.value && measured.value <= measured.high)

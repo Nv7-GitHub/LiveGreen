@@ -64,6 +64,10 @@ extension ClaudeClient: VisionIdentifier {
         - Write `scene_title` first, and start each component object with its `name`, so the app can show \
         items while the answer is still arriving.
         - A meal is split into its foods and drinks (e.g. burger, fries, cola can), not reported as one plate.
+        - Report each container once. A food's or drink's own cup, lid, straw, bottle, can or wrapper is part of \
+        that item (its packaging_mass_g and packaging_materials), not a separate packaging component. Report \
+        packaging on its own only when the food it held is not in the photo (an empty cup, a stack of takeout boxes). \
+        Reusable bowls, plates, mugs, glasses and tumblers are never packaging.
         - Choose the category from the table below; it fixes which metrics apply:
         \(PromptParts.categoryTable)
         - Anything that plugs in or charges, including kitchen and laundry appliances (dishwasher, washer, \
@@ -108,11 +112,24 @@ extension ClaudeClient: VisionIdentifier {
         - gtin: assign a barcode hint to the item it is printed on (if there is a single packaged product, it is \
         that product). Never fabricate digits.
         - materials: the mass split of the item itself (fiber percentages from a care label are exact; otherwise \
-        estimate typical construction, e.g. a paper cup ≈ 95% paperboard, 5% polyethylene).
+        estimate typical construction, e.g. a paper cup ≈ 95% paperboard, 5% polyethylene). Mugs, bowls and plates \
+        are ceramic; drinking glasses glass_tableware; steel cutlery, bottles and tumblers stainless_steel; glass is \
+        for bottles and jars. Leave materials empty for food and drinks: food_group describes them. For a filled \
+        household or personal-care product (cleaner, detergent, shampoo, lotion) materials are the contents: \
+        detergent_formula.
+        - packaging_materials: for food, drinks and filled household or personal-care products, the split of what is \
+        thrown away after use (cup, lid, straw, bottle, can, bag, wrapper, tray), the packaging packaging_mass_g \
+        weighs. Clear plastic cups, dome lids and clamshells are pet_thermoform; drink bottles are pet.
 
         Quantities
         - Estimate from visible size cues and typical products: mass of one unit or of the portion shown, \
-        serving size for food, packaging mass, screen diagonal, rated wattage (prefer wattage hints), volume.
+        serving size for food (a single drink, cup or snack pack is one serving), packaging mass, screen diagonal, \
+        rated wattage (prefer wattage hints), volume.
+        - packaging_mass_g is only what is thrown away after use. Typical masses: plastic straw 0.5-1 g (wide boba \
+        straw ~1.5 g); 16 oz clear cold cup 12-16 g, its flat lid 3-4 g or dome lid 5-7 g; paper hot cup 10-14 g plus \
+        a 3-4 g lid; 330 mL aluminium can 13-15 g; 500 mL PET bottle 10-20 g; 1.5 L juice bottle 45-60 g; \
+        single-serve chip bag 2-3 g, family-size bag 8-10 g; candy wrapper 1-3 g; clamshell 15-30 g; glass jar \
+        150-300 g.
         - cooked: true for a portion cooked from a dry grain, pasta or pulse (boiled rice, pasta, noodles, couscous, \
         porridge, cooked or canned beans, lentils and chickpeas), whose mass includes the water it absorbed; else null.
         - Set food_group or device_type using the reference keys so LiveGreen's factor tables apply. Choose the \

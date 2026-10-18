@@ -26,7 +26,10 @@ struct ScanPipelineTests {
             let result = try await pipeline(scene: scene).run(image: Data([1]), hints: .none, mode: .photo)
             #expect(!result.components.isEmpty)
             for component in result.components {
-                #expect(component.missingMetrics.isEmpty, "\(scene) \(component.name) missing \(component.missingMetrics)")
+                // Unpackaged food has nothing to recycle or leave behind.
+                let unpackaged = component.category == .food && !FoodServing.isPackaged(component)
+                let expectedMissing: Set<MetricKey> = unpackaged ? [.recyclablePercent, .decompositionTime] : []
+                #expect(Set(component.missingMetrics) == expectedMissing, "\(scene) \(component.name) missing \(component.missingMetrics)")
             }
             #expect(result.totals[.carbon] != nil)
         }

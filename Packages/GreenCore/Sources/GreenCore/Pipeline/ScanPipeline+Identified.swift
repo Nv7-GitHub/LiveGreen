@@ -2,11 +2,63 @@ import Foundation
 
 extension ScanPipeline {
     /// Post-processing of the identify output before the ladder runs: plugged-in appliances are scored as
-    /// electronics, model names the labels do not back up become model lines, unambiguous on-device hints become
-    /// identifiers (spec §5.2), and unidentified items get their generic kind.
+    /// electronics, model names the labels do not back up become model lines, containers reported twice are
+    /// counted once, unambiguous on-device hints become identifiers (spec §5.2), and unidentified items get their
+    /// generic kind.
     func prepared(_ components: [IdentifiedComponent], hints: OCRHints) -> [IdentifiedComponent] {
         let checked = components.map(reclassified).map { Self.demotingUnreadModel(from: $0, hints: hints) }
-        return Self.withGenericKeys(Self.applyingHints(hints, to: checked))
+        let packaging = Self.countingContainersOnce(checked, store: engine.store ?? .bundled)
+        return Self.withGenericKeys(Self.applyingHints(hints, to: packaging))
+    }
+
+    /// Reusable dishes are not packaging: a food served in one keeps no packaging mass.
+    static let reusableTableware: Set<String> = ["ceramic", "glass_tableware", "stainless_steel"]
+
+    /// A packaging component counts as the food's own packaging when this share of the smaller box overlaps.
+    static let containerOverlap = 0.5
+
+    /// A drink's cup is sometimes reported twice: in the drink's `packagingMassG` and as a packaging component of its
+    /// own. The food keeps it (so the cup follows the drink's servings a week) and the packaging component is dropped,
+    /// lending its materials to foods that did not name theirs. It is a duplicate only when its box mostly overlaps
+    /// those foods and its mass is no more than 1.5× theirs; a heavier one (a takeout box under a wrapped burger) is a
+    /// different container and stays. Packaging that is only reusable tableware (a ceramic bowl) is cleared first.
+    static func countingContainersOnce(_ components: [IdentifiedComponent], store: ReferenceStore) -> [IdentifiedComponent] {
+        var result = components
+        for index in result.indices where result[index].category == .food {
+            let materials = result[index].identifiers.packagingMaterials ?? []
+            let tableware = !materials.isEmpty && materials.allSatisfy { share in
+                store.materialFactor(material: share.material).map { reusableTableware.contains($0.endOfLife.material) } ?? false
+            }
+            if tableware {
+                result[index].quantities.packagingMassG = nil
+                result[index].identifiers.packagingMaterials = []
+            }
+        }
+        var duplicates = Set<Int>()
+        for index in result.indices where result[index].category == .packaging {
+            let box = result[index].boundingBox
+            let holders = result.indices.filter { food in
+                result[food].category == .food && (result[food].quantities.packagingMassG ?? 0) > 0
+                    && overlap(box, result[food].boundingBox) >= containerOverlap
+            }
+            let held = holders.reduce(0) { $0 + (result[$1].quantities.packagingMassG ?? 0) }
+            let ownG = result[index].quantities.packagingMassG ?? result[index].quantities.massKg.map { $0 * 1000 } ?? 0
+            guard !holders.isEmpty, ownG <= held * 1.5 else { continue }
+            for food in holders where result[food].identifiers.packagingMaterials?.isEmpty ?? true {
+                result[food].identifiers.packagingMaterials = result[index].identifiers.materials
+            }
+            duplicates.insert(index)
+        }
+        return result.indices.filter { !duplicates.contains($0) }.map { result[$0] }
+    }
+
+    /// Intersection over the smaller box, so a drink inside its cup's box overlaps fully.
+    static func overlap(_ a: NormalizedRect, _ b: NormalizedRect) -> Double {
+        let width = min(a.x + a.width, b.x + b.width) - max(a.x, b.x)
+        let height = min(a.y + a.height, b.y + b.height) - max(a.y, b.y)
+        let smaller = min(a.area, b.area)
+        guard width > 0, height > 0, smaller > 0 else { return 0 }
+        return width * height / smaller
     }
 
     /// A model the on-device text does not contain was most likely told from the item's look, such as a laptop line
@@ -49,6 +101,7 @@ extension ScanPipeline {
             result[index].category = result[lead].category
             result[index].quantities = result[lead].quantities
             result[index].identifiers.materials = result[lead].identifiers.materials
+            result[index].identifiers.packagingMaterials = result[lead].identifiers.packagingMaterials
             result[index].estimates = result[lead].estimates
         }
         return result
