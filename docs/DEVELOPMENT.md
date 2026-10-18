@@ -111,8 +111,10 @@ docs/                             this file, the spec, screenshots
 `ScanCoordinator` (app) → `ScanPipeline` (GreenCore), emitting `PipelineEvent`s the analyzing card shows:
 
 1. **Reading labels**: on-device Vision OCR and barcodes → `OCRHints` (GTINs, model-number tokens,
-   wattages, fiber %, resin codes). Images are normalized first (`CapturedImage`: orientation baked in,
-   long edge ≤ 1568 px, JPEG), so boxes map straight onto the displayed photo.
+   wattages, fiber %, resin codes). Images are normalized first (`CapturedImage` via `IdentifyImage`:
+   orientation baked in, long edge ≤ 2576 px and ≤ 3.7 MP, the Sonnet/Opus 5.5 vision limit, JPEG), so boxes
+   map straight onto the displayed photo and logos and key legends stay legible. The scan keeps a copy scaled
+   to 1568 px (`ScanPhoto.stored`) for History, the results screen and the Grok image edit.
 2. **Identifying**: the AI provider's `identify` returns components with category, normalized box,
    identifiers, quantities, default usage, deferrable load, one fallback carbon estimate and optional
    questions. The call streams, and `.identifyProgress` events carry item names as they appear.
@@ -125,8 +127,15 @@ docs/                             this file, the spec, screenshots
    household, packaging and personal-care items are cached by their generic kind (`Identifiers.genericKey`:
    the name without colour words, singular, so "Blue backpack" and "Beige backpack" are both `backpack`), and
    items of one kind in a scan share the best-informed one's guesses. A kind's cached T4 estimate is only used
-   when the new item cannot do better itself. Brand and model are set only when legible in the photo or the
-   OCR text, and a model name the labels do not back up is dropped (`droppingUnreadModel`).
+   when the new item cannot do better itself. Identify reports a brand from a legible logo or from
+   unmistakable design cues (a Mac keyboard's ⌘ keys, ROG styling, an iPhone camera layout), a `model_line`
+   ("MacBook Pro 14", "Zenbook 14"), the `appearance_cues` it used and a `confidence`. `model` stays a printed
+   model number: an unread one moves to the model line with its brand prefix stripped and confidence capped at
+   medium (low without cues), and an unread single code like "M2" stays a model only at high confidence when
+   the item's own label text contains it. A medium- or high-confidence line drives spec research and the ASUS
+   line records (T2 ranges); a missing confidence counts as low. Line results are cached under
+   `Component.resolutionKey` = `bl:<category>|<brand>|<line>|<size>` (screen inches or mass), never for food or
+   packaging, and not at all when the size is unknown, so a 43" and a 65" TV of one line never share numbers.
 4. **Computing**: `ImpactEngine` derives yearly electricity, use-phase carbon from the local grid, yearly
    totals, lifecycle stage splits, with a seeded 2,000-sample Monte Carlo for ranges.
 5. **Questions**: shown only if the AI asked and the metric's range is wide (high/low > 1.6) and it is a
@@ -137,6 +146,13 @@ docs/                             this file, the spec, screenshots
    estimates.
 7. **Swaps** are prefetched in the background as soon as a scan is saved (`SwapPrefetcher`), along with the
    greener image for scenes with more than two items, so the swaps screen opens instantly.
+8. **Feedback**: the results screen has an optional note field ("the TV was actually a monitor"). Notes are
+   stored in SwiftData (`StoredFeedback`, `FeedbackStore`) with the scan's id, item names and categories, and
+   managed in Settings → Scan feedback. Each identify call gets up to five relevant notes
+   (`ScanFeedback.relevant`: shared words with the OCR text or a hinted category first, then newest) as a
+   separate "Recent user corrections (hints only)" block, at most 600 characters, which tells the model to
+   apply a correction only when the photo agrees and never to relabel every similar item. Claude and Grok both
+   send it.
 
 ## 6. AI providers and models (measured)
 
@@ -276,18 +292,43 @@ Measured on the desk photo (Sonnet 5.5, Oct 2026):
 
 ## 10. Onboarding and the leaderboard
 
-- `UserProfile.commuteKmPerWeekByMode` stores a distance per mode (car + transit + bike…). The old
-  single-mode fields decode into it. `commuteMode` and `commuteKmPerWeek` remain as computed properties.
+- Onboarding asks: location (a MapKit map flies to the state, then the ZIP), household size, meat meals and
+  dairy meals a week (0–21 each), getting around (car, electric car, transit, e-bike with a weekly distance
+  each; none is a valid answer), home type, floor area and heating sources (multi-select), and new clothes a
+  year. Each step has drawn, animated art (plates that fill, a street scene, a house drawn to scale, a rail of
+  shirts) in `OnboardingArt` and `LifestyleStepViews`.
+- `UserProfile.commuteKmPerWeekByMode` stores a distance per mode. Walk, bike and work from home are gone;
+  old profiles drop those entries. `commuteMode` is optional (nil with no regular travel).
+- Food modifier (`reference.meals`): the plant-based share of food's footprint plus the rest scaled by meat
+  meals against 9 a week and dairy meals against 10, weighted 1.8 vs 0.45 kg CO2e a meal (Scarborough 2014).
+  Plant shares are carbon 0.51, land 0.24, water 0.81 (Poore & Nemecek 2018: an all-plant diet cuts food's
+  emissions 49%, land 76%, freshwater 19%). `diet` is derived from the two counts for prompt context.
+- Home: `floorAreaM2` (nil = typical for the home type) scales heating and cooling, 52% of home energy (EIA),
+  against RECS 2020 averages (detached 2,264 ft², townhouse 1,615, apartment 926; dorm 250 is assumed).
+  `heatingSources` is a set; several sources average their modifiers evenly, and an empty set is no heating.
+  The heating modifiers are electricity-based and are also applied to home-energy carbon, so a heat pump
+  still reads higher carbon than gas; that needs carbon-specific modifiers.
+- Clothing modifier: 0.15 + 0.85 × new items a year ÷ 64 (AAFA's US average); the 0.15 base covers shoes and
+  second-hand buys.
+- Old saved profiles decode: `diet`, `heating` and `clothingHabit` map to counts and sets with the same footprint.
 - `LifestyleEstimate` gives the live estimate in onboarding: food, home energy and clothing are per-capita
   carbon × category share × the cohort model's profile modifiers; travel is distance × per-mode factors
-  (kg CO2e/km: car 0.25, EV 0.08, transit 0.10, e-bike 0.005, bike/walk/remote 0); everything else is the
-  remaining share minus an average-travel share of 20%. Flights are not asked about.
+  (kg CO2e/km: car 0.25, EV 0.08, transit 0.10, e-bike 0.005); everything else is the remaining share minus an
+  average-travel share of 20%. Flights are not asked about.
 - Leaderboard tab (code still lives in `Features/Compare`): you plus nine friends (Saahil Shah, Yuti
   Purohit, Nishant Vikramaditya, Vishnu Mangipudi, Sebastian Bagley, Daniel Hoang, Albert Wu, Shuji Hokosawa,
   Louis Liu). Names are dealt in a seeded shuffle; friends are stratified draws from the region's whole-footprint
   distribution (`CohortModel.simulatedFriends`, `regionalDistribution`), and you are your onboarding estimate
   with each category raised to what you scanned in it if larger (`CohortModel.estimate(for:scanned:)`), so both
-  sides are whole yearly footprints. Only carbon and home electricity are ranked (`leaderboardMetrics`).
+  sides are whole yearly footprints. Carbon, home electricity, water and land are ranked
+  (`leaderboardMetrics`). Water, land and electricity count only the consumption categories' shares of the
+  per-capita figure (national withdrawals, farmland and demand also cover industry); land's baseline is one
+  world average, so its peers are labelled "worldwide". Each metric's board is built once in the background,
+  so switching chips is a lookup. There is no percentile-over-time card and no "simulated" wording in the UI.
+- History: delete a scan by swiping, long-pressing, or the "…" menu on the opened scan (with confirmation).
+  `AppModel` remembers deleted ids for the session so an open result screen can't save the scan back or start
+  a swaps fetch. Cached product metrics are kept; they are keyed by product, not by scan. Feedback notes on a
+  deleted scan stay until removed in Settings.
 
 ## 11. Results screen design
 
