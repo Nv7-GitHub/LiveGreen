@@ -1,7 +1,8 @@
 import SwiftUI
 import GreenCore
 
-/// Measured savings so far (aenergy × hourly intensity) and the yearly estimate for the plan.
+/// Measured savings so far (aenergy × hourly intensity) and the yearly estimate for the plan, with an everyday
+/// comparison for the yearly estimate (the savings so far before there is one).
 struct PlugSavingsCard: View {
     let plug: PairedPlug
     let outlook: GridOutlook?
@@ -32,6 +33,8 @@ struct PlugSavingsCard: View {
                 LabeledContent("This plan, per year", value: "~\(DisplayUnits.carbon(kg: yearlyEstimateKg))")
                     .font(.subheadline)
             }
+            EquivalenceCallout(metric: .carbon, amount: yearlyEstimateKg ?? plug.savings.savedKgCO2e,
+                               context: "plug-\(plug.id.uuidString)", framing: .saving)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassCard(tint: Theme.leaf.opacity(0.12))

@@ -1,7 +1,7 @@
 import SwiftUI
 import GreenCore
 
-/// "You're greener than X% of people like you" for the selected metric.
+/// "You're greener than X% of people like you" for the selected metric, with an everyday comparison for your year.
 struct PercentileHeroCard: View {
     let metric: MetricKey
     let greenerThan: Double
@@ -32,6 +32,7 @@ struct PercentileHeroCard: View {
                     stat("Peer median", value: peerMedian)
                 }
                 .padding(.top, 2)
+                EquivalenceCallout(metric: metric, amount: userValue, context: "leaderboard|\(metric.rawValue)")
             }
         }
         .accessibilityElement(children: .combine)

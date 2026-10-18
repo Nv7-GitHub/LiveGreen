@@ -2,10 +2,13 @@ import SwiftUI
 import GreenCore
 
 /// Sums the savings of every chosen swap (spec §7): carbon and electricity per year, and water or plastic
-/// per year only for things bought again and again; for durable items those are saved once, when made.
+/// per year only for things bought again and again; for durable items those are saved once, when made. One yearly
+/// saving also gets an everyday comparison ("That saves as much as 54 showers!"), its metric varying by scan and day.
 struct ProjectedSavingsCard: View {
     let savings: [MetricKey: SwapMath.SavingSplit]
     let swapCount: Int
+    /// What the savings belong to (the scan), seeding which comparison shows.
+    var context = "swaps"
 
     var body: some View {
         GlassCard(tint: Theme.leaf.opacity(0.18)) {
@@ -18,6 +21,10 @@ struct ProjectedSavingsCard: View {
                 } else {
                     ForEach(SwapMath.savingsMetrics.filter { shows(savings[$0]) }, id: \.self) { metric in
                         if let split = savings[metric] { row(metric, split) }
+                    }
+                    if let highlight {
+                        EquivalenceCallout(metric: highlight.metric, amount: highlight.amount,
+                                           context: "\(context)|\(highlight.metric.rawValue)", framing: .saving)
                     }
                     Text("From \(swapCount) swap\(swapCount == 1 ? "" : "s"), using your usage answers. \"Once\" is the saving from making the item; ranges carry each value's uncertainty.")
                         .font(.caption2).foregroundStyle(.secondary)
@@ -49,6 +56,20 @@ struct ProjectedSavingsCard: View {
             Text("\(Self.signed(-saving.high, scale)) to \(Self.signed(-saving.low, scale))")
                 .font(.caption2.monospacedDigit()).foregroundStyle(.secondary)
         }
+    }
+
+    /// One yearly saving with an everyday comparison, its metric picked by `context` and day among those that have
+    /// one, so the card does not always talk carbon.
+    private var highlight: (metric: MetricKey, amount: Double)? {
+        let imperial = DisplayUnits.system == .imperial
+        let eligible: [(metric: MetricKey, amount: Double)] = SwapMath.savingsMetrics.compactMap { metric in
+            guard let yearly = savings[metric]?.yearly, Self.isChange(yearly), yearly.value > 0,
+                  !Equivalences.candidates(for: metric, amount: yearly.value, imperial: imperial).isEmpty
+            else { return nil }
+            return (metric, yearly.value)
+        }
+        guard !eligible.isEmpty else { return nil }
+        return eligible[Int(Equivalences.seed("\(context)|metric") % UInt64(eligible.count))]
     }
 
     /// A total that nets out to nothing gets no line; a net loss still does.

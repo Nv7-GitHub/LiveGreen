@@ -30,6 +30,13 @@ nonisolated struct PairedPlug: Codable, Identifiable, Hashable, Sendable {
     /// Keychain account holding the device password, if any.
     var passwordAccount: String { "shelly-\(id.uuidString)" }
 
+    /// kg CO2e a year the current schedule avoids for the assigned load; nil without a schedule, a load or a plan
+    /// that kept its baseline (plans re-saved on the next refresh do).
+    var yearlySavingsKg: Double? {
+        guard let schedule, let dailyKWh = candidate?.dailyKWh, dailyKWh > 0 else { return nil }
+        return schedule.yearlySavingsKg(dailyKWh: dailyKWh)
+    }
+
     var hostDescription: String {
         switch kind {
         case .shelly(let endpoint): endpoint.port == 80 ? endpoint.host : "\(endpoint.host):\(endpoint.port)"

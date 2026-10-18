@@ -106,7 +106,8 @@ public struct CohortModel: Sendable {
     /// Your yearly footprint on the same basis as `regionalDistribution`. Each category counts the larger of
     /// two amounts: your profile's typical amount (per-capita × share × modifiers) or what you've scanned in
     /// it. Carbon adds your commute and the rest of the footprint (services, other goods), so with nothing
-    /// scanned it equals `LifestyleEstimate.totalKg`.
+    /// scanned it equals `LifestyleEstimate.totalKg`, and takes off what smart-plug scheduling avoids
+    /// (`ScannedFootprint.scheduledSavingsKg`).
     public func estimate(for metric: MetricKey, scanned: ScannedFootprint = .empty) -> Double? {
         guard Self.leaderboardMetrics.contains(metric), let total = baseline.medians[metric] else { return nil }
         let heating = heatingCarbonModifier
@@ -120,6 +121,7 @@ public struct CohortModel: Sendable {
             let shares = Category.allCases.reduce(0) { $0 + reference.share(of: $1, for: .carbon) }
             value += profile.commuteKmPerWeekByMode.reduce(0) { $0 + (LifestyleEstimate.kgPerKm[$1.key] ?? 0) * $1.value * 52 }
             value += max(0, total * (1 - shares - LifestyleEstimate.averageTravelShare))
+            value = max(value - scanned.scheduledSavingsKg, 0)
         }
         return value
     }

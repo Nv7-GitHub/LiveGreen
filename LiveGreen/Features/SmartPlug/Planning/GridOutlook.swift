@@ -22,9 +22,9 @@ nonisolated struct GridOutlook: Hashable, Sendable {
     /// Cleanest-hours plan for `requiredHours` of charging before `deadlineHour`, as a daily plug schedule.
     func schedule(requiredHours: Double, deadlineHour: Int, now: Date = Date(),
                   calendar: Calendar = .current) -> PlugSchedule {
-        GreenHoursPlanner.plan(forecast: forecast, requiredHours: requiredHours, now: now,
-                               deadlineHour: deadlineHour, calendar: calendar)
-            .flexible.schedule(timeZone: calendar.timeZone, createdAt: now)
+        let plan = GreenHoursPlanner.plan(forecast: forecast, requiredHours: requiredHours, now: now,
+                                          deadlineHour: deadlineHour, calendar: calendar)
+        return plan.flexible.schedule(timeZone: calendar.timeZone, createdAt: now, baselineIntensity: plan.dayAverage)
     }
 
     /// Yearly kg CO2e saved by running `dailyKWh` in the schedule's hours instead of at the day's average.
