@@ -260,23 +260,45 @@ struct ClaudeIdentifyTests {
         #expect(laptop.modelLine == "MacBook Pro 14-inch (M-series)", "the repeated brand is dropped from the line")
         #expect(laptop.confidence == .medium)
         #expect(laptop.appearanceCues == "⌘ command keys, notch, black keyboard well")
-        #expect(laptop.lineKey == "bl:apple|macbook pro 14-inch (m-series)")
-        #expect(laptop.resolutionKey == laptop.lineKey)
+        let size = Quantities(screenSizeInches: 14.2)
+        #expect(laptop.lineKey(category: .electronic, quantities: size) == "bl:electronic|apple|macbook pro 14-inch (m-series)|14in")
+        #expect(laptop.resolutionKey(category: .electronic, quantities: size) == laptop.lineKey(category: .electronic, quantities: size))
 
         let mug = response.components[1].identifiers
         #expect(mug.modelLine == nil && mug.confidence == nil, "unknown confidence values are ignored")
-        #expect(mug.lineKey == nil)
+        #expect(mug.lineKey(category: .household, quantities: Quantities(massKg: 0.3)) == nil)
+    }
+
+    @Test func aLineThatOnlyRepeatsTheBrandIsDropped() throws {
+        let input: JSONValue = ["components": [[
+            "name": "Coca-Cola can", "category": "food", "bounding_box": ["x": 0, "y": 0, "width": 0.1, "height": 0.1],
+            "identifiers": ["brand": "Coca-Cola", "model": .null, "model_line": "coca-cola", "confidence": "high",
+                            "gtin": .null, "materials": []],
+        ]]]
+        let ids = try ReportComponentsTool.parse(input).components[0].identifiers
+        #expect(ids.brand == "Coca-Cola")
+        #expect(ids.modelLine == nil)
+        #expect(Identifiers.modelLine("Dell XPS 13", brand: "Dell") == "XPS 13")
+        #expect(Identifiers.modelLine("Dellwood desk", brand: "Dell") == "Dellwood desk")
     }
 
     @Test func lowConfidenceLinesAreNotLookedUpOrCached() {
+        let size = Quantities(screenSizeInches: 13.6)
         var ids = Identifiers(brand: "Apple", modelLine: "MacBook Air", confidence: .low)
         #expect(ids.confidentModelLine == nil)
-        #expect(ids.lineKey == nil)
+        #expect(ids.lineKey(category: .electronic, quantities: size) == nil)
+        // Grok can return a null confidence, and Claude's tool input is not strictly validated: no stated
+        // confidence is not a confident line.
+        ids.confidence = nil
+        #expect(ids.confidentModelLine == nil)
+        #expect(ids.lineKey(category: .electronic, quantities: size) == nil)
+        ids.confidence = .medium
+        #expect(ids.confidentModelLine == "MacBook Air")
         ids.confidence = .high
-        #expect(ids.lineKey == "bl:apple|macbook air")
+        #expect(ids.lineKey(category: .electronic, quantities: size) == "bl:electronic|apple|macbook air|14in")
         ids.model = "A2681"
-        #expect(ids.lineKey == nil, "a model number keys the cache instead")
-        #expect(ids.resolutionKey == "bm:apple|a2681")
+        #expect(ids.lineKey(category: .electronic, quantities: size) == nil, "a model number keys the cache instead")
+        #expect(ids.resolutionKey(category: .electronic, quantities: size) == "bm:apple|a2681")
     }
 
     @Test func hintTextSkipsKeyLegendsAndRepeats() {

@@ -46,8 +46,10 @@ struct ModelLineTests {
         #expect(researcher.asked.values.first?.modelLine == "MacBook Pro 14-inch (M-series)")
         #expect(researcher.asked.values.first?.model == nil)
 
-        // A low-confidence guess, a line without a brand, or a brand alone is not researched.
+        // A low-confidence guess, a line without a stated confidence (Grok can return null, Claude's tool input is
+        // not strictly validated), a line without a brand, or a brand alone is not researched.
         _ = try await resolve(Identifiers(brand: "Apple", modelLine: "MacBook Air", confidence: .low))
+        _ = try await resolve(Identifiers(brand: "Apple", modelLine: "MacBook Air", confidence: nil))
         _ = try await resolve(Identifiers(modelLine: "MacBook Air", confidence: .high))
         _ = try await resolve(Identifiers(brand: "Apple", confidence: .high))
         #expect(researcher.asked.values.count == 1)
@@ -92,9 +94,10 @@ struct ModelLineTests {
         let exact = try await resolve(Identifiers(brand: "ASUS", model: "UX3405MA", modelLine: "Zenbook 14 OLED", confidence: .high))
         #expect(exact.metrics[.carbon]?.value == 210 && exact.metrics[.carbon]?.tier == .exactRecord)
 
-        // Too vague, a low-confidence guess, or another maker: nothing.
+        // Too vague, a low-confidence guess, no stated confidence, or another maker: nothing.
         #expect(try await resolve(Identifiers(brand: "ASUS", modelLine: "Zenbook", confidence: .high)).metrics.isEmpty)
         #expect(try await resolve(Identifiers(brand: "ASUS", modelLine: "Zenbook 14 OLED", confidence: .low)).metrics.isEmpty)
+        #expect(try await resolve(Identifiers(brand: "ASUS", modelLine: "Zenbook 14 OLED", confidence: nil)).metrics.isEmpty)
         #expect(try await resolve(Identifiers(brand: "Dell", modelLine: "Zenbook 14 OLED", confidence: .high)).metrics.isEmpty)
     }
 
@@ -116,9 +119,11 @@ struct ModelLineTests {
         let researcher = RecordingResearcher(values: [Self.reportCarbon])
         let cache = InMemoryResolutionCache()
         let laptopQuantities = Quantities(massKg: 1.6, screenSizeInches: 14, deviceType: "laptop")
-        // Claude put the line in `model`; nothing printed backs it, so it becomes the model line.
+        // Claude put the line in `model`; nothing printed backs it, so it becomes the model line (without the
+        // repeated brand), still researched because identify noted the design cues it was told from.
         let mac = IdentifiedComponent(name: "Apple MacBook Pro 14-inch", category: .electronic, boundingBox: .full,
-                                      identifiers: Identifiers(brand: "Apple", model: "MacBook Pro 14", confidence: .medium),
+                                      identifiers: Identifiers(brand: "Apple", model: "Apple MacBook Pro 14", confidence: .high,
+                                                               appearanceCues: "⌘ keys, notch, HDMI port"),
                                       quantities: laptopQuantities, estimates: [.carbon: EstimateRange(value: 300, low: 150, high: 600)])
         let zenbook = IdentifiedComponent(name: "ASUS Zenbook 14 OLED", category: .electronic, boundingBox: .full,
                                           identifiers: Identifiers(brand: "ASUS", modelLine: "Zenbook 14 OLED", confidence: .high),
@@ -135,6 +140,7 @@ struct ModelLineTests {
         let asked = researcher.asked.values.first { $0.brand == "Apple" }
         #expect(asked?.model == nil)
         #expect(asked?.modelLine == "MacBook Pro 14")
+        #expect(asked?.confidence == .medium, "a model nothing backs up leaves the line at most medium")
         // The researched embodied carbon is used (its tier joins the factor-model electricity it is combined with).
         #expect(result.components[0].metrics[.carbon]?.sources.contains { $0.title == "Laptop environmental report" } == true)
         // The Zenbook's carbon comes from its line's PCF reports, with the use phase added for the local grid.
@@ -150,5 +156,61 @@ struct ModelLineTests {
         let again = try await pipeline.run(image: Data([1]), hints: .none, mode: .photo)
         #expect(researcher.asked.values.count == calls)
         #expect(again.components.map { $0.metrics[.carbon] } == result.components.map { $0.metrics[.carbon] })
+    }
+
+    @Test func lineKeysHoldTheCategoryAndSize() {
+        let tv = Identifiers(brand: "Samsung", modelLine: "Crystal UHD", confidence: .medium)
+        #expect(tv.lineKey(category: .electronic, quantities: Quantities(screenSizeInches: 43)) == "bl:electronic|samsung|crystal uhd|43in")
+        #expect(tv.lineKey(category: .electronic, quantities: Quantities(screenSizeInches: 64.5, deviceType: "tv"))
+            == "bl:electronic|samsung|crystal uhd|65in")
+        #expect(tv.lineKey(category: .electronic, quantities: Quantities(deviceType: "tv")) == nil, "no size, no key")
+        // Without a screen, the mass stands for the size.
+        let kettle = Identifiers(brand: "Smeg", modelLine: "50's Style kettle", confidence: .high)
+        #expect(kettle.lineKey(category: .electronic, quantities: Quantities(massKg: 1.234)) == "bl:electronic|smeg|50's style kettle|1.2kg")
+        #expect(kettle.lineKey(category: .household, quantities: Quantities(massKg: 1.234)) == "bl:household|smeg|50's style kettle|1.2kg")
+        #expect(kettle.lineKey(category: .electronic, quantities: Quantities(massKg: 1.234))
+            != kettle.lineKey(category: .electronic, quantities: Quantities(massKg: 1.6)))
+        // A drink line comes in cans and 2 L bottles, and a pack line in many sizes: never keyed by line.
+        let coke = Identifiers(brand: "Coca-Cola", modelLine: "Original Taste", confidence: .high)
+        #expect(coke.lineKey(category: .food, quantities: Quantities(massKg: 0.33, servingKg: 0.33)) == nil)
+        #expect(coke.lineKey(category: .packaging, quantities: Quantities(massKg: 0.015)) == nil)
+        #expect(Component(name: "Coca-Cola 2 L bottle", category: .food, identifiers: coke,
+                          quantities: Quantities(massKg: 2)).resolutionKey == nil)
+    }
+
+    @Test func oneLineInTwoSizesKeepsTwoSetsOfNumbers() async throws {
+        let store = ReferenceStore.bundled
+        let researcher = RecordingResearcher()
+        let cache = InMemoryResolutionCache()
+        func tv(inches: Double?) -> IdentifiedComponent {
+            IdentifiedComponent(name: "Samsung Crystal UHD TV", category: .electronic, boundingBox: .full,
+                                identifiers: Identifiers(brand: "Samsung", modelLine: "Crystal UHD", confidence: .medium,
+                                                         appearanceCues: "Samsung logo on the bezel"),
+                                quantities: Quantities(screenSizeInches: inches, deviceType: "tv"),
+                                estimates: [.carbon: EstimateRange(value: 500, low: 300, high: 900)])
+        }
+        func scan(_ item: IdentifiedComponent) async throws -> Component {
+            let resolvers: [any MetricResolver] = [
+                SpecResearchResolver(researcher: researcher), FactorModelResolver(store: store), EstimateResolver(),
+            ]
+            let pipeline = ScanPipeline(vision: FixedVision(components: [item]), alternatives: FakeAlternativeSuggester(),
+                                        products: FakeProductDatabase(), ladder: EvidenceLadder(resolvers: resolvers, cache: cache),
+                                        engine: ImpactEngine(reference: store), profile: .default)
+            return try await pipeline.run(image: Data([1]), hints: .none, mode: .photo).components[0]
+        }
+        let small = try await scan(tv(inches: 43))
+        let large = try await scan(tv(inches: 65))
+        #expect(researcher.asked.values.count == 2, "the 65-inch set is looked up, not served the 43-inch set's entry")
+        let smallCarbon = try #require(small.metrics[.carbon]), largeCarbon = try #require(large.metrics[.carbon])
+        #expect(largeCarbon.value > smallCarbon.value * 1.5)
+        // The same product again still reuses its entry.
+        let again = try await scan(tv(inches: 43))
+        #expect(researcher.asked.values.count == 2)
+        #expect(again.metrics[.carbon] == smallCarbon)
+        // Without a size nothing says which set it is: it is resolved afresh and not cached.
+        let entries = await cache.count
+        _ = try await scan(tv(inches: nil))
+        #expect(researcher.asked.values.count == 3)
+        #expect(await cache.count == entries)
     }
 }

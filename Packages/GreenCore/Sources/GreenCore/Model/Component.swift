@@ -53,10 +53,15 @@ public struct Component: Codable, Sendable, Hashable, Identifiable {
 }
 
 extension Component {
-    /// Monte Carlo seed for this component's derived values: its identifier key when it has one, so a
-    /// rescan of the same GTIN, brand|model or kind of generic item gives identical ranges, else its id.
+    /// Key for the resolution cache and Monte Carlo seeds (`Identifiers.resolutionKey(category:quantities:)`).
+    public var resolutionKey: String? {
+        identifiers.resolutionKey(category: category, quantities: quantities)
+    }
+
+    /// Monte Carlo seed for this component's derived values: its identifier key when it has one, so a rescan of
+    /// the same GTIN, brand|model, sized model line or kind of generic item gives identical ranges, else its id.
     public var stableSeed: UInt64 {
-        identifiers.resolutionKey.map(StableHash.fnv1a) ?? StableHash.seed(id)
+        resolutionKey.map(StableHash.fnv1a) ?? StableHash.seed(id)
     }
 }
 

@@ -9,19 +9,27 @@ extension ScanPipeline {
         return Self.withGenericKeys(Self.applyingHints(hints, to: checked))
     }
 
-    /// A model the on-device text does not contain and that is not a printed-looking code (one word with a
-    /// digit) is a product line recognized from the item's look, such as a laptop line told from its keyboard.
-    /// Looked up as a model number it would match the wrong record, so it moves to the model line (unless one is
-    /// set), which spec research treats as a line; the brand is kept.
+    /// A model the on-device text does not contain was most likely told from the item's look, such as a laptop line
+    /// from its keyboard. Looked up as a model number it would match the wrong record and share a cache entry with
+    /// other products, so it stays a model only when it looks printed (one word with a digit), identify was highly
+    /// confident and its own transcription of the item's text has it. Otherwise it moves to the model line (unless
+    /// one is set), without the brand as identify's own lines are, and at most medium confidence: low unless identify
+    /// noted the cues it saw. The brand is kept.
     static func demotingUnreadModel(from component: IdentifiedComponent, hints: OCRHints) -> IdentifiedComponent {
-        guard let model = component.identifiers.model?.trimmedNonEmpty else { return component }
+        let ids = component.identifiers
+        guard let model = ids.model?.trimmedNonEmpty else { return component }
         let key = ReferenceKey.modelKey(model)
-        let read = !key.isEmpty && (hints.modelNumbers + hints.textLines).contains { ReferenceKey.modelKey($0).contains(key) }
+        func contains(_ text: String) -> Bool { !key.isEmpty && ReferenceKey.modelKey(text).contains(key) }
+        if (hints.modelNumbers + hints.textLines).contains(where: contains) { return component }
         let codeLike = !model.contains(where: \.isWhitespace) && model.contains(where: \.isNumber)
-        guard !read, !codeLike else { return component }
+        if codeLike, ids.confidence == .high, ids.ocrText.map(contains) == true { return component }
         var copy = component
         copy.identifiers.model = nil
-        if copy.identifiers.modelLine?.trimmedNonEmpty == nil { copy.identifiers.modelLine = model }
+        if ids.modelLine?.trimmedNonEmpty == nil, let line = Identifiers.modelLine(model, brand: ids.brand) {
+            copy.identifiers.modelLine = line
+            copy.identifiers.confidence = ids.appearanceCues?.trimmedNonEmpty == nil ? .low
+                : ids.confidence.map { $0 == .high ? .medium : $0 }
+        }
         return copy
     }
 

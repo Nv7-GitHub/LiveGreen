@@ -55,6 +55,20 @@ struct LadderCacheTests {
         #expect(second.metrics == first.metrics)
     }
 
+    @Test func oneDrinkLineInACanAndABottleDoesNotShareAnEntry() async {
+        let cache = InMemoryResolutionCache()
+        let ladder = EvidenceLadder(resolvers: [EstimateResolver()], cache: cache)
+        let line = Identifiers(brand: "Coca-Cola", modelLine: "Original Taste", confidence: .high)
+        let can = Component(name: "Coca-Cola can", category: .food, identifiers: line, quantities: Quantities(massKg: 0.33),
+                            fallbackEstimates: [.carbon: EstimateRange(value: 0.2, low: 0.15, high: 0.3)])
+        let bottle = Component(name: "Coca-Cola 2 L bottle", category: .food, identifiers: line, quantities: Quantities(massKg: 2),
+                               fallbackEstimates: [.carbon: EstimateRange(value: 1.1, low: 0.8, high: 1.5)])
+        let first = await ladder.resolve(can, profile: .default)
+        let second = await ladder.resolve(bottle, profile: .default)
+        #expect(await cache.count == 0)
+        #expect(second.metrics[.carbon]?.value != first.metrics[.carbon]?.value)
+    }
+
     @Test func tierFilterRunsOnlyThatPhase() async {
         let ladder = EvidenceLadder(resolvers: [
             FakeMetricResolver(tier: .exactRecord, values: [.powerOn: 18]),
