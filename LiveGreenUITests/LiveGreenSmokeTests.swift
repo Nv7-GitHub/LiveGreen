@@ -82,6 +82,9 @@ final class LiveGreenSmokeTests: XCTestCase {
         XCTAssertTrue(generate.isEnabled, "Demo scans carry a photo, so the greener image can be generated")
 
         app.tabBars.buttons["Leaderboard"].tap()
+        // The board opens on the overall GreenScore; the "people like you" line is on a single metric.
+        XCTAssertTrue(app.descendants(matching: .any)["overallScore"].waitForExistence(timeout: 15))
+        app.buttons["leaderboard.metric.carbon"].tap()
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] %@", "people like you"))
             .firstMatch.waitForExistence(timeout: 15))
     }
