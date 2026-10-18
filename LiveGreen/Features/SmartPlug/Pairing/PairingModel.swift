@@ -44,16 +44,6 @@ final class PairingModel {
         }
     }
 
-    /// Step 6: the simulated plug for demos.
-    func chooseMock() async {
-        await run {
-            device = try await connector.mock.deviceInfo()
-            kind = .mock
-            password = ""
-            path.append(.name)
-        }
-    }
-
     private func run(_ work: () async throws -> Void) async {
         isVerifying = true
         errorMessage = nil

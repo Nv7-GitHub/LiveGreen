@@ -45,7 +45,7 @@ xcodebuild -project LiveGreen.xcodeproj -scheme LiveGreen \
   -derivedDataPath .build/DerivedData test
 ```
 
-`LiveGreenTourTests` walks onboarding → demo scan → questions → component flow and inspector → greener swaps and image → Compare → mock plug pairing and schedule → History → Settings, attaching a screenshot at each stop. Export them with `xcrun xcresulttool export attachments --path <result bundle> --output-path <dir>`. Screenshots from a run are in [`docs/screenshots/`](docs/screenshots/).
+`LiveGreenTourTests` walks onboarding → demo scan → questions → component flow and inspector → greener swaps and image → Compare → plug pairing → History → Settings, attaching a screenshot at each stop. Export them with `xcrun xcresulttool export attachments --path <result bundle> --output-path <dir>`. Screenshots from a run are in [`docs/screenshots/`](docs/screenshots/).
 
 ## Architecture
 
@@ -86,7 +86,6 @@ The flags are set in Settings and persisted in UserDefaults. Launch arguments ov
 | Smart plug features (Plugs tab, cards) | on | `-PlugFeatures NO` |
 | AI provider for identify, alternatives and research (`grok` = grok-4.3, `claude`) | grok | `-AIProvider claude` |
 | Claude model (`opus` = claude-opus-5-5, `sonnet` = claude-sonnet-5-5), Claude provider only | opus | `-ModelChoice sonnet` |
-| Mock plug | off | `-MockPlug YES` |
 
 Launch-only arguments: `-SkipOnboarding YES` and `-InMemoryStore YES` (a throwaway SwiftData store, used by UI tests).
 

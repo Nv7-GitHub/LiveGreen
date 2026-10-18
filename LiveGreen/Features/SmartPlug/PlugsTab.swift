@@ -54,15 +54,12 @@ struct PlugsTab: View {
             }
             .navigationTitle("Plugs")
             .navigationDestination(for: UUID.self) { id in
-                PlugDashboard(plugID: id) { replacement in path = [replacement] }
+                PlugDashboard(plugID: id)
             }
             .settingsToolbarButton()
             .sheet(isPresented: $showsPairing) {
                 PairingFlow { plug in path = [plug.id] }
             }
-        }
-        .task(id: model.flags.useMockPlug) {
-            await center.ensureMockPlug(enabled: model.flags.useMockPlug)
         }
     }
 
@@ -94,7 +91,7 @@ private struct PlugRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: plug.isMock ? "cpu" : "powerplug.fill")
+            Image(systemName: "powerplug.fill")
                 .font(.title2)
                 .foregroundStyle(plug.offlineSince == nil ? Theme.leaf : Theme.warning)
                 .frame(width: 36)

@@ -21,7 +21,8 @@ final class PlugCenter {
         self.defaults = defaults
         self.calendar = calendar
         plugs = defaults.data(forKey: Self.defaultsKey)
-            .flatMap { try? JSONDecoder().decode([PairedPlug].self, from: $0) } ?? []
+            .flatMap { try? JSONDecoder().decode([StoredPlug].self, from: $0) }?
+            .compactMap(\.plug) ?? []
     }
 
     func plug(id: UUID) -> PairedPlug? { plugs.first { $0.id == id } }
@@ -47,13 +48,6 @@ final class PlugCenter {
         Keychain.delete(account: plug.passwordAccount, service: Self.keychainService)
         plugs.removeAll { $0.id == id }
         persist()
-    }
-
-    /// Pairs the simulated plug when the Settings "Mock plug" toggle is on and none exists yet.
-    func ensureMockPlug(enabled: Bool) async {
-        guard enabled, !plugs.contains(where: \.isMock),
-              let info = try? await connector.mock.deviceInfo() else { return }
-        add(PairedPlug(name: info.name ?? "Mock plug", kind: .mock, device: info), password: nil)
     }
 
     func controller(for plug: PairedPlug) -> any PlugController {
@@ -124,6 +118,16 @@ final class PlugCenter {
 
     private func persist() {
         if let data = try? JSONEncoder().encode(plugs) { defaults.set(data, forKey: Self.defaultsKey) }
+    }
+}
+
+/// One saved plug, or nil when it no longer decodes (such as a plug of a kind since removed), so one stale
+/// entry doesn't drop every paired plug.
+private struct StoredPlug: Decodable {
+    let plug: PairedPlug?
+
+    init(from decoder: any Decoder) throws {
+        plug = try? PairedPlug(from: decoder)
     }
 }
 
