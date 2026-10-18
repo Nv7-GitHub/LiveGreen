@@ -53,18 +53,24 @@ extension ImpactEngine {
         }
     }
 
-    /// Uncertainty-aware yearly totals across components (spec §5.6), one joint Monte Carlo per metric.
+    /// Uncertainty-aware yearly totals across components (spec §5.6), one joint Monte Carlo per metric. When only
+    /// one component has the metric, its total is that component's own yearly figure (`yearly(_:of:)`, on its own
+    /// seed), so the summary and the item's inspector never show two ranges for one item.
     public func yearlyTotals(_ components: [Component], seed: UInt64) -> [MetricKey: Measured] {
         Self.annualMetrics.reduce(into: [:]) { result, metric in
-            result[metric] = yearlyTotal(metric, of: components, seed: seed)
+            let contributing = components.filter { $0.metrics[metric] != nil }
+            result[metric] = contributing.count == 1 ? yearly(metric, of: contributing[0])
+                                                     : yearlyTotal(metric, of: contributing, seed: seed)
         }
     }
 
-    /// Uncertainty-aware per-unit totals (what is in the photo), one Monte Carlo per metric.
+    /// Uncertainty-aware per-unit totals (what is in the photo), one Monte Carlo per metric. A single value is its
+    /// own total: resampling it would only add noise to its range.
     public func itemTotals(_ components: [Component], seed: UInt64) -> [MetricKey: Measured] {
         let mc = MonteCarlo(seed: seed)
         return Self.annualMetrics.reduce(into: [:]) { result, metric in
-            result[metric] = mc.sum(components.compactMap { $0.metrics[metric] }, salt: "items.\(metric.rawValue)")
+            let values = components.compactMap { $0.metrics[metric] }
+            result[metric] = values.count == 1 ? values[0] : mc.sum(values, salt: "items.\(metric.rawValue)")
         }
     }
 
@@ -95,7 +101,9 @@ extension ImpactEngine {
                 terms.append((valueIndex, inputs.count - 1, 1))
             }
         }
-        guard !terms.isEmpty else { return nil }
+        guard let first = terms.first else { return nil }
+        // One value times a count is exact; sampling it would only blur its own range.
+        if terms.count == 1, first.divisorIndex == nil { return inputs[first.valueIndex].scaled(by: first.multiplier) }
         return MonteCarlo(seed: seed).propagate(inputs, unit: metric.unit, salt: "yearly.\(metric.rawValue)") { draws in
             terms.reduce(0) { total, term in
                 let value = draws[term.valueIndex] * term.multiplier

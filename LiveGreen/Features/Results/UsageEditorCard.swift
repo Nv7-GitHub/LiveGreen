@@ -42,7 +42,7 @@ struct UsageEditorCard: View {
             HStack {
                 Text(Self.title(field)).font(.subheadline)
                 Spacer()
-                Text(field.customLabel(value))
+                Text(field.rateLabel(value))
                     .font(.subheadline.weight(.semibold).monospacedDigit())
                     .contentTransition(.numericText())
             }
@@ -52,7 +52,7 @@ struct UsageEditorCard: View {
             }
             .tint(Theme.leaf)
             .accessibilityLabel(Self.title(field))
-            .accessibilityValue(field.customLabel(value))
+            .accessibilityValue(field.rateLabel(value))
         }
     }
 
@@ -63,6 +63,7 @@ struct UsageEditorCard: View {
         return "\(basis). A year is \(unit) a week × 52."
     }
 
+    /// Verb titles for counts read with `rateLabel`: "Used once a week", not "Used 1 uses a week".
     static func title(_ field: UsageField) -> String {
         switch field {
         case .hoursOnPerDay: "In use"

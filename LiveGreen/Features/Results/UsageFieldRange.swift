@@ -23,19 +23,36 @@ extension UsageField {
     }
 
     func customLabel(_ value: Double) -> String {
-        let number = if value.rounded() == value {
-            String(Int(value))
-        } else if self == .packsPerWeek {
-            value.formatted(.number.precision(.fractionLength(0...2)))
-        } else {
-            String(format: "%.1f", value)
-        }
+        let number = Self.number(value, field: self)
+        let one = value == 1
         switch self {
         case .hoursOnPerDay, .standbyHoursPerDay: return "\(number) h a day"
         case .servingsPerWeek, .packsPerWeek: return "\(number) a week"
-        case .chargesPerWeek: return "\(number) charges a week"
-        case .wearsPerYear: return "\(number) wears a year"
-        case .usesPerWeek: return "\(number) uses a week"
+        case .chargesPerWeek: return "\(number) \(one ? "charge" : "charges") a week"
+        case .wearsPerYear: return "\(number) \(one ? "wear" : "wears") a year"
+        case .usesPerWeek: return "\(number) \(one ? "use" : "uses") a week"
         }
+    }
+
+    /// The label beside a verb title ("Used", "Charged", "Worn"): "once a week", "3 times a year". Other fields read
+    /// as `customLabel`.
+    func rateLabel(_ value: Double) -> String {
+        let period: String
+        switch self {
+        case .usesPerWeek, .chargesPerWeek: period = "a week"
+        case .wearsPerYear: period = "a year"
+        default: return customLabel(value)
+        }
+        switch value {
+        case 1: return "once \(period)"
+        case 2: return "twice \(period)"
+        default: return "\(Self.number(value, field: self)) times \(period)"
+        }
+    }
+
+    private static func number(_ value: Double, field: UsageField) -> String {
+        if value.rounded() == value { return String(Int(value)) }
+        if field == .packsPerWeek { return value.formatted(.number.precision(.fractionLength(0...2))) }
+        return String(format: "%.1f", value)
     }
 }
