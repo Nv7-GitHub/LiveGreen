@@ -486,10 +486,10 @@ monospaced caption), like the tag beside a pressed flower.
   `.floating`), `DriftingLeaves.swift` (one `Canvas` on a 30 fps `TimelineView`, paused off screen),
   `GreeneryEmptyState.swift`. A scene picks the pieces for a screen; each tab has its own corner of the garden:
   History a hanging fern over a forest floor, Leaderboard an apple-blossom branch with foxglove and big leaves
-  in the bottom corners, Plugs trailing ivy, onboarding ivy over a wildflower meadow, Settings and About a
-  fern, pushed screens (results, swaps, a plug) only the forest floor. Settings shows the home on a floating
-  island; the GreenScore sits in an olive laurel; the analyzing card has a seedling that grows with each step;
-  the no-camera screen is the forest at night.
+  in the bottom corners, Plugs trailing ivy, the name sign-up and the questionnaire ivy over a wildflower
+  meadow, Settings and About a fern, pushed screens (results, swaps, a plug) only the forest floor. Settings
+  shows the home on a floating island; the GreenScore sits in an olive laurel; the analyzing card has a
+  seedling that grows with each step; the no-camera screen is the forest at night.
 - The art is decoration: hidden from VoiceOver, no hit testing, and still (no sway, no drifting leaves) with
   Reduce Motion. Ink drawn for paper is dimmed to 82% on the dark page. `greeneryBackground` hides list and
   form backgrounds so the paper shows, clips to its own bounds (sheets don't clip their background) and adds
