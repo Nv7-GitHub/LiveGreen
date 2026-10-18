@@ -194,7 +194,9 @@ public struct LocalActionPlanner: ActionPlanner {
         } else {
             steps.append(ActionStep(title: "Make it your usual", detail: "Pick it again next time and the savings below repeat every week."))
         }
-        return ActionPlanDraft(headline: "\(isFood ? "Get" : "Pick up") \(item.lowercased()) at \(place.name)\(distance)",
+        let lowered = item.lowercased()
+        let article = lowered.hasPrefix("a ") || lowered.hasSuffix("s") ? "" : "aeiou".contains(lowered.prefix(1)) ? "an " : "a "
+        return ActionPlanDraft(headline: "\(isFood ? "Get" : "Pick up") \(article)\(lowered) at \(place.name)\(distance)",
                                placeIndex: 0, steps: steps)
     }
 }

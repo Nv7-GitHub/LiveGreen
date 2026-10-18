@@ -99,7 +99,14 @@ nonisolated struct ServiceContainer: Sendable {
 
     /// The container for the current settings.
     static func make(flags: FeatureFlags, secrets: Secrets) -> ServiceContainer {
-        flags.demoMode ? demo(modelChoice: flags.modelChoice) : live(flags: flags, secrets: secrets)
+        guard flags.demoMode else { return live(flags: flags, secrets: secrets) }
+        var services = demo(modelChoice: flags.modelChoice)
+        // Scans stay canned, but with a key the action plans are written for the real places nearby.
+        if secrets.value(for: flags.aiProvider.key) != nil {
+            services.planner = analysisClient(flags: flags, secrets: secrets, vocabulary: services.reference.vocabulary)
+        }
+        services.photon = photon(secrets: secrets)
+        return services
     }
 
     /// Demo helper: the same services with the identifier replaying a specific canned scene.

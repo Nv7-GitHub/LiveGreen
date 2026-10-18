@@ -15,6 +15,15 @@ public enum MealTime: String, Codable, Sendable, Hashable, CaseIterable, Identif
         }
     }
 
+    /// The meal a scan's title names ("Lunch", "Sunday brunch"), if any.
+    public init?(title: String) {
+        let words = Set(title.lowercased().split { !$0.isLetter }.map(String.init))
+        if !words.isDisjoint(with: ["breakfast", "brunch"]) { self = .breakfast }
+        else if words.contains("lunch") { self = .lunch }
+        else if !words.isDisjoint(with: ["dinner", "supper"]) { self = .dinner }
+        else { return nil }
+    }
+
     public var title: String {
         switch self {
         case .breakfast: "Breakfast"
@@ -32,6 +41,8 @@ public enum MealTime: String, Codable, Sendable, Hashable, CaseIterable, Identif
         case .snack: "carrot"
         }
     }
+
+    public var plural: String { self == .lunch ? "lunches" : rawValue + "s" }
 
     /// When the meal usually starts, minutes after midnight, for a meal with no scans to learn from.
     public var usualStartMinute: Int {
@@ -69,9 +80,9 @@ public struct MealTrend: Sendable, Hashable, Identifiable {
         let latest = String(format: "%.1f", latestCarbonKg)
         if scanIDs.count > 1 {
             let average = String(format: "%.1f", averageCarbonKg)
-            return "Your last \(scanIDs.count) \(mealTime.rawValue)s averaged \(average) kg CO2e; the \(topItemName.lowercased()) was \(share)% of the latest one."
+            return "Your last \(scanIDs.count) \(mealTime.plural) averaged \(average) kg CO₂e; the \(topItemName.lowercased()) was \(share)% of the latest one."
         }
-        return "This \(mealTime.rawValue) came to \(latest) kg CO2e, and the \(topItemName.lowercased()) was \(share)% of it."
+        return "This \(mealTime.rawValue) came to \(latest) kg CO₂e, and the \(topItemName.lowercased()) was \(share)% of it."
     }
 
     /// Minutes before the meal that a nudge goes out, so it arrives while the user is still deciding.
@@ -99,7 +110,12 @@ public enum MealTrends {
             guard !scan.isScreenshot, let carbon = mealCarbon(scan) else { return nil }
             let parts = calendar.dateComponents([.hour, .minute], from: scan.date)
             let hour = parts.hour ?? 12
-            return (scan, carbon, MealTime(hour: hour), hour * 60 + (parts.minute ?? 0))
+            let byClock = MealTime(hour: hour)
+            // A title that names the meal wins; scanned at another hour, the meal's usual time stands in.
+            guard let named = MealTime(title: scan.title), named != byClock else {
+                return (scan, carbon, byClock, hour * 60 + (parts.minute ?? 0))
+            }
+            return (scan, carbon, named, named.usualStartMinute)
         }
         let byTime = Dictionary(grouping: meals, by: \.time)
         let trends = byTime.compactMap { time, group -> MealTrend? in

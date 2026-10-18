@@ -221,6 +221,7 @@ final class NudgeCenter {
         nudges[index].error = nil
         do {
             if conversation == nil { await checkActivation(photon: photon) }
+            guard phone != nil else { throw NudgeError.noPhone }
             guard let conversation else {
                 throw NudgeError.notActivated(line: lineNumber)
             }
@@ -261,11 +262,13 @@ final class NudgeCenter {
 
 enum NudgeError: Error {
     case invalidPhone
+    case noPhone
     case notActivated(line: String?)
 
     var message: String {
         switch self {
         case .invalidPhone: "That doesn't look like a phone number. Include the area code."
+        case .noPhone: "Add your phone number above to get texts."
         case .notActivated(let line):
             "Text anything to \(line.map(PhoneFormat.pretty) ?? "your LiveGreen number") first. iMessage only lets the line reply once you've messaged it."
         }

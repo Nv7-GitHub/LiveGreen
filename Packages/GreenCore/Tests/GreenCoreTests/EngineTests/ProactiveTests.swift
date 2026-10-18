@@ -33,6 +33,14 @@ struct ProactiveTests {
         #expect(trend.reason.contains("beef burger"))
     }
 
+    @Test func aTitleNamingTheMealWinsOverTheClock() throws {
+        var lunch = Self.meal(18, 3, 40, items: [Self.food("Beef burger", 3)])
+        lunch.title = "Lunch"
+        let trend = try #require(MealTrends.analyze([lunch], calendar: Self.calendar).first)
+        #expect(trend.mealTime == .lunch)
+        #expect(trend.typicalMinute == MealTime.lunch.usualStartMinute)
+    }
+
     @Test func lowCarbonMealsAndNonFoodScansAreIgnored() {
         let salad = Self.meal(17, 12, items: [Self.food("Lentil salad", 0.6)])
         let desk = ScanResult(date: Self.date(17, 12), title: "Desk",
