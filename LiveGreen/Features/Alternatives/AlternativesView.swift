@@ -2,8 +2,9 @@ import SwiftUI
 import GreenCore
 import GreenCoreFakes
 
-/// Greener swaps per component (spec §7): pick one per component, compare like-for-like,
-/// see projected yearly savings and, for scenes of more than two items, generate a picture of the greener setup.
+/// Take action: each item's greener swap as a plan to carry out (the nearby place to get it, with directions, and
+/// steps to tick off), then the projected yearly savings and, for scenes of more than two items, a picture of the
+/// greener setup. The swap picker and like-for-like chart (spec §7) sit inside each card.
 struct AlternativesView: View {
     /// Read in `body` so converted numbers refresh when Settings switches units.
     @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
@@ -32,6 +33,7 @@ struct AlternativesView: View {
                     case .ready where !hasSwaps:
                         noSwapsCard
                     case .ready:
+                        planSummary
                         swapCards
                         if !itemsWithoutSwaps.isEmpty { noOptionCard }
                         ProjectedSavingsCard(savings: SwapMath.projectedSavings(screen.result, selection: selection),
@@ -59,8 +61,9 @@ struct AlternativesView: View {
                 withAnimation { scroller.scrollTo(Self.imageAnchor, anchor: .top) }
             }
         }
-        .navigationTitle("Greener swaps")
+        .navigationTitle("Take action")
         .task { await screen.load(app: app) }
+        .task(id: planKey) { await makePlans() }
     }
 
     private static let imageAnchor = "greenerImage"
@@ -143,12 +146,74 @@ struct AlternativesView: View {
             let component = group[0]
             let others = Array(group.dropFirst())
             let options = screen.alternatives(for: component, plugFeatures: plugFeatures)
-            ComponentSwapCard(component: component, others: others, alternatives: options,
-                              pick: selection[component.id].flatMap { id in options.first { $0.id == id } },
-                              charging: screen.charging[component.id],
-                              onSelect: { screen.toggle($0, for: component, others: others, app: app) },
-                              onPair: { app.selectedTab = .plugs })
+            let pick = selection[component.id].flatMap { id in options.first { $0.id == id } }
+            let plans = app.actionPlans
+            ActionCard(component: component, others: others, alternatives: options, pick: pick,
+                       charging: screen.charging[component.id],
+                       plan: pick.flatMap(plans.plan(for:)),
+                       isPlanning: pick.map { plans.planning.contains($0.id) } ?? false,
+                       isDone: plans.isDone, onToggle: plans.toggle,
+                       onChoosePlace: { place in
+                           guard let pick else { return }
+                           Task { await plans.choose(place, for: pick, replacing: component, app: app) }
+                       },
+                       onSelect: { screen.toggle($0, for: component, others: others, app: app) },
+                       onPair: { app.selectedTab = .plugs })
         }
+    }
+
+    // MARK: - Action plans
+
+    /// The lead item and pick of every card, so plans are made again when a pick changes.
+    private var picked: [(component: Component, swap: Alternative)] {
+        let ordered = SwapMath.byYearlySaving(screen.result.components) {
+            screen.alternatives(for: $0, plugFeatures: plugFeatures)
+        }
+        return AlternativesModel.swapGroups(ordered, plugFeatures: plugFeatures).compactMap { group in
+            let lead = group[0]
+            let options = screen.alternatives(for: lead, plugFeatures: plugFeatures)
+            return selection[lead.id].flatMap { id in options.first { $0.id == id } }.map { (lead, $0) }
+        }
+    }
+
+    private var planKey: String {
+        screen.phase == .ready ? picked.map(\.swap.id.uuidString).joined(separator: ",") : ""
+    }
+
+    /// Plans for every pick at once; saved plans come back immediately.
+    private func makePlans() async {
+        guard screen.phase == .ready else { return }
+        let plans = app.actionPlans
+        await withTaskGroup(of: Void.self) { group in
+            for (component, swap) in picked {
+                group.addTask { await plans.ensurePlan(for: swap, replacing: component, app: app) }
+            }
+        }
+    }
+
+    /// How many actions there are, how far along they are and what they save together.
+    private var planSummary: some View {
+        let plans = app.actionPlans
+        let actions = picked
+        let steps = actions.compactMap { plans.progress(for: $0.swap) }
+        let done = steps.map(\.done).reduce(0, +)
+        let total = steps.map(\.total).reduce(0, +)
+        let saving = SwapMath.projectedSavings(screen.result, selection: selection)[.carbon]?.yearly?.value ?? 0
+        return GlassCard(tint: Theme.leaf.opacity(0.12)) {
+            VStack(alignment: .leading, spacing: 10) {
+                Label("Your game plan", systemImage: "checklist").font(.headline).foregroundStyle(Theme.leaf)
+                Text(actions.isEmpty ? "Pick a swap below to get steps and a place nearby."
+                     : "\(actions.count) \(actions.count == 1 ? "action" : "actions") near you"
+                        + (saving > 0 ? ", saving about \(DisplayUnits.carbon(kg: saving)) a year" : ""))
+                    .font(.title3.weight(.semibold))
+                    .fixedSize(horizontal: false, vertical: true)
+                if total > 0 {
+                    ProgressView(value: Double(done), total: Double(total)).tint(Theme.leaf)
+                    Text("\(done) of \(total) steps done").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .accessibilityIdentifier("alternatives.summary")
     }
 
     @ViewBuilder private var imageSection: some View {

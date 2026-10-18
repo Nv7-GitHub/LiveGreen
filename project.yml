@@ -54,6 +54,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         NSCameraUsageDescription: LiveGreen uses the camera to scan items, appliances and meals and measure their environmental impact.
         NSPhotoLibraryUsageDescription: LiveGreen can analyze photos you pick from your library.
+        NSLocationWhenInUseUsageDescription: LiveGreen uses your location to find stores and restaurants near you for greener swaps.
         NSLocalNetworkUsageDescription: LiveGreen finds and controls your Shelly smart plug on your local network.
         NSBonjourServices:
           - _shelly._tcp
@@ -68,6 +69,8 @@ targets:
         XAI_API_KEY: $(XAI_API_KEY)
         ELECTRICITYMAPS_API_KEY: $(ELECTRICITYMAPS_API_KEY)
         ENERGYSTAR_APP_TOKEN: $(ENERGYSTAR_APP_TOKEN)
+        PHOTON_API_KEY: $(PHOTON_API_KEY)
+        PHOTON_PROJECT_ID: $(PHOTON_PROJECT_ID)
 
   LiveGreenUITests:
     type: bundle.ui-testing

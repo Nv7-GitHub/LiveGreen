@@ -26,6 +26,10 @@ final class AppModel {
     private(set) var storageError: String?
     /// Greener swaps fetched in the background for scans whose swaps screen has not been opened yet.
     @ObservationIgnored let swapPrefetch = SwapPrefetcher()
+    /// Where to get each picked swap nearby, and the steps (the Take action screen).
+    @ObservationIgnored let actionPlans = ActionPlans()
+    /// The phone number, its Photon line and the meal nudges texted to it.
+    @ObservationIgnored let nudges = NudgeCenter()
     /// Scans deleted this session. A results or swaps screen still showing one (say, on the Scan tab) must not
     /// save it back or start fetching its swaps; every new scan gets a fresh id, so nothing else is affected.
     @ObservationIgnored private var deletedScanIDs: Set<UUID> = []
@@ -107,6 +111,8 @@ final class AppModel {
         perform { try feedback.deleteAll() }
         perform { try usageMemory.deleteAll() }
         plugs.removeAll()
+        actionPlans.removeAll()
+        nudges.removeAll()
         for key in SecretKey.allCases { try? secrets.setOverride(nil, for: key) }
         if let domain = Bundle.main.bundleIdentifier { defaults.removePersistentDomain(forName: domain) }
         // Removing the domain doesn't notify @AppStorage, so clear the units key directly as well.
@@ -133,6 +139,7 @@ final class AppModel {
         }
         perform { try store.save(result) }
         prefetchSwaps(for: result)
+        refreshNudges()
         // An item marked "It's mine" after the swaps came back was left out of them.
         if let before { swapPrefetch.fetchNewlyCounted(result, since: before, app: self) }
     }
@@ -152,6 +159,12 @@ final class AppModel {
         scans.removeAll { $0.id == id }
         swapPrefetch.forget(id)
         perform { try store.deleteScan(id: id) }
+        refreshNudges()
+    }
+
+    /// Re-reads meal trends and schedules nudges for meals that came out high in carbon.
+    func refreshNudges() {
+        Task { await nudges.refresh(app: self) }
     }
 
     /// A coordinator bound to the current services and profile.

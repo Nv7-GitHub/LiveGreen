@@ -2,17 +2,26 @@ import SwiftUI
 import GreenCore
 
 /// Stand-in for the onboarding questionnaire while `AppModel.usesFullOnboarding` is off: a pretend sign-up for a
-/// LiveGreen account that joins the friends leaderboard. The only field is a display name, and nothing leaves
-/// the device; the "creating" and "welcome" stages are for show.
+/// LiveGreen account that joins the friends leaderboard. The display name stays on the device. An optional phone
+/// number turns on meal nudges: it is assigned a Photon iMessage line, and the user texts that line once so it
+/// may reply (`NudgeCenter`).
 struct NameEntryView: View {
     let initialName: String
     let onComplete: (String) -> Void
 
-    private enum Stage { case form, creating, welcome }
+    @Environment(AppModel.self) private var app
+
+    private enum Stage { case form, creating, texting, welcome }
+    private enum Field { case name, phone }
 
     @State private var name: String
+    @State private var phone = ""
     @State private var stage = Stage.form
-    @FocusState private var isFocused: Bool
+    @State private var phoneError: String?
+    @State private var lineNumber: String?
+    @State private var checking = false
+    @State private var checkNote: String?
+    @FocusState private var focus: Field?
 
     init(initialName: String, onComplete: @escaping (String) -> Void) {
         self.initialName = initialName
@@ -22,6 +31,8 @@ struct NameEntryView: View {
 
     private var trimmed: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
     private var handle: String { "@" + trimmed.lowercased().filter { $0.isLetter || $0.isNumber } }
+    private var phoneEntered: Bool { !phone.trimmingCharacters(in: .whitespaces).isEmpty }
+    private var phoneValid: Bool { !phoneEntered || PhotonClient.e164(phone) != nil }
     private let players = CohortModel.friendNames
 
     var body: some View {
@@ -32,6 +43,7 @@ struct NameEntryView: View {
             Spacer()
             switch stage {
             case .form: form.transition(.opacity)
+            case .texting: texting.transition(.opacity)
             case .creating, .welcome: progress.transition(.opacity)
             }
             Spacer()
@@ -42,7 +54,7 @@ struct NameEntryView: View {
                 }
                 .buttonStyle(.glassProminent)
                 .controlSize(.large)
-                .disabled(trimmed.isEmpty)
+                .disabled(trimmed.isEmpty || !phoneValid)
                 .accessibilityIdentifier("onboarding.next")
             }
         }
@@ -52,7 +64,7 @@ struct NameEntryView: View {
                            startPoint: .topLeading, endPoint: .bottom)
                 .ignoresSafeArea()
         )
-        .onAppear { isFocused = true }
+        .onAppear { focus = .name }
     }
 
     private var form: some View {
@@ -65,24 +77,102 @@ struct NameEntryView: View {
             }
             competitors
             GlassCard {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Display name").font(.subheadline.weight(.semibold))
-                    TextField("e.g. Alex Rivera", text: $name)
-                        .textContentType(.name)
-                        .textInputAutocapitalization(.words)
-                        .autocorrectionDisabled()
-                        .submitLabel(.join)
-                        .focused($isFocused)
-                        .onSubmit(register)
-                        .padding(12)
-                        .background(.background.opacity(0.6), in: .rect(cornerRadius: 12))
-                        .accessibilityIdentifier("onboarding.name")
-                    Text(trimmed.isEmpty ? "Other players see this on the leaderboard."
-                                         : "You'll appear as \(trimmed) · \(handle)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                VStack(alignment: .leading, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Display name").font(.subheadline.weight(.semibold))
+                        TextField("e.g. Alex Rivera", text: $name)
+                            .textContentType(.name)
+                            .textInputAutocapitalization(.words)
+                            .autocorrectionDisabled()
+                            .submitLabel(.next)
+                            .focused($focus, equals: .name)
+                            .onSubmit { focus = .phone }
+                            .padding(12)
+                            .background(.background.opacity(0.6), in: .rect(cornerRadius: 12))
+                            .accessibilityIdentifier("onboarding.name")
+                        Text(trimmed.isEmpty ? "Other players see this on the leaderboard."
+                                             : "You'll appear as \(trimmed) · \(handle)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Phone number").font(.subheadline.weight(.semibold))
+                        TextField("(617) 555-0123", text: $phone)
+                            .textContentType(.telephoneNumber)
+                            .keyboardType(.phonePad)
+                            .focused($focus, equals: .phone)
+                            .padding(12)
+                            .background(.background.opacity(0.6), in: .rect(cornerRadius: 12))
+                            .accessibilityIdentifier("onboarding.phone")
+                        Label(phoneValid ? "Optional. We'll text you a greener idea right before a meal that's been heavy on carbon."
+                                         : "Include the area code, e.g. (617) 555-0123.",
+                              systemImage: phoneValid ? "message.badge" : "exclamationmark.circle")
+                            .font(.caption)
+                            .foregroundStyle(phoneValid ? Color.secondary : Theme.danger)
+                    }
                 }
+            }
+        }
+    }
+
+    /// The step between the account and the welcome: text the assigned line once so it may reply.
+    private var texting: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 8) {
+                Image(systemName: "message.badge.filled.fill")
+                    .font(.system(size: 44))
+                    .foregroundStyle(Theme.leaf)
+                Text("Turn on meal nudges").font(.largeTitle.weight(.bold))
+                Text("Send one text to your LiveGreen number. iMessage only lets it write to you once you've messaged it.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            GlassCard {
+                VStack(alignment: .leading, spacing: 12) {
+                    if let lineNumber {
+                        Text("Text START to").font(.caption).foregroundStyle(.secondary)
+                        Text(PhoneFormat.pretty(lineNumber))
+                            .font(.title.weight(.bold).monospacedDigit())
+                            .textSelection(.enabled)
+                            .accessibilityIdentifier("onboarding.lineNumber")
+                        if let url = URL(string: "sms:\(lineNumber)&body=START") {
+                            Link(destination: url) {
+                                Label("Open Messages", systemImage: "arrow.up.message")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.glass)
+                        }
+                    } else if let phoneError {
+                        Label(phoneError, systemImage: "exclamationmark.triangle")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        HStack(spacing: 10) {
+                            ProgressView()
+                            Text("Getting your LiveGreen number…").font(.subheadline)
+                        }
+                    }
+                    if let checkNote {
+                        Text(checkNote).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            VStack(spacing: 10) {
+                Button(action: checkTexted) {
+                    Label(checking ? "Checking…" : "I've sent it", systemImage: "checkmark.message")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.glassProminent)
+                .controlSize(.large)
+                .disabled(lineNumber == nil || checking)
+                .accessibilityIdentifier("onboarding.texted")
+                Button("Skip for now") { welcome() }
+                    .buttonStyle(.glass)
+                    .controlSize(.large)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("onboarding.skipTexting")
             }
         }
     }
@@ -130,12 +220,41 @@ struct NameEntryView: View {
     }
 
     private func register() {
-        guard !trimmed.isEmpty, stage == .form else { return }
-        isFocused = false
+        guard !trimmed.isEmpty, phoneValid, stage == .form else { return }
+        focus = nil
         withAnimation(.smooth) { stage = .creating }
         Task {
             try? await Task.sleep(for: .seconds(0.4))
-            withAnimation(.smooth) { stage = .welcome }
+            guard phoneEntered else { return welcome() }
+            withAnimation(.smooth) { stage = .texting }
+            do {
+                lineNumber = try await app.nudges.register(phone: phone, name: trimmed, photon: app.services.photon)
+            } catch {
+                phoneError = NudgeCenter.describe(error) + " You can set it up later in the Nudges tab."
+            }
+        }
+    }
+
+    private func checkTexted() {
+        checking = true
+        checkNote = nil
+        Task {
+            // The message can take a few seconds to reach Photon.
+            for attempt in 0..<4 {
+                if await app.nudges.checkActivation(photon: app.services.photon) {
+                    checking = false
+                    return welcome()
+                }
+                if attempt < 3 { try? await Task.sleep(for: .seconds(2)) }
+            }
+            checking = false
+            checkNote = app.nudges.setupError ?? "Haven't seen your text yet. Give it a moment and try again, or skip and finish this in the Nudges tab."
+        }
+    }
+
+    private func welcome() {
+        withAnimation(.smooth) { stage = .welcome }
+        Task {
             try? await Task.sleep(for: .seconds(0.6))
             onComplete(trimmed)
         }
@@ -144,4 +263,5 @@ struct NameEntryView: View {
 
 #Preview {
     NameEntryView(initialName: "") { _ in }
+        .environment(AppModel.preview())
 }
