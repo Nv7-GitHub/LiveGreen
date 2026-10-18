@@ -26,7 +26,8 @@ struct HistoryRow: View {
                 VStack(alignment: .trailing, spacing: 3) {
                     Text(carbon.formatted)
                         .font(.subheadline.weight(.semibold).monospacedDigit())
-                    Text("per year").font(.caption2).foregroundStyle(.secondary)
+                    // A screenshot's items are what they would add if bought, not the user's own year.
+                    Text(scan.isScreenshot ? "if bought" : "per year").font(.caption2).foregroundStyle(.secondary)
                     TierBadge(tier: carbon.tier)
                 }
             }
@@ -35,9 +36,9 @@ struct HistoryRow: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// Per-year carbon, matching the results header's headline figure.
+    /// Per-year carbon, matching the results header's headline figure (counted items only).
     private var yearlyCarbon: Measured? {
-        let yearly = scan.yearlyTotals.isEmpty ? ImpactEngine().yearlyTotals(scan.components, seed: scan.totalsSeed)
+        let yearly = scan.yearlyTotals.isEmpty ? ImpactEngine().yearlyTotals(scan.totaledComponents, seed: scan.totalsSeed)
                                                : scan.yearlyTotals
         return yearly[.carbon] ?? scan.totals[.carbon]
     }

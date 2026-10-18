@@ -1,6 +1,6 @@
-/// Where to draw numbered pins over a photo (spec §6) so none hides another. Each pin starts at its anchor, an item's
-/// box centre (identify gives no point of its own), and overlapping pins are pushed apart, earlier pins less, then
-/// kept inside the photo. Two items with one box (a drink and its cup) end up side by side instead of stacked.
+/// Where to draw numbered pins over a photo (spec §6) so none hides another. Each pin starts at its anchor
+/// (`anchor(box:point:)`: identify's point on the item, else the box centre), and overlapping pins are pushed apart,
+/// earlier pins less, then kept inside the photo. Two items with one box (a drink and its cup) end up side by side instead of stacked.
 /// Deterministic, so pins sit in the same place on every render.
 public enum PinLayout {
     /// Pin centres for `anchors` (points in a `size` photo, most important first), at least `spacing` apart where
@@ -34,4 +34,28 @@ public enum PinLayout {
         }
         return points
     }
+}
+
+extension PinLayout {
+    /// How far outside its box identify's point may lie and still count as on the item: this share of the box's
+    /// width or height, at least `minimumSlack` of the photo.
+    static let anchorSlack = 0.25
+    static let minimumSlack = 0.03
+
+    /// Where an item's pin points, normalized: identify's point on the item when it lies in or near the box, since a
+    /// point lands on a small item where a loose box's centre can miss it; else the box centre. A point far from its
+    /// box is more likely a slip than a better guess.
+    public static func anchor(box: NormalizedRect, point: NormalizedPoint?) -> NormalizedPoint {
+        let box = box.clamped
+        let centre = NormalizedPoint(x: box.midX, y: box.midY)
+        guard let point = point?.clamped else { return centre }
+        let dx = max(box.width * anchorSlack, minimumSlack), dy = max(box.height * anchorSlack, minimumSlack)
+        let near = NormalizedRect(x: box.x - dx, y: box.y - dy, width: box.width + 2 * dx, height: box.height + 2 * dy)
+        return near.contains(point) ? point : centre
+    }
+}
+
+extension Component {
+    /// Where the item's pin points on the photo (`PinLayout.anchor(box:point:)`).
+    public var pinAnchor: NormalizedPoint { PinLayout.anchor(box: boundingBox, point: anchor) }
 }

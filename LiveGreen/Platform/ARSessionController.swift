@@ -58,12 +58,14 @@ final class ARSessionController: NSObject {
         return ARCaptureSnapshot.make(from: frame, orientation: interfaceOrientation)
     }
 
-    /// Raycasts each component's box center from the captured camera and anchors a pin there.
+    /// Raycasts each component's pin anchor (identify's point on the item, else its box center) from the captured
+    /// camera and anchors a pin there.
     func anchor(_ components: [GreenCore.Component], of resultID: UUID, from camera: ARCapturedCamera, tints: [UUID: UIColor]) {
         clearAnchors()
         anchoredResultID = resultID
         for component in components {
-            let center = CGPoint(x: component.boundingBox.clamped.midX, y: component.boundingBox.clamped.midY)
+            let point = component.pinAnchor
+            let center = CGPoint(x: point.x, y: point.y)
             let anchor = AnchorEntity(world: worldTransform(for: center, from: camera))
             anchor.addChild(Self.pin(color: tints[component.id] ?? .systemGreen))
             arView.scene.addAnchor(anchor)

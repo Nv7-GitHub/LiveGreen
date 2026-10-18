@@ -3,7 +3,7 @@ import GreenCore
 import GreenCoreFakes
 
 /// Detail for a tapped AR label (spec §5.1): the same component detail the Results screen shows (flow,
-/// inspector with sources, plug card), with a route into the full scan results.
+/// inspector with sources, plug card, "Not mine" / "It's mine"), with a route into the full scan results.
 struct ARComponentDetailSheet: View {
     let component: Component
     let result: ScanResult
@@ -16,7 +16,8 @@ struct ARComponentDetailSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                ComponentDetailView(component: component, preferredMetric: .carbon, plugAction: plugAction)
+                ComponentDetailView(component: live.component(withID: component.id) ?? component, preferredMetric: .carbon,
+                                    plugAction: plugAction, ownership: (live, markOwned))
                     .padding()
             }
             .navigationTitle(component.name)
@@ -37,6 +38,14 @@ struct ARComponentDetailSheet: View {
         }
         .presentationDetents([.medium, .large])
         .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+    }
+
+    /// The saved copy of the scan, so the sheet follows the user's answer.
+    private var live: ScanResult { model.scans.first { $0.id == result.id } ?? result }
+
+    /// "Not mine" / "It's mine": saved with the scan, so the labels, totals and leaderboard follow.
+    private func markOwned(_ owned: Bool?) {
+        model.save(model.makeScanCoordinator().markingOwned(owned, componentID: component.id, in: live))
     }
 
     private var plugAction: (() -> Void)? {

@@ -58,6 +58,11 @@ final class ScanCoordinator: ScanCoordinating {
         return updated
     }
 
+    /// Swaps for some items only (`ScanPipeline.suggestAlternatives(forItems:in:)`).
+    func suggestAlternatives(forItems ids: Set<UUID>, in result: ScanResult) async throws -> ScanResult {
+        try await pipeline.suggestAlternatives(forItems: ids, in: result)
+    }
+
     /// Re-resolves items whose detail questions were answered before the results (T4 → factor model), on-device.
     func refining(_ result: ScanResult, specAnswers: [SpecAnswer]) async -> ScanResult {
         let refined = await pipeline.refining(result, specAnswers: specAnswers)
@@ -80,5 +85,20 @@ final class ScanCoordinator: ScanCoordinating {
         guard let component = result.component(withID: componentID) else { return result }
         let edits = ImpactEngine().usageEdits(field, value, for: component)
         return pipeline.applying(edits.map { (componentID, $0) }, to: result)
+    }
+
+    /// The user said whether one item is theirs ("Not mine", "It's mine"; nil restores the scan's guess): the totals
+    /// are recomputed without the items left out.
+    func markingOwned(_ owned: Bool?, componentID: UUID, in result: ScanResult) -> ScanResult {
+        var updated = result
+        updated.markOwned(owned, componentID: componentID, engine: pipeline.engine)
+        return updated
+    }
+
+    /// "Which is yours?": exactly `owned` are the user's.
+    func markingOwned(only owned: Set<UUID>, in result: ScanResult) -> ScanResult {
+        var updated = result
+        updated.markOwned(only: owned, engine: pipeline.engine)
+        return updated
     }
 }

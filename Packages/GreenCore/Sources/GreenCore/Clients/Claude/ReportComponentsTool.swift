@@ -14,7 +14,7 @@ enum ReportComponentsTool {
         "input_schema": SchemaParts.object([
             "scene_title": SchemaParts.string("1-3 word title for the scene, e.g. 'Desk setup', 'Lunch'."),
             "components": SchemaParts.array(of: component, "Distinct items, most environmentally significant first (max 8)."),
-        ], required: ["scene_title", "components"]),
+        ].merging(sceneExtras) { current, _ in current }, required: ["scene_title", "components", "scene_context"]),
     ]
 
     /// The identify schema with `fallback_estimates` limited to one carbon value, which roughly halves the
@@ -62,8 +62,9 @@ enum ReportComponentsTool {
             nullable: true),
         "fallback_estimates": SchemaParts.estimates,
         "needs_question": SchemaParts.array(of: question, "At most one question, only when the answer changes the footprint a lot."),
-    ], required: ["name", "category", "bounding_box", "identifiers", "quantities", "default_usage",
-                  "deferrable_load", "fallback_estimates", "needs_question"])
+    ].merging(componentExtras) { current, _ in current },
+        required: ["name", "category", "bounding_box", "identifiers", "quantities", "default_usage",
+                   "deferrable_load", "fallback_estimates", "needs_question"])
 
     static let question = SchemaParts.object([
         "id": SchemaParts.string("Stable snake_case id, e.g. 'hours_on', 'servings_per_week'."),
@@ -89,12 +90,16 @@ enum ReportComponentsTool {
             throw GreenCoreError.invalidModelOutput("report_components input: \(error)")
         }
         let components = try payload.components.map { try $0.makeIdentified() }
-        return IdentifyResponse(components: components, sceneTitle: payload.sceneTitle?.trimmedNonEmpty)
+        return IdentifyResponse(components: components, sceneTitle: payload.sceneTitle?.trimmedNonEmpty,
+                                sceneContext: payload.sceneContext?.value.flatMap(SceneContext.init(looseRawValue:)),
+                                photoRegion: payload.photoRegion?.value?.clamped)
     }
 
     struct Payload: Decodable {
         var sceneTitle: String?
         var components: [ComponentPayload]
+        var sceneContext: Lenient<String>?
+        var photoRegion: Lenient<NormalizedRect>?
     }
 
     struct ComponentPayload: Decodable {
@@ -107,6 +112,10 @@ enum ReportComponentsTool {
         var deferrableLoad: String?
         var fallbackEstimates: [EstimatePayload]?
         var needsQuestion: [ComponentQuestion]?
+        var anchor: Lenient<NormalizedPoint>?
+        var kind: Lenient<String>?
+        var likelyOwned: Lenient<Bool>?
+        var background: Lenient<Bool>?
 
         func makeIdentified() throws -> IdentifiedComponent {
             guard let name = name.trimmedNonEmpty else { throw GreenCoreError.invalidModelOutput("component without a name") }
@@ -120,7 +129,9 @@ enum ReportComponentsTool {
                 defaultUsage: defaultUsage,
                 deferrableLoad: deferrableLoad.flatMap(DeferrableLoadType.init(looseRawValue:)),
                 estimates: EstimatePayload.table(fallbackEstimates ?? [], for: category),
-                needsQuestion: (needsQuestion ?? []).filter { !$0.options.isEmpty })
+                needsQuestion: (needsQuestion ?? []).filter { !$0.options.isEmpty },
+                anchor: anchor?.value.flatMap { $0.x.isFinite && $0.y.isFinite ? $0.clamped : nil },
+                kind: kind?.value?.trimmedNonEmpty, likelyOwned: likelyOwned?.value, background: background?.value)
         }
     }
 

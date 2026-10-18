@@ -38,6 +38,13 @@ struct AlternativesView: View {
                                              swapCount: selection.count,
                                              context: "swaps-\(screen.result.id.uuidString)")
                         if screen.showsGreenerImage { imageSection.id(Self.imageAnchor) }
+                        if screen.result.isScreenshot {
+                            Label("No greener picture for a screenshot: it would redraw someone else's post.",
+                                  systemImage: "photo.badge.exclamationmark")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .accessibilityIdentifier("alternatives.noImageForScreenshot")
+                        }
                     }
                 }
                 .padding()
@@ -94,7 +101,7 @@ struct AlternativesView: View {
     /// Items with nothing to offer, biggest yearly carbon first, so the main item is never silently missing (S10:
     /// the camera was 92% of the scene and had no card).
     private var itemsWithoutSwaps: [Component] {
-        screen.result.components
+        screen.result.totaledComponents
             .filter { screen.alternatives(for: $0, plugFeatures: plugFeatures).isEmpty }
             .sorted { (SwapMath.yearlyCarbon(of: $0)?.value ?? 0) > (SwapMath.yearlyCarbon(of: $1)?.value ?? 0) }
     }

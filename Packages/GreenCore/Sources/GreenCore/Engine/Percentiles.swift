@@ -27,13 +27,14 @@ public struct ScannedFootprint: Sendable, Hashable {
 
     /// Sums yearly impacts of every scanned component. An item scanned again in a later scan (same GTIN or
     /// brand|model, else same category and name) replaces the earlier scan's count of it, so repeat scans
-    /// count once while several units in one scan (two monitors on a desk) all count.
+    /// count once while several units in one scan (two monitors on a desk) all count. Only the user's own items
+    /// count (`Component.isCounted`): not a stranger's car, store stock, a background item or a post seen on screen.
     public static func from(scans: [ScanResult], scheduledSavingsKg: Double = 0,
                             engine: ImpactEngine = ImpactEngine()) -> ScannedFootprint {
         var latest: [String: [(component: Component, seed: UInt64)]] = [:]
         for scan in scans.sorted(by: { $0.date < $1.date }) {
             var units: [String: [(component: Component, seed: UInt64)]] = [:]
-            for component in scan.components {
+            for component in scan.components where component.isCounted {
                 let key = component.identifiers.cacheKey ?? "\(component.category.rawValue)|\(component.name.lowercased())"
                 units[key, default: []].append((component, scan.seed))
             }

@@ -27,6 +27,8 @@ struct ScanResultView: View {
     @State private var showsQuestions = false
     @State private var handledQuestions: Set<PendingQuestion.ID> = []
     @State private var isRerunning = false
+    /// "Which is yours?" reopened from the scene banner.
+    @State private var showsOwnership = false
     /// Height of the overview's visible area, which caps the photo's height.
     @State private var viewportHeight: CGFloat = 0
 
@@ -35,21 +37,29 @@ struct ScanResultView: View {
         self.result = result
         self.rerun = rerun
         _current = State(initialValue: result)
-        _breakdown = State(initialValue: ScanBreakdown(components: result.components))
+        _breakdown = State(initialValue: Self.breakdown(for: result))
+    }
+
+    /// Items the scan does not count are numbered after the rest, so a stranger's car never takes pin 1.
+    private static func breakdown(for result: ScanResult) -> ScanBreakdown {
+        ScanBreakdown(components: result.components, notCounted: Set(result.notCountedComponents.map(\.id)))
     }
 
     private var isLandscape: Bool { verticalSizeClass == .compact }
 
     private var pendingQuestions: [PendingQuestion] {
-        QuestionGate.pendingQuestions(for: current.components).filter { !handledQuestions.contains($0.id) }
+        QuestionGate.pendingQuestions(for: current.totaledComponents).filter { !handledQuestions.contains($0.id) }
     }
 
     private var selectedComponent: Component? { selectedID.flatMap(current.component(withID:)) }
 
-    private var availableFilters: [ResultMetricFilter] { ResultInsights.availableFilters(for: current.components) }
+    private var availableFilters: [ResultMetricFilter] { ResultInsights.availableFilters(for: current.totaledComponents) }
 
-    /// The components that have the selected metric; a laptop has no land use, so it leaves the Land view.
-    private var shownComponents: [Component] { ResultInsights.components(current.components, showing: filter) }
+    /// The counted components that have the selected metric; a laptop has no land use, so it leaves the Land view.
+    private var shownComponents: [Component] { ResultInsights.components(current.totaledComponents, showing: filter) }
+
+    /// Items left out of the totals (not the user's, in the background, removed), listed apart whatever the metric.
+    private var notCounted: [Component] { current.notCountedComponents }
 
     var body: some View {
         let _ = unitSystem
@@ -95,9 +105,15 @@ struct ScanResultView: View {
         .sheet(isPresented: $showsQuestions) {
             QuestionsSheet(questions: pendingQuestions, onApply: applyAnswers, onUseEstimate: useEstimates)
         }
+        .sheet(isPresented: $showsOwnership) {
+            WhichIsYoursSheet(result: current) { owned in
+                showsOwnership = false
+                markOwned(only: owned)
+            }
+        }
         .onChange(of: result) { _, newValue in current = newValue }
-        .onChange(of: current.components) { _, components in
-            withAnimation(.smooth) { breakdown = ScanBreakdown(components: components) }
+        .onChange(of: current.components) { _, _ in
+            withAnimation(.smooth) { breakdown = Self.breakdown(for: current) }
         }
         .onChange(of: availableFilters, initial: true) { _, options in
             if !options.contains(filter) { filter = options.first ?? .carbon }
@@ -114,10 +130,12 @@ struct ScanResultView: View {
             ScrollView {
                 VStack(spacing: 14) {
                     photo
+                    SceneBanner(result: current) { showsOwnership = true }
                     MetricPicker(selection: $filter, options: availableFilters)
                     SummaryHeader(result: current, filter: filter, breakdown: breakdown)
                     if !pendingQuestions.isEmpty { questionsBanner }
-                    componentList
+                    if !shownComponents.isEmpty { componentList }
+                    if !notCounted.isEmpty { notCountedList }
                     alternativesButton
                     ScanFeedbackCard(result: current)
                 }
@@ -154,8 +172,8 @@ struct ScanResultView: View {
             // nothing to point at.
             if current.mode != .barcode {
                 ZStack {
-                    ComponentHotspots(components: shownComponents, filter: filter, breakdown: breakdown,
-                                      selectedID: selectedID, onSelect: select)
+                    ComponentHotspots(components: shownComponents + notCounted, filter: filter, breakdown: breakdown,
+                                      selectedID: selectedID, notCounted: Set(notCounted.map(\.id)), onSelect: select)
                     selectionAnchor
                 }
             }
@@ -166,13 +184,13 @@ struct ScanResultView: View {
 
     private static let selectionAnchorID = "selectedItemAnchor"
 
-    /// An invisible point at the selected item's box center, scrolled to when an item is selected.
+    /// An invisible point at the selected item's pin anchor, scrolled to when an item is selected.
     private var selectionAnchor: some View {
         GeometryReader { geometry in
-            let box = selectedComponent?.boundingBox.clamped ?? .full
+            let point = selectedComponent?.pinAnchor ?? NormalizedPoint(x: 0.5, y: 0.5)
             Color.clear
                 .frame(width: 1, height: 1)
-                .position(x: box.midX * geometry.size.width, y: box.midY * geometry.size.height)
+                .position(x: point.x * geometry.size.width, y: point.y * geometry.size.height)
                 .id(Self.selectionAnchorID)
         }
         .allowsHitTesting(false)
@@ -207,12 +225,58 @@ struct ScanResultView: View {
                                      isSelected: component.id == selectedID)
                     }
                     .buttonStyle(.plain)
+                    .contextMenu {
+                        Button(current.isScreenshot ? "Remove" : "Not mine", systemImage: "minus.circle") {
+                            markOwned(false, component)
+                        }
+                        .accessibilityIdentifier("notMine.\(component.name)")
+                    }
                 }
             }
             .padding(4)
             .glassEffect(.regular, in: .rect(cornerRadius: Theme.cardCornerRadius))
         }
         .padding(.top, 4)
+    }
+
+    /// Items the scan leaves out of its totals and the footprint, still listed so the photo's pins make sense; each
+    /// can be counted again (context menu, or "It's mine" in its detail sheet).
+    private var notCountedList: some View {
+        let metric = filter.shareMetric
+        let engine = ImpactEngine()
+        return VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Not counted").font(.headline)
+                Text("Left out of this scan's totals and your footprint")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 6)
+            VStack(spacing: 0) {
+                ForEach(Array(breakdown.ranked(notCounted, by: metric).enumerated()), id: \.element.id) { index, component in
+                    if index > 0 { Divider().padding(.leading, 54) }
+                    Button { select(component) } label: {
+                        ComponentRow(component: component, number: breakdown.number(of: component), filter: filter,
+                                     yearly: breakdown.yearly(metric, of: component), share: 0,
+                                     assumption: ResultInsights.assumptionLabel(for: component, metric: metric,
+                                                                                breakdown: breakdown, engine: engine),
+                                     tint: .gray, isSelected: component.id == selectedID,
+                                     notCountedReason: OwnershipText.reason(for: component, in: current))
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        Button(current.isScreenshot ? "I bought it" : "It's mine", systemImage: "plus.circle") {
+                            markOwned(true, component)
+                        }
+                        .accessibilityIdentifier("countIt.\(component.name)")
+                    }
+                }
+            }
+            .padding(4)
+            .glassEffect(.regular, in: .rect(cornerRadius: Theme.cardCornerRadius))
+        }
+        .padding(.top, 4)
+        .accessibilityIdentifier("notCountedList")
     }
 
     private var questionsBanner: some View {
@@ -256,7 +320,7 @@ struct ScanResultView: View {
     /// carbon contributor.
     private var sideInspector: some View {
         let component = selectedComponent
-            ?? breakdown.ranked(current.components, by: .carbon).first
+            ?? breakdown.ranked(current.totaledComponents, by: .carbon).first
         return ScrollView {
             if let component {
                 detail(for: component).padding()
@@ -276,6 +340,7 @@ struct ScanResultView: View {
         if component.detailAnswer != nil { undo = { undoAnswer(of: component.id) } }
         return ComponentDetailView(component: component, preferredMetric: filter.shareMetric, plugAction: plugAction,
                                    onUsageChange: { field, value in applyUsage(field, value, to: component.id) },
+                                   ownership: (current, { owned in markOwned(owned, component) }),
                                    usageNote: usageNote(for: component), onUndoAnswer: undo)
             .id(component.id)
     }
@@ -350,6 +415,23 @@ struct ScanResultView: View {
             model.rememberUsage(from: base, to: updated)
             isRerunning = false
         }
+    }
+
+    /// "Not mine" or "It's mine" on one item: the totals drop or add it, and the saved scan (and so the leaderboard)
+    /// follows.
+    private func markOwned(_ owned: Bool?, _ component: Component) {
+        let base = savedCopy ?? current
+        let updated = model.makeScanCoordinator().markingOwned(owned, componentID: component.id, in: base)
+        withAnimation(.smooth) { current = updated }
+        model.save(updated)
+    }
+
+    /// "Which is yours?" answered from the banner.
+    private func markOwned(only owned: Set<UUID>) {
+        let base = savedCopy ?? current
+        let updated = model.makeScanCoordinator().markingOwned(only: owned, in: base)
+        withAnimation(.smooth) { current = updated }
+        model.save(updated)
     }
 
     /// Usage edited in the detail sheet: re-run the engine on-device, save, and remember the rate for this kind of item.

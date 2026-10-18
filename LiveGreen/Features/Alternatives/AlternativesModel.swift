@@ -43,8 +43,9 @@ final class AlternativesModel {
 
     var hasPhoto: Bool { !(result.photo ?? Data()).isEmpty }
 
-    /// A greener picture only suits a scene: for one item or a pair the edit looks odd, so it is not offered.
-    static func showsGreenerImage(for result: ScanResult) -> Bool { result.components.count > 2 }
+    /// A greener picture only suits a scene: for one item or a pair the edit looks odd, so it is not offered. Nor for
+    /// a screenshot (C3): the edit would re-render someone else's post or a store's listing.
+    static func showsGreenerImage(for result: ScanResult) -> Bool { result.components.count > 2 && !result.isScreenshot }
 
     var showsGreenerImage: Bool { Self.showsGreenerImage(for: result) }
 
@@ -53,9 +54,11 @@ final class AlternativesModel {
     }
 
     /// The swaps to offer: plug scheduling when plug features are on, product swaps that pass the GreenScore
-    /// trade-off rule (scans saved before it existed may still hold others).
+    /// trade-off rule (scans saved before it existed may still hold others). None for an item the scan does not
+    /// count (`Component.isTotaled`), even if its swaps were fetched before the user said it is not theirs.
     static func alternatives(for component: Component, plugFeatures: Bool) -> [Alternative] {
-        component.alternatives.filter { alternative in
+        guard component.isTotaled else { return [] }
+        return component.alternatives.filter { alternative in
             alternative.kind == .smartPlugScheduling
                 ? plugFeatures : GreenScore.accepts(alternative, replacing: component, engine: SwapMath.engine)
         }
