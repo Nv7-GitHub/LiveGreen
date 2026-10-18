@@ -69,12 +69,15 @@ final class AppModel {
     }
 
     /// Erases everything the app stored on this device: scans and history, the profile, the metrics cache,
-    /// paired plugs, settings, archived grid readings and API keys entered in Settings (keys built in from
-    /// Secrets.xcconfig still apply). The default profile sends RootView back to the start of onboarding.
+    /// scan feedback notes, paired plugs, settings, archived grid readings and API keys entered in Settings
+    /// (keys built in from Secrets.xcconfig still apply). The default profile sends RootView back to the start
+    /// of onboarding.
     func eraseAllData(plugs: PlugCenter = .shared, defaults: UserDefaults = .standard) {
         swapPrefetch.reset()
         scans = []
+        deletedScanIDs = []
         perform { try store.deleteAll() }
+        perform { try feedback.deleteAll() }
         plugs.removeAll()
         for key in SecretKey.allCases { try? secrets.setOverride(nil, for: key) }
         if let domain = Bundle.main.bundleIdentifier { defaults.removePersistentDomain(forName: domain) }

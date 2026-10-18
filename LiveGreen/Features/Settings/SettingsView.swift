@@ -98,7 +98,7 @@ struct SettingsView: View {
         .confirmationDialog("Erase all data?", isPresented: $confirmsErase, titleVisibility: .visible) {
             Button("Erase everything", role: .destructive) { eraseAllData() }
         } message: {
-            Text("Scans, history, your profile, paired plugs, settings and saved API keys are deleted from this phone. This can't be undone.")
+            Text("Scans, history, scan feedback, your profile, paired plugs, settings and saved API keys are deleted from this phone. This can't be undone.")
         }
         .sheet(isPresented: $isEditingProfile) {
             OnboardingFlow(initialProfile: model.profile,
