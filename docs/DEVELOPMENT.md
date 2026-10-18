@@ -300,7 +300,8 @@ Measured on the desk photo (Sonnet 5.5, Oct 2026):
 
 ## 10. Onboarding and the leaderboard
 
-- Onboarding asks: location (a MapKit map flies to the state, then the ZIP), household size, meat meals and
+- Onboarding asks: location (ZIP first; below it a MapKit map, 110–170 pt tall to fit the screen, flies to
+  the state, then the ZIP), household size, meat meals and
   dairy meals a week (0–21 each), getting around (car, electric car, transit, e-bike with a weekly distance
   each; none is a valid answer), home type, floor area and heating sources (multi-select), and new clothes a
   year. Each step has drawn, animated art (plates that fill, a street scene, a house drawn to scale, a rail of
@@ -314,8 +315,11 @@ Measured on the desk photo (Sonnet 5.5, Oct 2026):
 - Home: `floorAreaM2` (nil = typical for the home type) scales heating and cooling, 52% of home energy (EIA),
   against RECS 2020 averages (detached 2,264 ft², townhouse 1,615, apartment 926; dorm 250 is assumed).
   `heatingSources` is a set; several sources average their modifiers evenly, and an empty set is no heating.
-  The heating modifiers are electricity-based and are also applied to home-energy carbon, so a heat pump
-  still reads higher carbon than gas; that needs carbon-specific modifiers.
+  Yearly electricity uses `heatingModifiers`; home-energy carbon uses `heatingCarbonModifiers` (none 0.66,
+  heat pump 0.86, gas 0.98, district 0.98, oil 1.09, electric resistance 1.15). Those are derived, not quoted:
+  US home energy 5.95 t CO2e with space heating 34% (EIA RECS 2020 CE4.1, HC6.1), the same heat from each
+  source at 80% furnace efficiency (oil 83%) or a seasonal COP of 2.5, eGRID2023's 349.7 g/kWh, and ENERGY STAR
+  Portfolio Manager fuel factors. Upstream methane is not counted.
 - Clothing modifier: 0.15 + 0.85 × new items a year ÷ 64 (AAFA's US average); the 0.15 base covers shoes and
   second-hand buys.
 - Old saved profiles decode: `diet`, `heating` and `clothingHabit` map to counts and sets with the same footprint.
