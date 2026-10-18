@@ -32,7 +32,7 @@ struct CompareTab: View {
             ScrollView {
                 VStack(spacing: 16) {
                     if !model.displayName.isEmpty {
-                        AccountCard(name: model.displayName, isCreated: model.accountCreated)
+                        AccountCard(name: model.displayName, overall: isLoaded ? analysis.overall : [])
                     }
                     if !isLoaded {
                         ProgressView().padding(.top, 40)
@@ -59,7 +59,6 @@ struct CompareTab: View {
             .navigationTitle("Leaderboard")
             .settingsToolbarButton()
             .task(id: inputs) { await refresh() }
-            .task(id: model.displayName) { await createAccountIfNeeded() }
         }
     }
 
@@ -72,14 +71,6 @@ struct CompareTab: View {
             CompareAnalysis(scans: scans, profile: profile, plugSavingsKg: plugSavingsKg, userName: userName)
         }.value
         isLoaded = true
-    }
-
-    /// Pretends to sign the user up the first time the Leaderboard opens with a name. Nothing leaves the device.
-    private func createAccountIfNeeded() async {
-        guard !model.displayName.isEmpty, !model.accountCreated else { return }
-        try? await Task.sleep(for: .seconds(1.6))
-        guard !Task.isCancelled else { return }
-        withAnimation(.smooth) { model.accountCreated = true }
     }
 
     @ViewBuilder

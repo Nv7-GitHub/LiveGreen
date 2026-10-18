@@ -72,20 +72,14 @@ final class AppModel {
     static let usesFullOnboarding = false
 
     static let displayNameKey = "LiveGreen.displayName"
-    static let accountCreatedKey = "LiveGreen.accountCreated"
 
     /// The name asked for at first launch, shown on the Leaderboard. Empty until entered.
     var displayName: String = UserDefaults.standard.string(forKey: AppModel.displayNameKey) ?? "" {
         didSet { UserDefaults.standard.set(displayName, forKey: Self.displayNameKey) }
     }
-    /// Whether the Leaderboard has played its pretend "creating your account" step. There is no real account.
-    var accountCreated: Bool = UserDefaults.standard.bool(forKey: AppModel.accountCreatedKey) {
-        didSet { UserDefaults.standard.set(accountCreated, forKey: Self.accountCreatedKey) }
-    }
 
-    /// Finishes the name-only onboarding: keeps the current profile answers and records the name.
+    /// Finishes the pretend sign-up: keeps the current profile answers and records the display name.
     func completeOnboarding(withName name: String) {
-        if name != displayName { accountCreated = false }
         displayName = name
         completeOnboarding(with: profile)
     }
@@ -119,7 +113,6 @@ final class AppModel {
         defaults.removeObject(forKey: DisplayUnits.defaultsKey)
         flags = FeatureFlags.load(defaults: defaults)
         displayName = ""
-        accountCreated = false
         refreshServices()
         selectedTab = .scan
         updateProfile(.default)
