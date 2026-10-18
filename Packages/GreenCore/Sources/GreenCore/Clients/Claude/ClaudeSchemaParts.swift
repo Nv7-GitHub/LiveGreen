@@ -20,6 +20,10 @@ enum SchemaParts {
         ["type": ["number", "null"], "description": .string(description)]
     }
 
+    static func nullableBoolean(_ description: String) -> JSONValue {
+        ["type": ["boolean", "null"], "description": .string(description)]
+    }
+
     static func enumeration(_ values: [String], _ description: String, nullable: Bool = false) -> JSONValue {
         let options = values.map(JSONValue.string) + (nullable ? [JSONValue.null] : [])
         return ["type": nullable ? ["string", "null"] : "string", "enum": .array(options),
@@ -82,8 +86,9 @@ enum SchemaParts {
         "screen_size_inches": nullableNumber("Displays only: diagonal, inches."),
         "rated_power_w": nullableNumber("Rated or label wattage, W (prefer OCR wattage hints)."),
         "volume_liters": nullableNumber("Drinks/containers/appliances: volume, L."),
-        "food_group": nullableString("Food only: reference food-group key (see list in instructions)."),
+        "food_group": nullableString("Food only: reference food-group key for the food as served (see list in instructions)."),
         "device_type": nullableString("Electronics/appliances: reference device-type key (see list in instructions)."),
+        "cooked": nullableBoolean("Food only: true when cooked from a dry grain, pasta or pulse (boiled rice, pasta, porridge, cooked or canned beans), so the mass includes absorbed water; else null."),
     ], required: ["mass_kg"])
 
     static let usage = object([

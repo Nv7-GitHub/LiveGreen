@@ -100,10 +100,10 @@ enum DemoFixtures {
         IdentifiedComponent(
             name: "French fries", category: .food,
             boundingBox: NormalizedRect(x: 0.62, y: 0.38, width: 0.25, height: 0.25),
-            quantities: Quantities(massKg: 0.15, servingKg: 0.15, foodGroup: "potatoes"),
+            quantities: Quantities(massKg: 0.15, servingKg: 0.15, foodGroup: "fries"),
             defaultUsage: UsageProfile(servingsPerWeek: 2),
-            estimates: [.carbon: est(0.5, 0.3, 0.9), .water: est(9, 4, 16), .land: est(0.13, 0.08, 0.25),
-                        .waterPollution: est(0.5, 0.3, 1), .plasticMass: est(1, 0, 3),
+            estimates: [.carbon: est(0.5, 0.3, 0.9), .water: est(30, 15, 60), .land: est(0.6, 0.3, 1.2),
+                        .waterPollution: est(1.8, 0.9, 3.5), .plasticMass: est(1, 0, 3),
                         .recyclablePercent: est(20, 0, 50), .decompositionTime: est(0.1, 0.05, 0.3)]),
         IdentifiedComponent(
             name: "Cola can", category: .food,

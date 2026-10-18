@@ -113,7 +113,17 @@ extension ClaudeClient: VisionIdentifier {
         Quantities
         - Estimate from visible size cues and typical products: mass of one unit or of the portion shown, \
         serving size for food, packaging mass, screen diagonal, rated wattage (prefer wattage hints), volume.
-        - Set food_group or device_type using the reference keys so LiveGreen's factor tables apply.
+        - cooked: true for a portion cooked from a dry grain, pasta or pulse (boiled rice, pasta, noodles, couscous, \
+        porridge, cooked or canned beans, lentils and chickpeas), whose mass includes the water it absorbed; else null.
+        - Set food_group or device_type using the reference keys so LiveGreen's factor tables apply. Choose the \
+        food_group of the food as served, not of one ingredient:
+          - drinks: latte for coffee with milk (latte, cappuccino, flat white, mocha, coffee frappé); milk_tea for \
+        tea with milk (bubble or boba tea, Thai tea, chai or matcha latte; an opaque, milky tea counts); tea for plain \
+        brewed or iced tea; coffee only for black coffee or beans; smoothie; juice; soft_drinks only for sodas and \
+        sweetened drinks without milk; soy_milk for any plant milk.
+          - desserts and snacks: ice_cream, yogurt (parfaits too), baked_goods (cookies, cakes, pastries, muffins, \
+        donuts), candy (sweets other than chocolate), potato_crisps (chips and crisps), fries, preserved_vegetables \
+        (jarred, canned, pickled or marinated vegetables, olives). Bread stays wheat_rye.
         \(PromptParts.vocabularyList(vocabulary))
 
         Default usage

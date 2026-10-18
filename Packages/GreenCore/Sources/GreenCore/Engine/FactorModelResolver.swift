@@ -27,14 +27,15 @@ public struct FactorModelResolver: MetricResolver {
     // MARK: Food (per serving, or per pack for a barcoded pack of known size)
 
     func food(_ component: Component) -> ResolverOutput {
-        let q = component.quantities
         var metrics: [MetricKey: Measured] = [:]
         var stages: [LifecycleStage: Double] = [:]
         let unitKg = FoodServing.unitKg(component)
-        if let factor = store.foodFactor(group: q.foodGroup ?? component.name), let unitKg, unitKg > 0 {
+        if let factor = store.foodFactor(group: FoodServing.factorKey(component)), let unitKg, unitKg > 0 {
             let sources = [factor.citation]
-            // Coffee's factor is per kg of beans; a brewed cup holds only its grounds' worth.
+            // Coffee's factor is per kg of beans, so a brewed cup holds only its grounds' worth; the dry-commodity
+            // factors (rice, pasta, pulses) count a cooked portion by its dry weight.
             let factorKg = unitKg * FoodServing.dryIngredientShare(group: factor.group, component: component)
+                / FoodServing.cookedDivisor(group: factor.group, component: component)
             func perUnit(_ perKg: Double, _ unit: MetricUnit) -> Measured {
                 FactorRanges.multiplicative(perKg * factorKg, factor: 1.6, unit: unit, sources: sources)
             }
