@@ -107,6 +107,26 @@ final class LiveGreenSmokeTests: XCTestCase {
     }
 
     @MainActor
+    func testEraseAllDataFromSettings() {
+        let app = launch()
+        app.buttons["E-bike corner"].tap()
+        XCTAssertTrue(waitForResults("E-bike corner", in: app))
+        skipQuestions(in: app)
+        app.tabBars.buttons["Scan"].tap()
+
+        let settings = app.navigationBars.buttons["Settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        settings.tap()
+        let erase = app.buttons["settings.eraseAllData"]
+        for _ in 0..<6 where !erase.isHittable { app.swipeUp() }
+        erase.tap()
+        let confirm = app.buttons["Erase everything"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        confirm.tap()
+        XCTAssertTrue(app.buttons["onboarding.next"].waitForExistence(timeout: 10), "Onboarding starts again")
+    }
+
+    @MainActor
     func testRedoOnboardingFromSettings() {
         let app = launch()
         let settings = app.navigationBars.buttons["Settings"]

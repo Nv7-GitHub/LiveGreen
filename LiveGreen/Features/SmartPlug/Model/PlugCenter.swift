@@ -50,6 +50,13 @@ final class PlugCenter {
         persist()
     }
 
+    /// Forgets every plug and its stored password. Schedules already on the plugs keep running.
+    func removeAll() {
+        for plug in plugs { Keychain.delete(account: plug.passwordAccount, service: Self.keychainService) }
+        plugs = []
+        persist()
+    }
+
     func controller(for plug: PairedPlug) -> any PlugController {
         connector.controller(for: plug.kind,
                              password: Keychain.read(account: plug.passwordAccount, service: Self.keychainService))
