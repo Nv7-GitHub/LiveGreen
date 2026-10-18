@@ -63,6 +63,24 @@ final class AppModel {
         updateProfile(.default)
     }
 
+    /// Erases everything the app stored on this device: scans and history, the profile, the metrics cache,
+    /// paired plugs, settings, archived grid readings and API keys entered in Settings (keys built in from
+    /// Secrets.xcconfig still apply). The default profile sends RootView back to the start of onboarding.
+    func eraseAllData(plugs: PlugCenter = .shared, defaults: UserDefaults = .standard) {
+        swapPrefetch.reset()
+        scans = []
+        perform { try store.deleteAll() }
+        plugs.removeAll()
+        for key in SecretKey.allCases { try? secrets.setOverride(nil, for: key) }
+        if let domain = Bundle.main.bundleIdentifier { defaults.removePersistentDomain(forName: domain) }
+        // Removing the domain doesn't notify @AppStorage, so clear the units key directly as well.
+        defaults.removeObject(forKey: DisplayUnits.defaultsKey)
+        flags = FeatureFlags.load(defaults: defaults)
+        refreshServices()
+        selectedTab = .scan
+        updateProfile(.default)
+    }
+
     func updateProfile(_ profile: UserProfile) {
         self.profile = profile
         perform { try store.saveProfile(profile) }
