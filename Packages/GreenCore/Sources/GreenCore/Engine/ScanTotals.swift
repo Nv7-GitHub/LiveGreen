@@ -9,6 +9,8 @@ public enum ScanTotals {
         for metric in additiveMetrics {
             let values = components.compactMap { $0.metrics[metric] }
             guard !values.isEmpty else { continue }
+            // One item's total is that item's own figure, sources included.
+            if values.count == 1 { totals[metric] = values[0]; continue }
             totals[metric] = Measured(
                 value: values.reduce(0) { $0 + $1.value },
                 low: values.reduce(0) { $0 + $1.low },

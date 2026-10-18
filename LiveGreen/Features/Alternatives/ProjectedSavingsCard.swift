@@ -39,12 +39,14 @@ struct ProjectedSavingsCard: View {
     }
 
     private func amount(_ saving: EstimateRange, _ metric: MetricKey, suffix: String) -> some View {
-        VStack(alignment: .trailing, spacing: 2) {
-            Text("\(Self.signed(-saving.value, metric)) \(DisplayUnits.symbol(metric.unit))\(suffix)")
+        // One unit for the figure and its range, suited to its size (lb rather than 3,527 oz of car plastic).
+        let scale = DisplayUnits.scale(for: metric.unit, magnitude: saving.value)
+        return VStack(alignment: .trailing, spacing: 2) {
+            Text("\(Self.signed(-saving.value, scale))\(DisplayUnits.nbsp)\(scale.symbol)\(suffix)")
                 .font(.body.weight(.semibold).monospacedDigit())
                 .foregroundStyle(saving.value >= 0 ? Theme.leaf : Theme.warning)
             // The headline is the change (negative = saved), so the range uses the same sign.
-            Text("\(Self.signed(-saving.high, metric)) to \(Self.signed(-saving.low, metric))")
+            Text("\(Self.signed(-saving.high, scale)) to \(Self.signed(-saving.low, scale))")
                 .font(.caption2.monospacedDigit()).foregroundStyle(.secondary)
         }
     }
@@ -58,8 +60,8 @@ struct ProjectedSavingsCard: View {
         [split?.yearly, split?.oneTime].contains { $0.map(Self.isChange) ?? false }
     }
 
-    private static func signed(_ change: Double, _ metric: MetricKey) -> String {
-        let magnitude = Measured.format(DisplayUnits.value(abs(change), metric.unit))
+    private static func signed(_ change: Double, _ scale: DisplayScale) -> String {
+        let magnitude = Measured.format(abs(change) * scale.factor, resolution: scale.resolution)
         if change > 0 { return "+\(magnitude)" }
         return change < 0 ? "−\(magnitude)" : magnitude
     }
