@@ -30,8 +30,20 @@ enum SuggestAlternativesTool {
         "identifiers": SchemaParts.identifiers,
         "quantities": SchemaParts.quantities,
         "usage": SchemaParts.usage,
+        "condition": SchemaParts.enumeration(Alternative.Condition.allCases.map(\.rawValue),
+            "new, or used / refurbished when the swap is buying the item second-hand."),
+        "reusable": ["type": "boolean", "description": """
+            True for a durable item used again and again in place of single-use ones (a steel tumbler or glass jar \
+            for disposable cups, a cloth bag for plastic bags). Scored as a household item over its whole life.
+            """],
+        "lifespan_years": SchemaParts.nullableNumber("""
+            Years the alternative serves when that differs from the original's (kept longer, built to last, or a \
+            reusable's life). Null when it lasts about as long; a used or refurbished item is compared over the \
+            original's years.
+            """),
         "fallback_estimates": SchemaParts.estimates,
-    ], required: ["name", "category", "rationale", "cost", "effort", "identifiers", "quantities", "usage", "fallback_estimates"])
+    ], required: ["name", "category", "rationale", "cost", "effort", "identifiers", "quantities", "usage", "condition",
+                  "reusable", "lifespan_years", "fallback_estimates"])
 
     static func parse(_ input: JSONValue, components: [Component]) throws -> [AlternativeSuggestion] {
         let decoder = JSONDecoder()
@@ -72,11 +84,18 @@ enum SuggestAlternativesTool {
         var identifiers: ReportComponentsTool.IdentifiersPayload?
         var quantities: Quantities?
         var usage: UsageProfile?
+        var condition: String?
+        var reusable: Bool?
+        var lifespanYears: Double?
         var fallbackEstimates: [EstimatePayload]?
 
+        /// A condition or reuse flag left out is read from the name ("Used …", "Reusable …"). A reusable is filed
+        /// as household before its estimates are kept, so its lifespan estimate is not dropped as a packaging one.
         func makeAlternative(original: Component) throws -> Alternative {
             guard let name = name.trimmedNonEmpty else { throw GreenCoreError.invalidModelOutput("alternative without a name") }
-            let category = Category(looseRawValue: category) ?? original.category
+            let isReusable = reusable ?? name.lowercased().contains("reusable")
+            let category = Alternative.scoredCategory(Category(looseRawValue: category) ?? original.category,
+                                                      isReusable: isReusable)
             return Alternative(
                 name: name, category: category,
                 identifiers: identifiers?.identifiers ?? Identifiers(),
@@ -85,7 +104,10 @@ enum SuggestAlternativesTool {
                 rationale: rationale.trimmedNonEmpty ?? "",
                 practicality: Practicality(cost: Practicality.CostTier(rawValue: cost.lowercased()) ?? .similar,
                                            effort: Practicality.Effort(rawValue: effort.lowercased()) ?? .moderate),
-                fallbackEstimates: EstimatePayload.table(fallbackEstimates ?? [], for: category))
+                fallbackEstimates: EstimatePayload.table(fallbackEstimates ?? [], for: category),
+                condition: condition.flatMap { Alternative.Condition(rawValue: $0.lowercased()) } ?? Alternative.Condition(name: name),
+                isReusable: isReusable,
+                lifespanYears: lifespanYears.flatMap { $0.isFinite && $0 > 0 ? $0 : nil })
         }
     }
 }
