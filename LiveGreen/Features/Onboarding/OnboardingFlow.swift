@@ -46,7 +46,7 @@ struct OnboardingFlow: View {
             navigation
         }
         .padding()
-        .background(backdrop)
+        .greeneryBackground(.onboarding)
     }
 
     private var header: some View {
@@ -105,12 +105,6 @@ struct OnboardingFlow: View {
                 .accessibilityIdentifier("onboarding.next")
             }
         }
-    }
-
-    private var backdrop: some View {
-        LinearGradient(colors: [Theme.mint.opacity(0.45), Theme.leaf.opacity(0.15), .clear],
-                       startPoint: .topLeading, endPoint: .bottom)
-            .ignoresSafeArea()
     }
 
     private func move(by offset: Int) {

@@ -56,7 +56,8 @@ LiveGreen/                    app target (UI and platform integrations)
                               Compare, SmartPlug, History, Settings
   Platform/                   Keychain, Secrets, Vision OCR, AR session and anchoring, Bonjour, background refresh
   Persistence/                SwiftData models: StoredScan, CachedMetrics, StoredProfile; ScanStore, ScanCache
-  DesignSystem/               Theme (green palette, tier colors), GlassCard, TierBadge, number formatting
+  DesignSystem/               Theme (green palette, tier colors), GlassCard, TierBadge, number formatting,
+                              Greenery (hand-drawn field-journal art behind every screen)
   Resources/                  Assets
 Packages/GreenCore/           Swift package with no UIKit/SwiftUI dependency
   Sources/GreenCore/Model     Tier, Source, Measured, MetricKey, Category, Component, ScanResult, UserProfile…
@@ -69,6 +70,7 @@ Packages/GreenCore/           Swift package with no UIKit/SwiftUI dependency
   Sources/GreenCore/Resources ReferenceData JSON tables, each record cited
   Sources/GreenCoreFakes      Fake* implementations and demo fixtures (desk, meal, e-bike corner)
 LiveGreenUITests/             Demo-mode smoke tests and a full screen-by-screen tour
+tools/greenery/               Scripts that generated and cut out the bundled greenery art
 ```
 
 **Pipeline.** `ScanCoordinator.scan(image:hints:)` returns an `AsyncThrowingStream<PipelineEvent, Error>`. It identifies components (`VisionIdentifier`), then runs the evidence ladder in tier order (T1 exact record → T2 researched spec → T3 factor model → T4 estimate), using a SwiftData cache keyed by GTIN or brand|model. It then gates follow-up questions and finishes with `.completed(ScanResult)`. Every number is a `Measured` value with a range, tier and sources.

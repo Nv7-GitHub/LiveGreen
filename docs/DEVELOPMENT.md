@@ -65,7 +65,8 @@ Secrets.example.xcconfig          template; Secrets.xcconfig is gitignored
 LiveGreen/                        app target (SwiftUI)
   App/                            LiveGreenApp, RootView (tab bar), AppModel, FeatureFlags, AIProvider,
                                   ServiceContainer (builds real or fake services)
-  DesignSystem/                   Theme, GlassCard, TierBadge, MeasuredFormatting, DisplayUnits
+  DesignSystem/                   Theme, GlassCard, TierBadge, MeasuredFormatting, DisplayUnits, Greenery
+                                  (hand-drawn backdrops, drifting leaves, illustrated empty states)
   Features/Scan/                  ScanTab, PhotoScanView, ARScanView ("Integrated view"), barcode scanner,
                                   ScanCoordinator, AnalyzingCard (live progress)
   Features/Results/               ScanResultView, ComponentHotspots (numbered pins), SummaryHeader,
@@ -80,6 +81,7 @@ LiveGreen/                        app target (SwiftUI)
   Platform/                       Keychain, Secrets, Vision OCR, AR session, Bonjour, background refresh
   Resources/Assets.xcassets       AppIcon (light, dark, tinted), AccentColor
 LiveGreenUITests/                 XCUITest smoke and tour tests
+tools/greenery/                   scripts that made the greenery art (Grok Imagine, cut-out, install)
 Packages/GreenCore/               Swift package, no UIKit; runs on the Mac with `swift test`
   Sources/GreenCore/Model         data model (Measured, Component, ScanResult, UserProfile, PipelineEvent…)
   Sources/GreenCore/Services      protocols (VisionIdentifier, SpecResearcher, ImageEditor, GridSignal…)
@@ -473,7 +475,41 @@ value), questions banner, the item list and "See greener swaps". The detail head
 words (`MaterialNames`; food lists only its packaging). Content has bottom margin so the floating
 tab bar never covers it. The detail sheet shows the flow (Sankey), usage card, plug card and inspector.
 
-## 12. Testing
+## 12. Greenery art
+
+Every main screen sits on a page of a naturalist's field journal: warm paper (deep forest in Dark Mode, asset
+`Paper`) with a faint dot grid, hand-drawn plants pinned to its edges, a few leaves drifting down and, in Dark
+Mode, fireflies. Empty states put an illustration over a cream specimen label (serif italic title, spaced
+monospaced caption), like the tag beside a pressed flower.
+
+- Code: `DesignSystem/Greenery.swift` (`GreeneryArt`, `GreeneryScene`, `.greeneryBackground(_:)`, `.swaying`,
+  `.floating`), `DriftingLeaves.swift` (one `Canvas` on a 30 fps `TimelineView`, paused off screen),
+  `GreeneryEmptyState.swift`. A scene picks the pieces for a screen; each tab has its own corner of the garden:
+  History a hanging fern over a forest floor, Leaderboard an apple-blossom branch with foxglove and big leaves
+  in the bottom corners, Plugs trailing ivy, the name sign-up and the questionnaire ivy over a wildflower
+  meadow, Settings and About a fern, pushed screens (results, swaps, a plug) only the forest floor. Settings
+  shows the home on a floating island; the GreenScore sits in an olive laurel; the analyzing card has a
+  seedling that grows with each step; the no-camera screen is the forest at night.
+- The art is decoration: hidden from VoiceOver, no hit testing, and still (no sway, no drifting leaves) with
+  Reduce Motion. Ink drawn for paper is dimmed to 82% on the dark page. `greeneryBackground` hides list and
+  form backgrounds so the paper shows, clips to its own bounds (sheets don't clip their background) and adds
+  bottom scroll room so the last content can rest above the plants.
+- Pieces use fixed full-screen frames: a ground strip wider than the screen (they spill past both sides) in a
+  `maxWidth: .infinity` frame widened the whole stack and pushed the top-right pieces off screen.
+- The art is fixed, not generated at run time. It was made with Grok Imagine (`grok-imagine-image-2.0`, 2k,
+  `/v1/images/generations`) with one shared style prompt (ink, gouache, coloured pencil, muted greens, ochre
+  and blossom pink, on plain white) and picked by eye from two variants per piece. Cutting it out of the paper
+  (`tools/greenery/cutout.py`) combines Vision's subject mask with removing paper connected to the outside and
+  matting a band along every edge against white, so no halo shows on the dark page. Paper fully enclosed by
+  ink can't be told apart from white petals by colour, so `--holes N` clears only enclosed gaps under N
+  pixels per piece, and white flowers were left out of the meadow prompt. PNGs are reduced to 256-colour
+  palettes (`install.py`), 2.4 MB for all 21 images.
+- To add or redo a piece: `python3 tools/greenery/generate.py OUT [Name]` (prompts and ratios in
+  `pieces.json`, `XAI_API_KEY` from `Secrets.xcconfig`), pick a variant, run `cutout.py` with the flags in
+  `pieces.json`, check it over cream and over near-black, then `install.py CUT.png Name`. Leaves come from one
+  sheet split with `split.py`. Needs Pillow, NumPy and SciPy (`python3 -m venv` + `pip install`).
+
+## 13. Testing
 
 - Core logic: `cd Packages/GreenCore && swift test` (~470 tests, under 1 s, Mac host).
 - App, default scheme `LiveGreen`: only the critical UI test (`LiveGreenSmokeTests/testDemoScanShowsResults`),
@@ -490,7 +526,7 @@ tab bar never covers it. The detail sheet shows the flow (Sankey), usage card, p
   test photo in the library; `xcrun simctl ui <device> appearance dark` switches appearance. Taps right after
   `launch` often land before the app is ready; wait a couple of seconds.
 
-## 13. Known gaps and ideas
+## 14. Known gaps and ideas
 
 - Camera, Integrated view (ARKit) and barcode scanning have only run in the simulator; test on a device.
 - Real Shelly pairing and schedule writes are untested on hardware.
@@ -502,7 +538,7 @@ tab bar never covers it. The detail sheet shows the flow (Sankey), usage card, p
 - Research is on the scan's critical path for branded items; a slow web search (one 36 s run seen) delays the
   result. It could move behind a preliminary result.
 
-## 14. History
+## 15. History
 
 - Image QA run 1 (`testing_images/testing_images_buglist1.md`, untracked) was fixed in batches, one PR each:
   #3 generic keys, units, Sankey, analyzing card (K2, L4, L5, L7); #4 swap scoring and cards (R5, S1–S9,
