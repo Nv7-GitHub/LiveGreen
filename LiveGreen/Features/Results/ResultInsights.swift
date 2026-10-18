@@ -1,40 +1,9 @@
 import Foundation
 import GreenCore
 
-/// Derived figures for the results screen: per-component shares and evidence confidence.
+/// Derived figures for the results screen: which metrics and items to show, and what their per-year figures
+/// assume. Values, shares and ranks come from `ScanBreakdown`, all per year like the headline.
 nonisolated enum ResultInsights {
-    /// Sum of one metric across components (values only).
-    static func total(_ metric: MetricKey, in components: [Component]) -> Double {
-        components.reduce(0) { $0 + max(0, $1.metrics[metric]?.value ?? 0) }
-    }
-
-    /// The component's share (0–1) of the scan's total for `metric`; 0 when unknown.
-    static func share(of component: Component, metric: MetricKey, in components: [Component]) -> Double {
-        let sum = total(metric, in: components)
-        guard sum > 0, let value = component.metrics[metric]?.value else { return 0 }
-        return max(0, value) / sum
-    }
-
-    /// Fraction of carbon per evidence tier, in tier order, omitting empty tiers.
-    static func carbonShareByTier(_ components: [Component]) -> [(tier: Tier, share: Double)] {
-        let sum = total(.carbon, in: components)
-        guard sum > 0 else { return [] }
-        return Tier.allCases.compactMap { tier in
-            let part = components
-                .compactMap { $0.metrics[.carbon] }
-                .filter { $0.tier == tier }
-                .reduce(0) { $0 + max(0, $1.value) }
-            return part > 0 ? (tier, part / sum) : nil
-        }
-    }
-
-    /// Confidence meter (spec §6): share of total carbon resolved at T1 or T2.
-    static func confidence(_ components: [Component]) -> Double {
-        carbonShareByTier(components)
-            .filter { $0.tier <= .researchedSpec }
-            .reduce(0) { $0 + $1.share }
-    }
-
     /// Picker options for a scan: metrics at least one component shows (applies, has a value, not ≈ 0; see
     /// `Component.displayable`). "All" is offered when more than one metric is.
     static func availableFilters(for components: [Component]) -> [ResultMetricFilter] {
@@ -56,12 +25,97 @@ nonisolated enum ResultInsights {
         return components.filter { $0.displayable(metric) != nil }
     }
 
-    /// Components ordered by the given metric, largest first; unknown values last.
-    static func ranked(_ components: [Component], by metric: MetricKey) -> [Component] {
-        components.sorted { lhs, rhs in
-            let l = lhs.metrics[metric]?.value ?? -.infinity
-            let r = rhs.metrics[metric]?.value ?? -.infinity
-            return metric.higherIsBetter ? l < r : l > r
+    // MARK: Assumptions
+
+    /// What one item's year assumes, e.g. "2 servings a week", "3 uses a week" or "4-yr life". For electricity, the
+    /// hours a day the device is on, unless the figure comes from a product record's own test.
+    static func assumptionLabel(for component: Component, metric: MetricKey, breakdown: ScanBreakdown,
+                                engine: ImpactEngine) -> String? {
+        if metric == .yearlyElectricity {
+            return hoursOn(component, engine: engine).map { "\(amount($0)) h a day" }
         }
+        switch breakdown.assumptions[component.id] {
+        case .servingsPerWeek(let n): return "\(amount(n)) \(n == 1 ? "serving" : "servings") a week"
+        case .packsPerWeek(let n): return "\(amount(n)) \(n == 1 ? "pack" : "packs") a week"
+        case .usesPerWeek(let n): return "\(amount(n)) \(n == 1 ? "use" : "uses") a week"
+        case .lifespan(let years): return "\(amount(years))-yr life"
+        case nil: return nil
+        }
+    }
+
+    /// The assumptions behind a per-year total, e.g. "Assumes 2 servings a week" or "Assumes food 1–2 servings a
+    /// week, packaging 2 uses a week, durables last 4–5 years". Nil when there is nothing to say.
+    static func assumptionNote(for components: [Component], metric: MetricKey, breakdown: ScanBreakdown,
+                               engine: ImpactEngine) -> String? {
+        let counted = components.filter { $0.metrics[metric] != nil }
+        if metric == .yearlyElectricity {
+            let hours = counted.compactMap { hoursOn($0, engine: engine) }
+            return hours.isEmpty ? nil : "Assumes \(span(hours)) h a day of use"
+        }
+        var servings: [Double] = [], packs: [Double] = [], packaging: [Double] = [], care: [Double] = []
+        var lifespans: [Double] = []
+        for component in counted {
+            switch breakdown.assumptions[component.id] {
+            case .servingsPerWeek(let n): servings.append(n)
+            case .packsPerWeek(let n): packs.append(n)
+            case .usesPerWeek(let n) where component.category == .personalCare: care.append(n)
+            case .usesPerWeek(let n): packaging.append(n)
+            case .lifespan(let years): lifespans.append(years)
+            case nil: break
+            }
+        }
+        let groups = [servings.isEmpty && packs.isEmpty, packaging.isEmpty, care.isEmpty, lifespans.isEmpty]
+            .filter { !$0 }.count
+        // Name each group only when there is more than one.
+        func named(_ noun: String, _ text: String) -> String { groups > 1 ? "\(noun) \(text)" : text }
+        var parts: [String] = []
+        if !servings.isEmpty { parts.append(named("food", "\(span(servings)) \(plural("serving", servings)) a week")) }
+        if !packs.isEmpty {
+            // Beside servings, "packs" already says it is food.
+            let text = "\(span(packs)) \(plural("pack", packs)) a week"
+            parts.append(servings.isEmpty ? named("food", text) : text)
+        }
+        if !packaging.isEmpty {
+            parts.append(named("packaging", "\(span(packaging)) \(plural("use", packaging)) a week"))
+        }
+        if !care.isEmpty { parts.append(named("personal care", "\(span(care)) \(plural("use", care)) a week")) }
+        if !lifespans.isEmpty {
+            let years = "\(span(lifespans)) \(plural("year", lifespans))"
+            if groups > 1 {
+                parts.append("durables last \(years)")
+            } else {
+                parts.append(lifespans.count == 1 ? "it lasts \(years)" : "they last \(years)")
+            }
+        }
+        return parts.isEmpty ? nil : "Assumes " + parts.joined(separator: ", ")
+    }
+
+    /// Hours a day an electronic item is on, as the engine uses them now; nil for record-based electricity.
+    private static func hoursOn(_ component: Component, engine: ImpactEngine) -> Double? {
+        guard component.metrics[.yearlyElectricity].map({ $0.tier != .exactRecord }) ?? false else { return nil }
+        return engine.editableUsage(for: component).first { $0.field == .hoursOnPerDay }?.value
+    }
+
+    /// "2" or "1–3": the range of values, each with at most one decimal.
+    private static func span(_ values: [Double]) -> String {
+        guard let low = values.min(), let high = values.max() else { return "" }
+        let lowText = amount(low), highText = amount(high)
+        return lowText == highText ? lowText : "\(lowText)–\(highText)"
+    }
+
+    /// Singular only when every value is exactly one.
+    private static func plural(_ noun: String, _ values: [Double]) -> String {
+        values.allSatisfy { $0 == 1 } ? noun : noun + "s"
+    }
+
+    private static func amount(_ number: Double) -> String {
+        number.formatted(.number.precision(.fractionLength(0...1)))
+    }
+}
+
+extension Measured {
+    /// The value with "/yr", e.g. "340 lb CO₂e/yr"; kWh/yr already says it.
+    var formattedPerYear: String {
+        unit == .kilowattHoursPerYear ? formatted : formatted + "/yr"
     }
 }

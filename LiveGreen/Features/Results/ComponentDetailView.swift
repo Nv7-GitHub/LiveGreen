@@ -68,9 +68,9 @@ struct ComponentDetailView: View {
         if let brand = ids.brand { parts.append(brand) }
         if let model = ids.model { parts.append(model) }
         if let gtin = ids.gtin { parts.append("GTIN \(gtin)") }
-        if !ids.materials.isEmpty {
-            parts.append(ids.materials.map { "\(Int($0.percent))% \($0.material.replacingOccurrences(of: "_", with: " "))" }
-                .joined(separator: ", "))
+        // Plain names ("PET plastic", not "pet"); food's own matter is not listed as "food organic".
+        if let materials = MaterialNames.summary(ids.materials, category: component.category) {
+            parts.append(materials)
         }
         if let basis = component.basisTitle { parts.append(basis) }
         return parts.joined(separator: " · ")

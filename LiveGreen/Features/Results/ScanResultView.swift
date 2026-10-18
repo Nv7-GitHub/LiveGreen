@@ -19,18 +19,24 @@ struct ScanResultView: View {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     @State private var current: ScanResult
+    /// Per-item yearly values, shares, ranks and pin numbers for `current`, so rows, pins and the summary share one
+    /// basis with the per-year headline.
+    @State private var breakdown: ScanBreakdown
     @State private var filter: ResultMetricFilter = .carbon
     @State private var selectedID: Component.ID?
     @State private var showsQuestions = false
     @State private var handledQuestions: Set<PendingQuestion.ID> = []
     @State private var didOfferQuestions = false
     @State private var isRerunning = false
+    /// Height of the overview's visible area, which caps the photo's height.
+    @State private var viewportHeight: CGFloat = 0
 
     /// - Parameter rerun: overrides the default local impact-engine re-run.
     init(result: ScanResult, rerun: Rerun? = nil) {
         self.result = result
         self.rerun = rerun
         _current = State(initialValue: result)
+        _breakdown = State(initialValue: ScanBreakdown(components: result.components))
     }
 
     private var isLandscape: Bool { verticalSizeClass == .compact }
@@ -74,6 +80,8 @@ struct ScanResultView: View {
                 ScrollView {
                     detail(for: component).padding()
                 }
+                // Content scrolled under the Done button is cut off cleanly instead of showing through behind it.
+                .scrollEdgeEffectStyle(.hard, for: .top)
                 // The detail header already names the item.
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -89,6 +97,9 @@ struct ScanResultView: View {
             QuestionsSheet(questions: pendingQuestions, onApply: applyAnswers, onUseEstimate: useEstimates)
         }
         .onChange(of: result) { _, newValue in current = newValue }
+        .onChange(of: current.components) { _, components in
+            withAnimation(.smooth) { breakdown = ScanBreakdown(components: components) }
+        }
         .onChange(of: availableFilters, initial: true) { _, options in
             if !options.contains(filter) { filter = options.first ?? .carbon }
         }
@@ -101,55 +112,100 @@ struct ScanResultView: View {
     // MARK: - Overview
 
     private var overview: some View {
-        ScrollView {
-            VStack(spacing: 14) {
-                photo
-                MetricPicker(selection: $filter, options: availableFilters)
-                SummaryHeader(result: current, filter: filter)
-                if !pendingQuestions.isEmpty { questionsBanner }
-                componentList
-                alternativesButton
-                ScanFeedbackCard(result: current)
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 14) {
+                    photo
+                    MetricPicker(selection: $filter, options: availableFilters)
+                    SummaryHeader(result: current, filter: filter, breakdown: breakdown)
+                    if !pendingQuestions.isEmpty { questionsBanner }
+                    componentList
+                    alternativesButton
+                    ScanFeedbackCard(result: current)
+                }
+                .padding(.horizontal)
+                .padding(.top, 4)
+                .animation(.smooth, value: current)
+                .animation(.smooth, value: filter)
             }
-            .padding(.horizontal)
-            .padding(.top, 4)
-            .animation(.smooth, value: current)
-            .animation(.smooth, value: filter)
+            .scrollIndicators(.hidden)
+            // Room for the floating tab bar so the last rows and the swaps button are never covered.
+            .contentMargins(.bottom, 96, for: .scrollContent)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { viewportHeight = $0 }
+            .onChange(of: selectedID) { _, id in
+                // In portrait the detail sheet covers the lower half of the screen: bring the selected item into the
+                // part above it, wherever it was tapped from.
+                guard id != nil, !isLandscape else { return }
+                Task { @MainActor in
+                    withAnimation(.smooth) { proxy.scrollTo(Self.selectionAnchorID, anchor: UnitPoint(x: 0.5, y: 0.3)) }
+                }
+            }
         }
-        .scrollIndicators(.hidden)
-        // Room for the floating tab bar so the last rows and the swaps button are never covered.
-        .contentMargins(.bottom, 96, for: .scrollContent)
+    }
+
+    /// Tall photos are capped so the picker and headline stay on the first screen: about half the visible height in
+    /// portrait, most of it in landscape.
+    private var photoMaxHeight: CGFloat {
+        guard viewportHeight > 0 else { return 420 }
+        return isLandscape ? max(200, viewportHeight * 0.8) : min(max(viewportHeight * 0.5, 260), 480)
     }
 
     private var photo: some View {
-        ResultPhoto(data: current.photo, mode: current.mode)
-            // On the photo itself: on the container it would replace every hotspot's identifier.
-            .accessibilityIdentifier("resultPhoto")
-            .overlay {
-                // A barcode scan's photo is the product's own pack shot, not the scene, so there is
-                // nothing to point at.
-                if current.mode != .barcode {
-                    ComponentHotspots(components: shownComponents, filter: filter,
+        ResultPhoto(data: current.photo, mode: current.mode, maxHeight: photoMaxHeight) {
+            // A barcode scan's photo is the product's own pack shot, not the scene, so there is
+            // nothing to point at.
+            if current.mode != .barcode {
+                ZStack {
+                    ComponentHotspots(components: shownComponents, filter: filter, breakdown: breakdown,
                                       selectedID: selectedID, onSelect: select)
+                    selectionAnchor
                 }
             }
-            .clipShape(.rect(cornerRadius: Theme.cardCornerRadius))
-            .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
+        }
+        .clipShape(.rect(cornerRadius: Theme.cardCornerRadius))
+        .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
+    }
+
+    private static let selectionAnchorID = "selectedItemAnchor"
+
+    /// An invisible point at the selected item's box center, scrolled to when an item is selected.
+    private var selectionAnchor: some View {
+        GeometryReader { geometry in
+            let box = selectedComponent?.boundingBox.clamped ?? .full
+            Color.clear
+                .frame(width: 1, height: 1)
+                .position(x: box.midX * geometry.size.width, y: box.midY * geometry.size.height)
+                .id(Self.selectionAnchorID)
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 
     private var componentList: some View {
-        let ranked = ResultInsights.ranked(shownComponents, by: filter.shareMetric)
+        let metric = filter.shareMetric
+        let ranked = breakdown.ranked(shownComponents, by: metric)
+        let engine = ImpactEngine()
         return VStack(alignment: .leading, spacing: 6) {
-            Text(filter == .all ? "Items" : "Items by \(filter.title.lowercased())")
-                .font(.headline)
-                .padding(.horizontal, 6)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(filter == .all ? "Items" : "Items by \(filter.title.lowercased())")
+                    .font(.headline)
+                Text("Color shows each item's yearly amount next to a typical person's year")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 6)
             VStack(spacing: 0) {
+                // Numbers are the pins' (by yearly carbon), so they stay with their items when the metric changes.
                 ForEach(Array(ranked.enumerated()), id: \.element.id) { index, component in
                     if index > 0 { Divider().padding(.leading, 54) }
+                    let yearly = breakdown.yearly(metric, of: component)
                     Button { select(component) } label: {
-                        ComponentRow(component: component, number: index + 1, filter: filter,
-                                     share: ResultInsights.share(of: component, metric: filter.shareMetric,
-                                                                 in: shownComponents),
+                        ComponentRow(component: component, number: breakdown.number(of: component), filter: filter,
+                                     yearly: yearly,
+                                     share: breakdown.share(of: component, metric: metric, in: shownComponents),
+                                     assumption: ResultInsights.assumptionLabel(for: component, metric: metric,
+                                                                                breakdown: breakdown, engine: engine),
+                                     tint: Theme.impactTint(ImpactLevel(yearly: yearly?.value ?? 0, metric: metric)),
                                      isSelected: component.id == selectedID)
                     }
                     .buttonStyle(.plain)
@@ -202,7 +258,7 @@ struct ScanResultView: View {
     /// carbon contributor.
     private var sideInspector: some View {
         let component = selectedComponent
-            ?? ResultInsights.ranked(current.components, by: .carbon).first
+            ?? breakdown.ranked(current.components, by: .carbon).first
         return ScrollView {
             if let component {
                 detail(for: component).padding()

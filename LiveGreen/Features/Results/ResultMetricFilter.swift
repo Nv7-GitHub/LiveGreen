@@ -1,8 +1,8 @@
 import GreenCore
 
-/// The results metric picker (spec §6): Carbon · Electricity · Water · Land · Plastic · All.
+/// The results metric picker (spec §6): Carbon · Electricity · Water · Land · Plastic · Water pollution · All.
 nonisolated enum ResultMetricFilter: String, CaseIterable, Identifiable, Hashable, Sendable {
-    case carbon, electricity, water, land, plastic, all
+    case carbon, electricity, water, land, plastic, pollution, all
 
     var id: Self { self }
 
@@ -13,6 +13,7 @@ nonisolated enum ResultMetricFilter: String, CaseIterable, Identifiable, Hashabl
         case .water: "Water"
         case .land: "Land"
         case .plastic: "Plastic"
+        case .pollution: "Pollution"
         case .all: "All"
         }
     }
@@ -25,6 +26,7 @@ nonisolated enum ResultMetricFilter: String, CaseIterable, Identifiable, Hashabl
         case .water: .water
         case .land: .land
         case .plastic: .plasticMass
+        case .pollution: .waterPollution
         case .all: nil
         }
     }
