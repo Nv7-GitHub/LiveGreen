@@ -30,9 +30,7 @@ struct ComponentDetailView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             header
-            if let ownership {
-                OwnershipCard(component: component, result: ownership.result, onChange: ownership.onChange)
-            }
+            if ownershipFirst { ownershipCard }
             if let metric = activeFlowMetric, let measured = component.displayable(metric) {
                 GlassCard {
                     VStack(alignment: .leading, spacing: 12) {
@@ -50,6 +48,20 @@ struct ComponentDetailView: View {
                 }
             }
             MetricInspector(component: component)
+            if !ownershipFirst { ownershipCard }
+        }
+    }
+
+    /// Up top when it matters (the item is not counted, or the scan is a store or street scene); for the user's own
+    /// things "Not mine" waits at the end, below the numbers.
+    private var ownershipFirst: Bool {
+        guard let ownership else { return false }
+        return !component.isCounted || ownership.result.sceneContext?.asksWhichIsYours == true
+    }
+
+    @ViewBuilder private var ownershipCard: some View {
+        if let ownership {
+            OwnershipCard(component: component, result: ownership.result, onChange: ownership.onChange)
         }
     }
 

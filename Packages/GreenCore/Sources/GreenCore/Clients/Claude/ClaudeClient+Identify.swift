@@ -89,7 +89,7 @@ extension ClaudeClient: VisionIdentifier {
         parked car, a neighbour's window unit), store stock and displays, and fixtures of the place (signs, shelving, \
         a store freezer, street furniture). Omit it for the user's own things.
         - background: true for an incidental item only partly visible behind or beside what the photo is of (a bag \
-        on the floor behind a notebook on a desk). Omit it otherwise. Report what the photo is of first.
+        on the floor behind a notebook on a desk). Omit it otherwise.
 
         Bounding boxes
         - Normalized to the image: x and y are the box's top-left corner as fractions of width and height \
