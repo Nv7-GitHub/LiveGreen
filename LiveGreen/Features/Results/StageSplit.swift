@@ -1,15 +1,24 @@
 import GreenCore
 
-/// Lifecycle-stage split for the flow view (spec §6). Carbon uses the component's recorded split
-/// (OFF / ASUS PCF stage shares) when present; otherwise a typical split for the category.
+/// Lifecycle-stage split for the flow view (spec §6). Carbon uses the component's stage shares (an OFF / ASUS PCF
+/// record's, or the factor table's) when present; otherwise a typical split for the category.
 nonisolated struct StageSplit: Equatable, Sendable {
+    /// Where the split comes from, for the caption under the flow.
+    enum Basis: Equatable, Sendable {
+        /// The product's own record, behind an exact-record (T1) carbon value.
+        case record
+        /// Yearly electricity is all use phase.
+        case usePhase
+        /// A modeled split: the category's typical shape or a factor table's.
+        case typical
+    }
+
     /// Fractions summing to 1, only stages with a positive share.
     let shares: [(stage: LifecycleStage, share: Double)]
-    /// True when the split came from the component's own record.
-    let isRecorded: Bool
+    let basis: Basis
 
     static func == (lhs: StageSplit, rhs: StageSplit) -> Bool {
-        lhs.isRecorded == rhs.isRecorded && lhs.shares.map(\.stage) == rhs.shares.map(\.stage)
+        lhs.basis == rhs.basis && lhs.shares.map(\.stage) == rhs.shares.map(\.stage)
             && lhs.shares.map(\.share) == rhs.shares.map(\.share)
     }
 
@@ -18,21 +27,39 @@ nonisolated struct StageSplit: Equatable, Sendable {
 
     static func split(for component: Component, metric: MetricKey) -> StageSplit {
         if metric == .yearlyElectricity {
-            return StageSplit(normalizing: [.use: 1], isRecorded: true)
+            return StageSplit(normalizing: [.use: 1], basis: .usePhase)
         }
         if metric == .carbon, !component.stageShares.isEmpty {
-            return StageSplit(normalizing: component.stageShares, isRecorded: true)
+            // Factor models and estimates fill in stage shares too (device tables, category defaults); only an
+            // exact record's carbon comes with the product's own split.
+            let recorded = component.metrics[.carbon]?.tier == .exactRecord
+            return StageSplit(normalizing: component.stageShares, basis: recorded ? .record : .typical)
         }
-        return StageSplit(normalizing: typical(component.category, metric: metric), isRecorded: false)
+        return StageSplit(normalizing: typical(component.category, metric: metric), basis: .typical)
     }
 
-    init(normalizing raw: [LifecycleStage: Double], isRecorded: Bool) {
+    init(normalizing raw: [LifecycleStage: Double], basis: Basis) {
         let sum = raw.values.filter { $0 > 0 }.reduce(0, +)
         shares = LifecycleStage.allCases.compactMap { stage in
             guard sum > 0, let value = raw[stage], value > 0 else { return nil }
             return (stage, value / sum)
         }
-        self.isRecorded = isRecorded
+        self.basis = basis
+    }
+
+    /// The line under the flow saying where the split comes from.
+    func caption(for category: GreenCore.Category) -> String {
+        switch basis {
+        case .record: "Stage split from the product's own record."
+        case .usePhase: "All of it is used while the item is on or on standby."
+        case .typical: "Typical stage split for \(category.displayName.lowercased()) items."
+        }
+    }
+
+    /// A share as a whole percent; a stage too small to round to 1% reads "<1%", never "0%".
+    static func percentLabel(_ share: Double) -> String {
+        let percent = share * 100
+        return percent > 0 && percent < 0.5 ? "<1%" : "\(Int(percent.rounded()))%"
     }
 
     /// Typical splits by category. Carbon shapes follow common LCA results: farm stage dominates food
