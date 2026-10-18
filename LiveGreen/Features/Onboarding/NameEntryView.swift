@@ -130,9 +130,9 @@ struct NameEntryView: View {
         isFocused = false
         withAnimation(.smooth) { stage = .creating }
         Task {
-            try? await Task.sleep(for: .seconds(1.4))
+            try? await Task.sleep(for: .seconds(0.4))
             withAnimation(.smooth) { stage = .welcome }
-            try? await Task.sleep(for: .seconds(1.3))
+            try? await Task.sleep(for: .seconds(0.6))
             onComplete(trimmed)
         }
     }
