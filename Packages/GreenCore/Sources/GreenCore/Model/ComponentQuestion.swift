@@ -33,12 +33,21 @@ public struct PendingQuestion: Codable, Sendable, Hashable, Identifiable {
     public var componentID: Component.ID
     public var componentName: String
     public var question: ComponentQuestion
+    /// The value the numbers use now for the field the options set ("Now: 3 a week"), when they all set one.
+    public var currentValue: Double?
 
     public var id: String { "\(componentID.uuidString)/\(question.id)" }
 
-    public init(componentID: Component.ID, componentName: String, question: ComponentQuestion) {
+    public init(componentID: Component.ID, componentName: String, question: ComponentQuestion, currentValue: Double? = nil) {
         self.componentID = componentID
         self.componentName = componentName
         self.question = question
+        self.currentValue = currentValue
+    }
+
+    /// The usage field the options set, when they all set the same one.
+    public var field: UsageField? {
+        let fields = Set(question.options.compactMap(\.field))
+        return fields.count == 1 ? fields.first : nil
     }
 }

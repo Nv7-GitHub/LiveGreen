@@ -46,15 +46,17 @@ struct PackBasisTests {
         #expect(bag.plasticPackagingShare == 1)
         #expect(try #require(bag.metrics[.water]).value > 0)
 
-        // A year is packs a week × 52 × the pack. With no rate stated, the default one serving a week is given in
-        // packs, so the year counts the same food as per serving did, not a whole pack a week.
+        // A year is packs a week × 52 × the pack. The rate is the food group's typical servings a week, given in
+        // packs, so the year counts the same food as per serving does, not a whole pack a week.
         let engine = ImpactEngine()
+        let servings = try #require(UsageDefaults.typicalPerWeek(for: bag, reference: ReferenceStore.bundled))
+        #expect(bag.usage?.servingsPerWeek == servings)
         #expect(engine.editableUsage(for: bag).map(\.field) == [.packsPerWeek])
-        #expect(abs((engine.editableUsage(for: bag).first?.value ?? 0) - 0.028 / 0.34) < 1e-9)
+        #expect(abs((engine.editableUsage(for: bag).first?.value ?? 0) - servings * 0.028 / 0.34) < 1e-9)
         let yearly = try #require(engine.yearly(.carbon, of: bag))
-        #expect(abs(yearly.value - 1 * 52 * 2.5 * 0.028) < 1e-9)
+        #expect(abs(yearly.value - servings * 52 * 2.5 * 0.028) < 1e-9)
         #expect(abs(try #require(scan.yearlyTotals[.carbon]).value - yearly.value) < 1e-9)
-        #expect(abs(try #require(engine.yearly(.plasticMass, of: bag)).value - 52 * 12 * 0.028 / 0.34) < 1e-9)
+        #expect(abs(try #require(engine.yearly(.plasticMass, of: bag)).value - 52 * 12 * servings * 0.028 / 0.34) < 1e-9)
 
         let twice = engine.applyingAnswer(AnswerOption(label: "2", field: .packsPerWeek, value: 2), to: bag, profile: .default)
         #expect(abs(try #require(engine.yearly(.carbon, of: twice)).value - 2 * 52 * 2.5 * 0.34) < 1e-9)
@@ -71,8 +73,9 @@ struct PackBasisTests {
         #expect(try #require(bag.metrics[.plasticMass]).value == 12)
         let engine = ImpactEngine()
         #expect(engine.editableUsage(for: bag).map(\.field) == [.servingsPerWeek])
+        let servings = try #require(UsageDefaults.typicalPerWeek(for: bag, reference: ReferenceStore.bundled))
         let yearly = try #require(engine.yearly(.carbon, of: bag))
-        #expect(abs(yearly.value - 1 * 52 * 2.5 * 0.028) < 1e-9)
+        #expect(abs(yearly.value - servings * 52 * 2.5 * 0.028) < 1e-9)
     }
 
     @Test func photographedPackWithARecordedGTINIsPerPackAtTheSameFoodPerWeek() async throws {
@@ -82,8 +85,8 @@ struct PackBasisTests {
         let can = try #require(scan.components.first { $0.name == "Cola can" })
         #expect(FoodServing.basis(of: can) == .pack(kg: 0.33))
         #expect(abs(try #require(can.metrics[.carbon]).value - 0.47 * 0.33) < 1e-9)
-        // Identify's 3 servings a week of a one-serving can are 3 cans a week.
-        #expect(can.usage?.packsPerWeek == 3)
+        // Soft drinks' typical 3 servings a week of a one-serving can are 3 cans a week.
+        #expect(FoodServing.packsPerWeek(of: can) == 3)
         // Plated food in the same photo stays per serving.
         let burger = try #require(scan.components.first { $0.name == "Beef burger" })
         #expect(FoodServing.basis(of: burger) == .serving(kg: 0.12))
