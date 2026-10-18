@@ -8,6 +8,8 @@ import GreenCore
 struct ComponentHotspots: View {
     let components: [Component]
     let filter: ResultMetricFilter
+    /// Yearly values, shares and ranks, the same basis as the list.
+    let breakdown: ScanBreakdown
     let selectedID: Component.ID?
     let onSelect: (Component) -> Void
 
@@ -16,7 +18,7 @@ struct ComponentHotspots: View {
 
     private let pinSize: CGFloat = 30
 
-    private var ranked: [Component] { ResultInsights.ranked(components, by: filter.shareMetric) }
+    private var ranked: [Component] { breakdown.ranked(components, by: filter.shareMetric) }
 
     var body: some View {
         GeometryReader { geometry in
@@ -55,7 +57,7 @@ struct ComponentHotspots: View {
     }
 
     private func pin(_ component: Component, number: Int, in size: CGSize) -> some View {
-        let share = ResultInsights.share(of: component, metric: filter.shareMetric, in: components)
+        let share = breakdown.share(of: component, metric: filter.shareMetric, in: components)
         let isSelected = component.id == selectedID
         let center = rect(for: component, in: size)
         // Keep the pin (and its label) inside the photo.
@@ -71,8 +73,8 @@ struct ComponentHotspots: View {
                 if isSelected {
                     VStack(alignment: .leading, spacing: 0) {
                         Text(component.name).font(.caption.weight(.semibold)).lineLimit(1)
-                        if let value = component.displayable(filter.shareMetric) {
-                            Text(value.formatted).font(.caption2.monospacedDigit()).opacity(0.85)
+                        if let value = breakdown.yearly(filter.shareMetric, of: component) {
+                            Text(value.formattedPerYear).font(.caption2.monospacedDigit()).opacity(0.85)
                         }
                     }
                     .padding(.trailing, 6)
@@ -94,7 +96,7 @@ struct ComponentHotspots: View {
     }
 
     private func accessibilityText(_ component: Component, number: Int, share: Double) -> String {
-        "\(number). \(component.name), \(Int((share * 100).rounded()))% of \(filter.shareMetric.displayName.lowercased())"
+        "\(number). \(component.name), \(Int((share * 100).rounded()))% of \(filter.shareMetric.displayName.lowercased()) per year"
     }
 
     /// Pops the pins in one after another so the container morphs them into place.

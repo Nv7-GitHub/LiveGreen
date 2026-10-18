@@ -19,6 +19,9 @@ struct ScanResultView: View {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     @State private var current: ScanResult
+    /// Per-item yearly values, shares, ranks and pin numbers for `current`, so rows, pins and the summary share one
+    /// basis with the per-year headline.
+    @State private var breakdown: ScanBreakdown
     @State private var filter: ResultMetricFilter = .carbon
     @State private var selectedID: Component.ID?
     @State private var showsQuestions = false
@@ -31,6 +34,7 @@ struct ScanResultView: View {
         self.result = result
         self.rerun = rerun
         _current = State(initialValue: result)
+        _breakdown = State(initialValue: ScanBreakdown(components: result.components))
     }
 
     private var isLandscape: Bool { verticalSizeClass == .compact }
@@ -89,6 +93,9 @@ struct ScanResultView: View {
             QuestionsSheet(questions: pendingQuestions, onApply: applyAnswers, onUseEstimate: useEstimates)
         }
         .onChange(of: result) { _, newValue in current = newValue }
+        .onChange(of: current.components) { _, components in
+            withAnimation(.smooth) { breakdown = ScanBreakdown(components: components) }
+        }
         .onChange(of: availableFilters, initial: true) { _, options in
             if !options.contains(filter) { filter = options.first ?? .carbon }
         }
@@ -105,7 +112,7 @@ struct ScanResultView: View {
             VStack(spacing: 14) {
                 photo
                 MetricPicker(selection: $filter, options: availableFilters)
-                SummaryHeader(result: current, filter: filter)
+                SummaryHeader(result: current, filter: filter, breakdown: breakdown)
                 if !pendingQuestions.isEmpty { questionsBanner }
                 componentList
                 alternativesButton
@@ -129,7 +136,7 @@ struct ScanResultView: View {
                 // A barcode scan's photo is the product's own pack shot, not the scene, so there is
                 // nothing to point at.
                 if current.mode != .barcode {
-                    ComponentHotspots(components: shownComponents, filter: filter,
+                    ComponentHotspots(components: shownComponents, filter: filter, breakdown: breakdown,
                                       selectedID: selectedID, onSelect: select)
                 }
             }
@@ -138,7 +145,9 @@ struct ScanResultView: View {
     }
 
     private var componentList: some View {
-        let ranked = ResultInsights.ranked(shownComponents, by: filter.shareMetric)
+        let metric = filter.shareMetric
+        let ranked = breakdown.ranked(shownComponents, by: metric)
+        let engine = ImpactEngine()
         return VStack(alignment: .leading, spacing: 6) {
             Text(filter == .all ? "Items" : "Items by \(filter.title.lowercased())")
                 .font(.headline)
@@ -146,10 +155,13 @@ struct ScanResultView: View {
             VStack(spacing: 0) {
                 ForEach(Array(ranked.enumerated()), id: \.element.id) { index, component in
                     if index > 0 { Divider().padding(.leading, 54) }
+                    let share = breakdown.share(of: component, metric: metric, in: shownComponents)
                     Button { select(component) } label: {
                         ComponentRow(component: component, number: index + 1, filter: filter,
-                                     share: ResultInsights.share(of: component, metric: filter.shareMetric,
-                                                                 in: shownComponents),
+                                     yearly: breakdown.yearly(metric, of: component), share: share,
+                                     assumption: ResultInsights.assumptionLabel(for: component, metric: metric,
+                                                                                breakdown: breakdown, engine: engine),
+                                     tint: Theme.carbonShareTint(share),
                                      isSelected: component.id == selectedID)
                     }
                     .buttonStyle(.plain)
@@ -202,7 +214,7 @@ struct ScanResultView: View {
     /// carbon contributor.
     private var sideInspector: some View {
         let component = selectedComponent
-            ?? ResultInsights.ranked(current.components, by: .carbon).first
+            ?? breakdown.ranked(current.components, by: .carbon).first
         return ScrollView {
             if let component {
                 detail(for: component).padding()
