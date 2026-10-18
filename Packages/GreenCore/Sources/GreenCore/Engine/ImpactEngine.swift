@@ -6,6 +6,8 @@ import Foundation
 /// - food: per serving, a year being `servingsPerWeek × 52` servings; or, for a barcoded pack whose net quantity is
 ///   on record, per whole pack, a year being `packsPerWeek × 52` packs (`FoodServing.basis`).
 /// - packaging, personal care: per unit consumed; a year is `usesPerWeek × 52` units.
+/// - household consumables (`Quantities.consumable`: a cleaner, a paper notebook): per item; a year is
+///   `usesPerWeek × 52 ÷ usesPerContainer` items (`consumablesPerYear(of:)`).
 /// - electronic, clothing, household (durables): per item over its whole life; carbon includes the use phase
 ///   (embodied + yearly use × lifespan), so a year is the lifetime value ÷ lifespan.
 /// - vehicle: likewise per vehicle over its life, the use phase being driving (`VehicleModel`).
@@ -95,7 +97,7 @@ public struct ImpactEngine: Sendable {
         if let vehicle = vehicleModel(for: component) {
             return vehicle.yearlyElectricity(component.usage, seed: component.stableSeed)
         }
-        let profile = store?.deviceProfile(deviceType: component.quantities.deviceType ?? component.name)
+        let profile = store?.deviceProfile(for: component)
         let usage = component.usage
         let mc = MonteCarlo(seed: component.stableSeed)
         if let battery = profile?.batteryKWh, let charges = usage?.chargesPerWeek {
@@ -110,5 +112,21 @@ public struct ImpactEngine: Sendable {
         return mc.propagate([powerOn, standby], unit: .kilowattHoursPerYear, salt: "kwh") {
             Self.yearlyElectricity(powerOnW: $0[0], hoursOnPerDay: hoursOn, standbyW: $0[1], standbyHoursPerDay: standbyHours)
         }
+    }
+}
+
+extension Component {
+    /// What the device table is searched by: the item's device type, else the name of an electronic. Nothing else
+    /// is matched by name, so a paper "spiral notebook" never gets a laptop's lifespan and citation.
+    public var deviceLookupKey: String? {
+        if let type = quantities.deviceType?.trimmingCharacters(in: .whitespacesAndNewlines), !type.isEmpty { return type }
+        return category == .electronic ? name : nil
+    }
+}
+
+extension ReferenceStore {
+    /// The component's device profile under `Component.deviceLookupKey`.
+    public func deviceProfile(for component: Component) -> DeviceProfile? {
+        component.deviceLookupKey.flatMap(deviceProfile(deviceType:))
     }
 }

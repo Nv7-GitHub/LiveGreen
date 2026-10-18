@@ -6,7 +6,8 @@ public enum StageModel {
         case .electronic: [.materials: 0.45, .manufacturing: 0.20, .transport: 0.04, .use: 0.30, .endOfLife: 0.01]
         case .clothing: [.materials: 0.25, .manufacturing: 0.50, .transport: 0.05, .use: 0.15, .endOfLife: 0.05]
         case .packaging: [.materials: 0.60, .manufacturing: 0.25, .transport: 0.10, .endOfLife: 0.05]
-        case .household: [.materials: 0.50, .manufacturing: 0.25, .transport: 0.10, .use: 0.10, .endOfLife: 0.05]
+        // Unpowered goods have no use phase; the factor model's carbon is materials ÷ the materials share.
+        case .household: [.materials: 0.55, .manufacturing: 0.30, .transport: 0.10, .endOfLife: 0.05]
         case .personalCare: [.materials: 0.45, .manufacturing: 0.25, .transport: 0.10, .use: 0.15, .endOfLife: 0.05]
         // A typical petrol car over 15 years: driving is about 90% of its life's carbon.
         case .vehicle: [.materials: 0.08, .manufacturing: 0.015, .transport: 0.003, .use: 0.9, .endOfLife: 0.002]

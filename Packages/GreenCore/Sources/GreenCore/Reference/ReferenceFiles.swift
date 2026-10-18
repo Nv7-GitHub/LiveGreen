@@ -121,6 +121,16 @@ struct DeviceRecordFile: Decodable {
     }
 }
 
+struct HouseholdLifespanRecordFile: Decodable {
+    var kind: String
+    var aliases: [String]
+    var lifespanYears: Double
+    var verified: Bool
+    var citation: Source
+
+    var lifespan: HouseholdLifespan { HouseholdLifespan(kind: kind, lifespanYears: lifespanYears, citation: citation) }
+}
+
 struct VehicleFile: Decodable {
     struct Glider: Decodable {
         var kgCO2ePerKg: Double

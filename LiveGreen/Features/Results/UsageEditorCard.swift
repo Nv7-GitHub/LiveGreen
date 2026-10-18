@@ -57,11 +57,17 @@ struct UsageEditorCard: View {
     }
 
     /// For food, what the item's figures cover and how a year is counted from the slider; for a vehicle, what its
-    /// year is made of.
+    /// year is made of; for a household consumable, how many it uses up a year.
     private var basisNote: String? {
         if component.category == .vehicle {
             let years = Int(ImpactEngine().lifespan(of: component).value.rounded())
             return "A year is driving this far, plus making the vehicle spread over \(years) years."
+        }
+        if component.category == .household, component.quantities.consumable == true {
+            let engine = ImpactEngine()
+            let uses = Int(engine.usesPerContainer(of: component).rounded())
+            let perYear = engine.consumablesPerYear(of: component).formatted(.number.precision(.fractionLength(0...1)))
+            return "One lasts about \(uses) uses, so that is \(perYear) a year."
         }
         guard let basis = component.basisTitle else { return nil }
         let unit = FoodServing.isPerPack(component) ? "packs" : "servings"

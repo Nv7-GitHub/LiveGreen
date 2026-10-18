@@ -58,7 +58,7 @@ extension ImpactEngine {
 
     /// Battery capacity for the component's device type, when it is a battery device.
     public func batteryKWh(for component: Component) -> Double? {
-        store?.deviceProfile(deviceType: component.quantities.deviceType ?? component.name)?.batteryKWh
+        store?.deviceProfile(for: component)?.batteryKWh
     }
 
     /// The usage fields that drive this component's yearly numbers, with the value the engine uses now (the
@@ -67,8 +67,7 @@ extension ImpactEngine {
         let usage = component.usage
         switch component.category {
         case .electronic:
-            let typical = store?.deviceProfile(deviceType: component.quantities.deviceType ?? component.name)?
-                .defaults.typicalHoursOnPerDay ?? 4
+            let typical = store?.deviceProfile(for: component)?.defaults.typicalHoursOnPerDay ?? 4
             let hoursOn = usage?.hoursOnPerDay ?? typical
             return [(.hoursOnPerDay, hoursOn), (.standbyHoursPerDay, usage?.standbyHoursPerDay ?? max(0, 24 - hoursOn))]
         case .food where FoodServing.isPerPack(component):
@@ -76,6 +75,8 @@ extension ImpactEngine {
         case .food:
             return [(.servingsPerWeek, usage?.servingsPerWeek ?? FoodServing.defaultServingsPerWeek)]
         case .packaging, .personalCare:
+            return [(.usesPerWeek, usage?.usesPerWeek ?? 1)]
+        case .household where component.quantities.consumable == true:
             return [(.usesPerWeek, usage?.usesPerWeek ?? 1)]
         case .vehicle:
             let typicalKm = (vehicleModel(for: component)?.factors.kmPerYear ?? 0) / Self.weeksPerYear

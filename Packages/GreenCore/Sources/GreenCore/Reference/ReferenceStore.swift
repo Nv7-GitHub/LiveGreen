@@ -11,12 +11,13 @@ public struct ReferenceStore: ReferenceProviding {
     public static var resourceBundle: Bundle { .module }
 
     public static let tableNames = ["food_factors", "fiber_factors", "material_endoflife", "device_defaults",
-                                    "grid_intensity", "per_capita", "asus_pcf", "vehicle_factors"]
+                                    "grid_intensity", "per_capita", "asus_pcf", "vehicle_factors", "household_lifespans"]
 
     let foods: AliasIndex<FoodFactor>
     let fibers: AliasIndex<FiberFactor>
     let materials: AliasIndex<MaterialFactor>
     let devices: AliasIndex<DeviceProfile>
+    let householdLifespans: AliasIndex<HouseholdLifespan>
     let grids: [String: RegionalGridIntensity]
     let regions: RegionResolver
     let countryBaselines: [String: PerCapitaBaseline]
@@ -36,6 +37,7 @@ public struct ReferenceStore: ReferenceProviding {
     /// Empty store (no records).
     public init() {
         foods = AliasIndex([]); fibers = AliasIndex([]); materials = AliasIndex([]); devices = AliasIndex([])
+        householdLifespans = AliasIndex([])
         grids = [:]; regions = RegionResolver(); countryBaselines = [:]; stateCarbonRatios = [:]; asus = [:]
         materialsByResin = [:]; garment = nil; vehicles = nil
         cohort = CohortReference(categoryShares: [:], commuteModifiers: [:], citations: [])
@@ -90,6 +92,12 @@ public struct ReferenceStore: ReferenceProviding {
         let device = try decode(RecordsFile<DeviceRecordFile>.self, "device_defaults").records
         devices = AliasIndex(device.map { ($0.deviceType, $0.aliases, $0.profile) })
         info += device.map { ReferenceRecordInfo(table: "device_defaults", key: $0.deviceType, verified: $0.verified, citation: $0.citation) }
+
+        let lifespans = try decode(RecordsFile<HouseholdLifespanRecordFile>.self, "household_lifespans").records
+        householdLifespans = AliasIndex(lifespans.map { ($0.kind, $0.aliases, $0.lifespan) })
+        info += lifespans.map {
+            ReferenceRecordInfo(table: "household_lifespans", key: $0.kind, verified: $0.verified, citation: $0.citation)
+        }
 
         let vehicleFile = try decode(VehicleFile.self, "vehicle_factors")
         vehicles = vehicleFile.factors
@@ -158,6 +166,9 @@ public struct ReferenceStore: ReferenceProviding {
     public func materialFactor(material: String) -> MaterialFactor? { materials.lookup(material) }
     public func materialFactor(resinCode: Int) -> MaterialFactor? { materialsByResin[resinCode] }
     public func deviceProfile(deviceType: String) -> DeviceProfile? { devices.lookup(deviceType) }
+
+    /// Service life of an unpowered household durable from its kind or name ("Hybrid bike" → bicycle).
+    public func householdLifespan(kind: String) -> HouseholdLifespan? { householdLifespans.lookup(kind) }
 
     public func asusDetail(model: String) -> ASUSPCFDetail? {
         let key = ReferenceKey.modelKey(model)

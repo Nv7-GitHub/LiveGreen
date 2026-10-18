@@ -6,6 +6,8 @@ import Testing
 struct MaterialRowsTests {
     let store = ReferenceStore.bundled
     let resolver = FactorModelResolver(store: .bundled)
+    /// What is made from a material also carries its forming, assembly, transport and disposal; a used-up formula does not.
+    let made = 1 / FactorModelResolver.materialsShare
 
     func share(_ material: String, _ percent: Double) -> MaterialShare { MaterialShare(material: material, percent: percent) }
 
@@ -42,14 +44,14 @@ struct MaterialRowsTests {
 
     @Test func tablewareIsNotContainerGlass() throws {
         let bowl = household("Ceramic bowl", kg: 0.4, [share("ceramic", 100)])
-        #expect(abs(try #require(bowl.metrics[.carbon]).value - 1.0) < 1e-9)
+        #expect(abs(try #require(bowl.metrics[.carbon]).value - 1.0 * made) < 1e-9)
         #expect(try #require(bowl.metrics[.recyclablePercent]).value == 0)
         #expect(bowl.metrics[.decompositionTime] == nil, "inert: no decomposition time")
         let glass = household("Drinking glass", kg: 0.3, [share("glass_tableware", 100)])
-        #expect(abs(try #require(glass.metrics[.carbon]).value - 0.45) < 1e-9)
+        #expect(abs(try #require(glass.metrics[.carbon]).value - 0.45 * made) < 1e-9)
         #expect(try #require(glass.metrics[.recyclablePercent]).value == 0)
         let spoon = household("Metal spoon", kg: 0.04, [share("stainless_steel", 100)])
-        #expect(abs(try #require(spoon.metrics[.carbon]).value - 0.04 * 6.15) < 1e-9)
+        #expect(abs(try #require(spoon.metrics[.carbon]).value - 0.04 * 6.15 * made) < 1e-9)
         #expect(spoon.metrics[.decompositionTime] == nil)
     }
 
@@ -57,7 +59,7 @@ struct MaterialRowsTests {
         // A 22 fl oz stain-remover spray: 665 g of formula in a 55 g HDPE bottle with a PP trigger.
         let spray = household("Stain remover spray", kg: 0.72, [share("detergent_formula", 100)], packagingG: 55,
                               packaging: [share("hdpe", 70), share("pp", 30)], liters: 0.65)
-        let carbon = 0.665 * 1.0 + 0.0385 * 1.8 + 0.0165 * 1.6
+        let carbon = 0.665 * 1.0 + (0.0385 * 1.8 + 0.0165 * 1.6) * made
         #expect(abs(try #require(spray.metrics[.carbon]).value - carbon) < 1e-9)
         #expect(abs(try #require(spray.metrics[.plasticMass]).value - 55) < 1e-9)
         // Only the bottle is thrown away: the formula is used up.
@@ -70,7 +72,7 @@ struct MaterialRowsTests {
         // The liquid tagged as food is the formula, so the product is no longer near zero carbon.
         let tagged = household("Stain remover spray", kg: 0.72, [share("food_organic", 92), share("hdpe", 6), share("pp", 2)],
                                packagingG: 55, liters: 0.65)
-        #expect(abs(try #require(tagged.metrics[.carbon]).value - (0.6624 + 0.0432 * 1.8 + 0.0144 * 1.6)) < 1e-9)
+        #expect(abs(try #require(tagged.metrics[.carbon]).value - (0.6624 + (0.0432 * 1.8 + 0.0144 * 1.6) * made)) < 1e-9)
         #expect(abs(try #require(tagged.metrics[.plasticMass]).value - 57.6) < 1e-9)
         // Only the bottle described: its split is the bottle's, not 780 g of plastic, and the contents are unknown.
         let bottleOnly = household("Stain remover spray", kg: 0.78,
@@ -83,7 +85,7 @@ struct MaterialRowsTests {
     @Test func aDurableInItsBoxCountsBoth() throws {
         let pan = household("Frying pan", kg: 1.2, [share("steel", 100)], packagingG: 200,
                             packaging: [share("corrugated_cardboard", 100)])
-        #expect(abs(try #require(pan.metrics[.carbon]).value - (1.0 * 2.0 + 0.2 * 0.9)) < 1e-9)
+        #expect(abs(try #require(pan.metrics[.carbon]).value - (1.0 * 2.0 + 0.2 * 0.9) * made) < 1e-9)
         #expect(abs(try #require(pan.metrics[.recyclablePercent]).value - (1000 * 70.9 + 200 * 96.5) / 1200) < 1e-9)
     }
 
@@ -108,7 +110,7 @@ struct MaterialRowsTests {
         #expect(gadget.metrics[.plasticMass] != nil)
         // A small unmodelled share is scaled like the rest instead of counting as zero.
         let lamp = household("Floor lamp", kg: 5, [share("steel", 95), share("electronics_mixed", 5)])
-        #expect(abs(try #require(lamp.metrics[.carbon]).value - 4.75 * 2.0 / 0.95) < 1e-9)
+        #expect(abs(try #require(lamp.metrics[.carbon]).value - 4.75 * 2.0 / 0.95 * made) < 1e-9)
     }
 
     @Test func consumedMaterialsLeaveNothingAtEndOfLife() throws {

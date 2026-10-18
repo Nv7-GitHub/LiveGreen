@@ -1,0 +1,119 @@
+{
+ "description": "Typical years of service of unpowered household durables, matched by item name (household items only). Items not listed fall back to the engine's 5-year default.",
+ "records": [
+  {
+   "kind": "bicycle",
+   "aliases": ["bike", "cycle", "city_bike", "road_bike", "mountain_bike"],
+   "lifespanYears": 10,
+   "verified": false,
+   "citation": {
+    "title": "ECF (2011), Quantifying CO2 savings of cycling (bicycle life ~19,200 km, about 8-10 years of commuting)",
+    "tier": 3,
+    "url": "https://ecf.com/groups/quantifying-co2-savings-cycling"
+   }
+  },
+  {
+   "kind": "tripod",
+   "aliases": ["camera_tripod"],
+   "lifespanYears": 10,
+   "verified": false,
+   "citation": {
+    "title": "Typical service life of aluminium photo tripods (assumed, as for other metal tools)",
+    "tier": 3
+   }
+  },
+  {
+   "kind": "table",
+   "aliases": ["desk", "dining_table", "coffee_table", "bookcase", "bookshelf", "shelf", "cabinet", "dresser", "wardrobe", "bed_frame"],
+   "lifespanYears": 15,
+   "verified": false,
+   "citation": {
+    "title": "NAHB / Bank of America (2007), Study of Life Expectancy of Home Components (furniture)",
+    "tier": 3
+   }
+  },
+  {
+   "kind": "chair",
+   "aliases": ["stool", "office_chair"],
+   "lifespanYears": 10,
+   "verified": false,
+   "citation": {
+    "title": "NAHB / Bank of America (2007), Study of Life Expectancy of Home Components (furniture)",
+    "tier": 3
+   }
+  },
+  {
+   "kind": "sofa",
+   "aliases": ["couch", "armchair"],
+   "lifespanYears": 12,
+   "verified": false,
+   "citation": {
+    "title": "NAHB / Bank of America (2007), Study of Life Expectancy of Home Components (furniture)",
+    "tier": 3
+   }
+  },
+  {
+   "kind": "mattress",
+   "aliases": [],
+   "lifespanYears": 8,
+   "verified": false,
+   "citation": {
+    "title": "Sleep Foundation, How long does a mattress last (7-10 years)",
+    "tier": 3,
+    "url": "https://www.sleepfoundation.org/mattress-information/how-long-does-a-mattress-last"
+   }
+  },
+  {
+   "kind": "rug",
+   "aliases": ["carpet"],
+   "lifespanYears": 10,
+   "verified": false,
+   "citation": {
+    "title": "NAHB / Bank of America (2007), Study of Life Expectancy of Home Components (carpet 8-10 years)",
+    "tier": 3
+   }
+  },
+  {
+   "kind": "frying_pan",
+   "aliases": ["pan", "skillet", "nonstick_pan"],
+   "lifespanYears": 5,
+   "verified": false,
+   "citation": {
+    "title": "Typical service life of non-stick cookware (3-5 years; assumed)",
+    "tier": 3
+   }
+  },
+  {
+   "kind": "pot",
+   "aliases": ["saucepan", "stockpot", "dutch_oven"],
+   "lifespanYears": 15,
+   "verified": false,
+   "citation": {
+    "title": "Typical service life of stainless and cast-iron cookware (assumed)",
+    "tier": 3
+   }
+  },
+  {
+   "kind": "helmet",
+   "aliases": ["bike_helmet", "bicycle_helmet"],
+   "lifespanYears": 5,
+   "verified": false,
+   "citation": {
+    "title": "Snell Memorial Foundation: replace helmets about every 5 years",
+    "tier": 3,
+    "url": "https://smf.org/helmet-faq"
+   }
+  },
+  {
+   "kind": "child_seat",
+   "aliases": ["car_seat", "child_bike_seat", "booster_seat"],
+   "lifespanYears": 7,
+   "verified": false,
+   "citation": {
+    "title": "NHTSA, car seat expiration (6-10 years from manufacture)",
+    "tier": 3,
+    "url": "https://www.nhtsa.gov/vehicle-safety/car-seats-and-booster-seats"
+   }
+  }
+ ]
+}

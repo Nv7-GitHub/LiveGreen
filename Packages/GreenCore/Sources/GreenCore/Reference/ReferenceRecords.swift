@@ -32,6 +32,13 @@ public struct DeviceProfile: Codable, Sendable, Hashable {
     public var verified: Bool
 }
 
+/// Typical service life of an unpowered household durable (`household_lifespans.json`): a bicycle, a table.
+public struct HouseholdLifespan: Sendable, Hashable {
+    public var kind: String
+    public var lifespanYears: Double
+    public var citation: Source
+}
+
 /// Light-vehicle factors (`vehicle_factors.json`), for `VehicleModel`.
 public struct VehicleFactors: Sendable, Hashable {
     /// Curb mass assumed when identify gave none.

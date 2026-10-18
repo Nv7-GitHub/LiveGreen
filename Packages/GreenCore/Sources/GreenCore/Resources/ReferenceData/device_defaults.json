@@ -4,7 +4,8 @@
   {
    "deviceType": "laptop",
    "aliases": [
-    "notebook",
+    "notebook_computer",
+    "notebook_pc",
     "macbook",
     "ultrabook"
    ],
