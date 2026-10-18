@@ -44,13 +44,18 @@ extension ClaudeClient: SpecResearcher {
         - Report a value only if the page states it for this model (or a variant the page explicitly says shares \
         the figure). Never estimate, average across models or infer from similar products. A missing value is \
         far better than an uncited one; list it in not_found.
+        - When only a model line is given (no model number), the product was recognized from its appearance. Use \
+        the maker's published figures for that line (spec page, environmental or carbon footprint report), for the \
+        size and generation the line describes, else its current one, and its base configuration. If the cited \
+        page lists several configurations of that line, report the base one as value with low and high spanning \
+        the listed ones. Never use figures for a different line.
         - Every value needs source_url (a page you retrieved in this conversation), source_title, and quote: the \
         exact sentence or table cell text from that page containing the figure, copied verbatim.
         - Convert the figure to the metric's canonical unit and basis below. Give low/high only when the source \
-        itself states a range (e.g. typical vs maximum power); otherwise null.
-        - Carbon: only from a PCF for this model. LiveGreen adds use-phase electricity itself, so report the \
-        footprint excluding the use phase when the PCF gives a lifecycle breakdown; if it gives no breakdown, \
-        do not report carbon.
+        itself states a range (e.g. typical vs maximum power, or a model line's configurations); otherwise null.
+        - Carbon: only from a PCF for this model (or this model line, as above). LiveGreen adds use-phase \
+        electricity itself, so report the footprint excluding the use phase when the PCF gives a lifecycle \
+        breakdown; if it gives no breakdown, do not report carbon.
 
         Metric units and basis:
         \(PromptParts.metricDefinitions)
@@ -60,6 +65,14 @@ extension ClaudeClient: SpecResearcher {
         var lines = ["Product: \(name)", "Category: \(category.rawValue)"]
         if let brand = identifiers.brand?.trimmedNonEmpty { lines.append("Brand: \(brand)") }
         if let model = identifiers.model?.trimmedNonEmpty { lines.append("Model: \(model)") }
+        if let line = identifiers.modelLine?.trimmedNonEmpty {
+            lines.append("Model line: \(line)")
+            if identifiers.model?.trimmedNonEmpty == nil {
+                let confidence = identifiers.confidence.map { ", \($0.rawValue) confidence" } ?? ""
+                let cues = identifiers.appearanceCues?.trimmedNonEmpty.map { "; cues: \($0)" } ?? ""
+                lines.append("No model number is known (recognized from its appearance\(confidence)\(cues)).")
+            }
+        }
         if let gtin = identifiers.gtin?.trimmedNonEmpty { lines.append("GTIN: \(gtin)") }
         if let text = identifiers.ocrText?.trimmedNonEmpty { lines.append("Label text: \(text)") }
         lines.append("Requested metrics:")

@@ -211,15 +211,94 @@ struct ClaudeIdentifyTests {
         }
     }
 
-    @Test func brandsMustBeLegibleAndSchemaHasNoExampleBrand() {
+    @Test func brandsComeFromLogosOrDesignAndModelNumbersOnlyFromPrint() {
         let system = ClaudeClient.identifySystemPrompt(vocabulary: .default, carbonEstimateOnly: true)
-        #expect(system.contains("never infer it from shape"))
-        #expect(system.contains("keep the brand out of `name`"))
+        // Makers are recognized by design too (a Mac keyboard), with a stated confidence, not left out.
+        #expect(system.contains("Recognize makers by design as well as by printed names"))
+        #expect(system.contains("⌘ command and option keys"))
+        #expect(system.contains("model_line"))
+        #expect(system.contains("confidence"))
+        #expect(!system.contains("never infer it from shape"))
+        // An exact model number still has to be printed.
+        #expect(system.contains("Never compose one from the model line"))
+
         let item = ReportComponentsTool.carbonEstimateOnlySchema["properties"]?["components"]?["items"]?["properties"]
-        let name = item?["name"]?["description"]?.string ?? ""
-        let brand = item?["identifiers"]?["properties"]?["brand"]?["description"]?.string ?? ""
-        #expect(!name.isEmpty && !name.contains("Dell"))
-        #expect(brand.contains("never inferred"))
+        let identifiers = item?["identifiers"]
+        let fields = identifiers?["properties"]
+        #expect(fields?["confidence"]?["enum"] == ["high", "medium", "low", nil])
+        #expect(fields?["model"]?["description"]?.string?.contains("Never guess one") == true)
+        let required = identifiers?["required"]?.array?.compactMap(\.string) ?? []
+        #expect(Set(required).isSuperset(of: ["brand", "model", "model_line", "confidence", "appearance_cues"]))
+        // No example product names in descriptions: the fast models copy them into answers.
+        let descriptions = ([item?["name"]] + ["brand", "model", "model_line", "appearance_cues"].map { fields?[$0] })
+            .compactMap { $0?["description"]?.string }
+        #expect(descriptions.count == 5)
+        for word in ["Dell", "Apple", "MacBook", "ASUS", "Zenbook"] {
+            #expect(!descriptions.contains { $0.contains(word) }, "\(word) in a schema description")
+        }
+        // The cues sort before the brand they support (the request encodes keys sorted).
+        #expect(fields?.object?.keys.sorted().first == "appearance_cues")
+        // Alternatives keep the plain identifiers.
+        #expect(SchemaParts.identifiers["properties"]?["model_line"] == nil)
+    }
+
+    @Test func parsesBrandModelLineAndConfidence() throws {
+        let input: JSONValue = ["scene_title": "Desk", "components": [[
+            "name": "Apple MacBook Pro 14-inch", "category": "electronic",
+            "bounding_box": ["x": 0.1, "y": 0.2, "width": 0.5, "height": 0.4],
+            "identifiers": ["appearance_cues": "⌘ command keys, notch, black keyboard well", "brand": "Apple",
+                            "model": .null, "model_line": "Apple MacBook Pro 14-inch (M-series)", "confidence": " Medium",
+                            "gtin": .null, "materials": []],
+        ], [
+            "name": "Mug", "category": "household", "bounding_box": ["x": 0, "y": 0, "width": 0.1, "height": 0.1],
+            "identifiers": ["brand": .null, "model": .null, "model_line": .null, "confidence": "certain", "gtin": .null, "materials": []],
+        ]]]
+        let response = try ReportComponentsTool.parse(input)
+        let laptop = response.components[0].identifiers
+        #expect(laptop.brand == "Apple")
+        #expect(laptop.model == nil)
+        #expect(laptop.modelLine == "MacBook Pro 14-inch (M-series)", "the repeated brand is dropped from the line")
+        #expect(laptop.confidence == .medium)
+        #expect(laptop.appearanceCues == "⌘ command keys, notch, black keyboard well")
+        #expect(laptop.lineKey == "bl:apple|macbook pro 14-inch (m-series)")
+        #expect(laptop.resolutionKey == laptop.lineKey)
+
+        let mug = response.components[1].identifiers
+        #expect(mug.modelLine == nil && mug.confidence == nil, "unknown confidence values are ignored")
+        #expect(mug.lineKey == nil)
+    }
+
+    @Test func lowConfidenceLinesAreNotLookedUpOrCached() {
+        var ids = Identifiers(brand: "Apple", modelLine: "MacBook Air", confidence: .low)
+        #expect(ids.confidentModelLine == nil)
+        #expect(ids.lineKey == nil)
+        ids.confidence = .high
+        #expect(ids.lineKey == "bl:apple|macbook air")
+        ids.model = "A2681"
+        #expect(ids.lineKey == nil, "a model number keys the cache instead")
+        #expect(ids.resolutionKey == "bm:apple|a2681")
+    }
+
+    @Test func hintTextSkipsKeyLegendsAndRepeats() {
+        let keys = ["esc", "Q", "W", "E", "command", "option", "command", "option", "⌘"]
+        let lines = ClaudeClient.hintTextLines(keys + (1...50).map { "Line \($0)" })
+        #expect(lines.prefix(4) == ["esc", "command", "option", "Line 1"])
+        #expect(lines.count == 40)
+        let text = ClaudeClient.identifyUserText(hints: OCRHints(textLines: ["Q", "MacBook Pro", "W"]), profile: .default)
+        #expect(text.contains("  MacBook Pro"))
+        #expect(!text.contains("  Q"))
+    }
+
+    @Test func photosAreSentAtTheModelsHighResolutionLimit() {
+        // A 12 MP iPhone photo keeps far more detail than the old 1568 px cap, within the ~3.75 MP API limit.
+        let photo = IdentifyImage.fittedSize(width: 4032, height: 3024)
+        #expect(photo.width >= 2200 && photo.width > 1568)
+        #expect(photo.width * photo.height <= 3_750_000)
+        #expect(abs(photo.width / photo.height - 4.0 / 3.0) < 0.01)
+        // A panorama is capped by the long edge; a small image is never upscaled.
+        #expect(IdentifyImage.fittedSize(width: 8000, height: 1000).width == 2576)
+        let small = IdentifyImage.fittedSize(width: 1200, height: 900)
+        #expect(small.width == 1200 && small.height == 900)
     }
 
     @Test func labelsPNGInput() {

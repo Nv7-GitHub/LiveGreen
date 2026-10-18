@@ -1,6 +1,7 @@
 /// Runs resolvers in tier order per component, stopping per metric at the first value (spec §5.4).
 /// Values from different tiers are kept per metric, so one component can mix tiers. With a cache, a
-/// component whose GTIN, brand|model or generic item kind was resolved before skips the resolvers entirely.
+/// component whose GTIN, brand|model, brand|model line or generic item kind was resolved before skips the resolvers
+/// entirely.
 public struct EvidenceLadder: Sendable {
     public let resolvers: [any MetricResolver]
     public let cache: (any ResolutionCache)?

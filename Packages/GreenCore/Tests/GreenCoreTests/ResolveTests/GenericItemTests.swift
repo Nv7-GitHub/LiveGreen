@@ -137,20 +137,22 @@ struct GenericItemTests {
         #expect(prepared[2].quantities.massKg == 1.1)
     }
 
-    @Test func inferredModelNamesAreDropped() {
-        func model(_ model: String, hints: OCRHints = .none) -> String? {
+    @Test func inferredModelNamesBecomeModelLines() {
+        func checked(_ model: String, line: String? = nil, hints: OCRHints = .none) -> Identifiers {
             let sneaker = IdentifiedComponent(name: "Sneakers", category: .clothing, boundingBox: .full,
-                                              identifiers: Identifiers(brand: "Acme", model: model))
-            let checked = ScanPipeline.droppingUnreadModel(from: sneaker, hints: hints)
-            #expect(checked.identifiers.brand == "Acme")
-            return checked.identifiers.model
+                                              identifiers: Identifiers(brand: "Acme", model: model, modelLine: line))
+            let checked = ScanPipeline.demotingUnreadModel(from: sneaker, hints: hints).identifiers
+            #expect(checked.brand == "Acme")
+            return checked
         }
-        // A product-line name nothing on the item backs up.
-        #expect(model("Runner Max") == nil)
-        #expect(model("Runner Max 90") == nil)
+        // A product-line name nothing on the item backs up is not a model number, but it still names the line.
+        #expect(checked("Runner Max").model == nil)
+        #expect(checked("Runner Max").modelLine == "Runner Max")
+        #expect(checked("Runner Max 90").model == nil)
+        #expect(checked("Runner Max 90", line: "Runner Max").modelLine == "Runner Max", "a stated line wins")
         // A printed-looking code, or a name the on-device text contains, is kept.
-        #expect(model("RM-90X") == "RM-90X")
-        #expect(model("Runner Max 90", hints: OCRHints(textLines: ["ACME RUNNER MAX 90"])) == "Runner Max 90")
-        #expect(model("Runner Max", hints: OCRHints(modelNumbers: ["RUNNERMAX"])) == "Runner Max")
+        #expect(checked("RM-90X").model == "RM-90X")
+        #expect(checked("Runner Max 90", hints: OCRHints(textLines: ["ACME RUNNER MAX 90"])).model == "Runner Max 90")
+        #expect(checked("Runner Max", hints: OCRHints(modelNumbers: ["RUNNERMAX"])).model == "Runner Max")
     }
 }
