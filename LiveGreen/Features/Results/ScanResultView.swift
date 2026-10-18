@@ -4,8 +4,8 @@ import GreenCoreFakes
 
 /// Results for one scan (spec §6): summary header with confidence, the photo with glass hotspots,
 /// a glass metric picker and the component list. Tapping a component opens its flow + inspector in a
-/// detent sheet (portrait) or a side inspector (landscape). Gated questions (spec §5.5) appear in one
-/// sheet and re-run the engine locally.
+/// detent sheet (portrait) or a side inspector (landscape). Gated questions (spec §5.5) wait behind a banner,
+/// never over the fresh results, and re-run the engine locally.
 struct ScanResultView: View {
     /// Read in `body` so converted numbers refresh when Settings switches units.
     @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
@@ -26,7 +26,6 @@ struct ScanResultView: View {
     @State private var selectedID: Component.ID?
     @State private var showsQuestions = false
     @State private var handledQuestions: Set<PendingQuestion.ID> = []
-    @State private var didOfferQuestions = false
     @State private var isRerunning = false
     /// "Which is yours?" reopened from the scene banner.
     @State private var showsOwnership = false
@@ -122,7 +121,6 @@ struct ScanResultView: View {
         // Greener swaps save picks and the image to the stored scan; pick them up when returning here.
         .onAppear { if let saved = savedCopy, saved != current { current = saved } }
         .onAppear { model.prefetchSwaps(for: current) }
-        .task { await offerQuestionsOnce() }
     }
 
     // MARK: - Overview
@@ -290,7 +288,7 @@ struct ScanResultView: View {
                     Text(pendingQuestions.count == 1 ? "1 question can narrow these numbers"
                                                      : "\(pendingQuestions.count) questions can narrow these numbers")
                         .font(.subheadline.weight(.semibold))
-                    Text("Answer to tighten the widest ranges.")
+                    Text("Answer to replace assumptions and tighten the widest ranges.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -338,10 +336,33 @@ struct ScanResultView: View {
     private func detail(for component: Component) -> some View {
         var plugAction: (() -> Void)?
         if model.flags.plugFeaturesEnabled { plugAction = { openPlugs() } }
+        var undo: (() -> Void)?
+        if component.detailAnswer != nil { undo = { undoAnswer(of: component.id) } }
         return ComponentDetailView(component: component, preferredMetric: filter.shareMetric, plugAction: plugAction,
                                    onUsageChange: { field, value in applyUsage(field, value, to: component.id) },
-                                   ownership: (current, { owned in markOwned(owned, component) }))
+                                   ownership: (current, { owned in markOwned(owned, component) }),
+                                   usageNote: usageNote(for: component), onUndoAnswer: undo)
             .id(component.id)
+    }
+
+    /// Under the usage card: where the item's rate comes from and what else changing it changes.
+    private func usageNote(for component: Component) -> String? {
+        let linked = ScanPipeline.usageLinkedItems(of: component, in: current.components, reference: model.services.reference)
+        var parts: [String] = []
+        if component.category == .packaging, let parent = component.parentID.flatMap(current.component(withID:)) {
+            parts.append("One is used with each \(parent.name.lowercased()), so changing it changes both.")
+        } else if !linked.isEmpty {
+            let names = linked.map(\.name)
+            parts.append(names.count <= 2 ? "Also changes \(names.joined(separator: " and ")) in this scan."
+                                          : "Also changes \(names.count) more items like it in this scan.")
+        }
+        switch component.usage?.source {
+        case .typical: parts.append("A typical week, assumed until you set yours. Later scans remember it.")
+        case .remembered: parts.append("From your answer on an earlier scan.")
+        case .answered: parts.append("Your answer. Later scans of this kind start from it.")
+        case nil: break
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
 
     /// The portrait sheet follows the selection; in landscape the side inspector shows it instead.
@@ -364,13 +385,8 @@ struct ScanResultView: View {
 
     // MARK: - Questions
 
-    private func offerQuestionsOnce() async {
-        guard !didOfferQuestions else { return }
-        didOfferQuestions = true
-        // Let the navigation push settle before presenting.
-        try? await Task.sleep(for: .milliseconds(450))
-        if !pendingQuestions.isEmpty { showsQuestions = true }
-    }
+    // Questions are offered by the banner only: opening them over the fresh results (or right after Quick details)
+    // hid the headline before it was read.
 
     private func useEstimates() {
         let declined = pendingQuestions
@@ -396,6 +412,7 @@ struct ScanResultView: View {
             updated.components = QuestionGate.settling(settled, in: updated.components)
             withAnimation(.smooth) { current = updated }
             model.save(updated)
+            model.rememberUsage(from: base, to: updated)
             isRerunning = false
         }
     }
@@ -417,7 +434,7 @@ struct ScanResultView: View {
         model.save(updated)
     }
 
-    /// Usage edited in the detail sheet: re-run the engine on-device and save.
+    /// Usage edited in the detail sheet: re-run the engine on-device, save, and remember the rate for this kind of item.
     private func applyUsage(_ field: UsageField, _ value: Double, to componentID: UUID) {
         let base = savedCopy ?? current
         let updated = rebasingSwaps(from: base,
@@ -425,6 +442,18 @@ struct ScanResultView: View {
                                                                                to: componentID, in: base))
         withAnimation(.smooth) { current = updated }
         model.save(updated)
+        model.rememberUsage(from: base, to: updated)
+    }
+
+    /// Takes back the quick-details answer that refined this item, back to the estimate it had.
+    private func undoAnswer(of componentID: UUID) {
+        Task {
+            let base = savedCopy ?? current
+            let undone = await model.makeScanCoordinator().undoingDetail(of: componentID, in: base)
+            let updated = rebasingSwaps(from: base, onto: undone)
+            withAnimation(.smooth) { current = updated }
+            model.save(updated)
+        }
     }
 
     /// Saved swaps take the new usage too (`SwapPrefetcher.rebase`), so the swaps screen still compares like with like.

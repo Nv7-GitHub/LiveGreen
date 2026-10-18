@@ -156,7 +156,8 @@ public enum FoodServing {
 }
 
 extension FoodServing {
-    /// Servings a week when nothing says how often the food is eaten.
+    /// Servings a week when nothing says how often the food is eaten. New scans always state a rate (the food group's
+    /// typical week, `UsageDefaults`); this covers swaps and scans saved without one.
     public static let defaultServingsPerWeek = 1.0
 
     /// Packs a week for a per-pack item from servings a week: servings × serving ÷ pack.

@@ -12,6 +12,8 @@ public struct ScanPipeline: Sendable {
     public var profile: UserProfile
     /// Notes the user left on earlier scans; identify gets the few most relevant as weak hints.
     public var feedback: [ScanFeedback] = []
+    /// The user's earlier rates a week by kind of item (`UsageDefaults.kindKey`), used in place of the typical week.
+    public var rememberedUsage: [String: Double] = [:]
 
     /// The ladder phases and the progress step each one reports.
     static let phases: [(step: PipelineStep, tiers: ClosedRange<Tier>)] = [
@@ -48,6 +50,7 @@ public struct ScanPipeline: Sendable {
         var components = identified.enumerated().map {
             $1.makeComponent(id: Self.componentID(scan: id, index: $0), scene: scene)
         }
+        components = Self.linkingContainers(components)
         let deferrable = Dictionary(uniqueKeysWithValues: zip(components.map(\.id), identified.map(\.deferrableLoad)))
         emit(.componentsIdentified(components))
         emit(.stepFinished(.identifying))
@@ -85,11 +88,14 @@ public struct ScanPipeline: Sendable {
         }
 
         components = components.map { completed($0, deferrable: deferrable[$0.id] ?? nil) }
+        // Typical weeks once the food groups are final (a pack basis can change one), in place of identify's guesses.
+        components = Self.askingFrequency(withDefaultUsage(components))
         // Questions are only about items the results add up, never a stranger's car or store stock.
         let asked = components.filter(\.isTotaled)
-        let pending = QuestionGate.pendingQuestions(for: asked)
+        let pending = QuestionGate.pendingQuestions(for: asked, engine: engine)
         if !pending.isEmpty { emit(.questionsNeeded(pending)) }
-        // Items still on a T4 estimate get a few plain detail questions before the results (`refining`).
+        // Items still on a T4 estimate, and foods of an uncertain group, get a few plain detail questions before the
+        // results (`refining`).
         let details = await specQuestions(for: asked)
         if !details.isEmpty { emit(.specQuestionsNeeded(details)) }
 
@@ -99,23 +105,6 @@ public struct ScanPipeline: Sendable {
                                 components: components, sceneContext: scene)
         result.updateTotals(engine: engine)
         return result
-    }
-
-    /// Re-runs the engine after question answers (spec §5.5), locally with no network call.
-    public func applying(_ answers: [(componentID: UUID, option: AnswerOption)], to result: ScanResult) -> ScanResult {
-        var updated = result
-        for answer in answers {
-            guard let index = updated.components.firstIndex(where: { $0.id == answer.componentID }) else { continue }
-            var component = engine.applyingAnswer(answer.option, to: updated.components[index], profile: profile)
-            if var candidate = component.plugCandidate, let kWh = component.metrics[.yearlyElectricity] {
-                candidate.dailyKWh = kWh.value / ImpactEngine.daysPerYear
-                candidate.estimatedSavings = plugSavings(for: candidate)
-                component.plugCandidate = candidate
-            }
-            updated.components[index] = component
-        }
-        updated.updateTotals(engine: engine)
-        return updated
     }
 
     // MARK: - Steps

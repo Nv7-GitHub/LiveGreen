@@ -19,14 +19,17 @@ final class ScanCoordinator: ScanCoordinating {
     @ObservationIgnored let pipeline: ScanPipeline
     private(set) var latestResult: ScanResult?
 
-    /// - Parameter feedback: notes from earlier scans; identify gets the most relevant few as weak hints.
+    /// - Parameters:
+    ///   - feedback: notes from earlier scans; identify gets the most relevant few as weak hints.
+    ///   - rememberedUsage: the user's earlier rates a week by kind of item, used in place of the typical week.
     init(services: ServiceContainer, profile: UserProfile, mode: ScanMode, cache: (any ResolutionCache)? = nil,
-         feedback: [ScanFeedback] = []) {
+         feedback: [ScanFeedback] = [], rememberedUsage: [String: Double] = [:]) {
         self.services = services
         self.profile = profile
         self.mode = mode
         var pipeline = services.pipeline(profile: profile, cache: cache)
         pipeline.feedback = feedback
+        pipeline.rememberedUsage = rememberedUsage
         self.pipeline = pipeline
     }
 
@@ -65,6 +68,11 @@ final class ScanCoordinator: ScanCoordinating {
         let refined = await pipeline.refining(result, specAnswers: specAnswers)
         latestResult = refined
         return refined
+    }
+
+    /// Takes back a quick-details answer from the item's detail sheet, on-device.
+    func undoingDetail(of componentID: UUID, in result: ScanResult) async -> ScanResult {
+        await pipeline.undoingDetail(of: componentID, in: result)
     }
 
     /// Re-runs the engine locally with question answers (spec §5.5).
