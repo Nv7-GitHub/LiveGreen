@@ -36,6 +36,7 @@ struct HistoryTab: View {
             }
         }
         .listStyle(.insetGrouped)
+        .greeneryBackground(.history)
         .overlay { emptyState }
         .navigationTitle(query.isEmpty ? "History" : "Search")
         .navigationDestination(for: HistoryRoute.self) { HistoryScanDetail(scanID: $0.scanID) }
@@ -50,11 +51,8 @@ struct HistoryTab: View {
     @ViewBuilder
     private var emptyState: some View {
         if model.scans.isEmpty {
-            ContentUnavailableView {
-                Label("No scans yet", systemImage: "clock.arrow.circlepath")
-            } description: {
-                Text("Scans you save appear here.")
-            } actions: {
+            GreeneryEmptyState(art: .seedling, title: "No scans yet", caption: "Awaiting your first find",
+                               message: "Scans you save appear here.") {
                 Button("Start scanning", systemImage: "viewfinder") { model.selectedTab = .scan }
                     .buttonStyle(.glassProminent)
             }

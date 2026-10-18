@@ -26,6 +26,15 @@ struct AnalyzingCard: View {
         GlassCard(tint: Color(uiColor: .systemBackground).opacity(0.6)) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
+                    // A seedling that grows as the steps finish.
+                    GreeneryArt.seedling.image
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 30, height: 30)
+                        .scaleEffect(0.4 + 0.6 * Double(progress.finished.count) / Double(PipelineStep.allCases.count),
+                                     anchor: .bottom)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.55), value: progress.finished.count)
+                        .accessibilityHidden(true)
                     Text("Analyzing").font(.headline)
                     Spacer()
                     Text("\(progress.finished.count)/\(PipelineStep.allCases.count)")

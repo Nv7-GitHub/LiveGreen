@@ -61,6 +61,7 @@ struct AlternativesView: View {
                 withAnimation { scroller.scrollTo(Self.imageAnchor, anchor: .top) }
             }
         }
+        .greeneryBackground(.detail)
         .navigationTitle("Take action")
         .task { await screen.load(app: app) }
         .task(id: planKey) { await makePlans() }

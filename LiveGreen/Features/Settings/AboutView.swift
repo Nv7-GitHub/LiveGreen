@@ -39,6 +39,13 @@ struct AboutView: View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 6) {
+                    GreeneryArt.lilyArch.image
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: 240)
+                        .swaying(1, anchor: .bottomLeading, duration: 5)
+                        .frame(maxWidth: .infinity)
+                        .accessibilityHidden(true)
                     Label("LiveGreen", systemImage: "leaf.fill")
                         .font(.title2.weight(.bold))
                         .foregroundStyle(Theme.leaf)
@@ -76,6 +83,7 @@ struct AboutView: View {
                 }
             }
         }
+        .greeneryBackground(.settings)
         .navigationTitle("About")
         .navigationBarTitleDisplayMode(.inline)
     }

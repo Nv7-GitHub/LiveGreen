@@ -59,11 +59,7 @@ struct NameEntryView: View {
             }
         }
         .padding()
-        .background(
-            LinearGradient(colors: [Theme.mint.opacity(0.45), Theme.leaf.opacity(0.15), .clear],
-                           startPoint: .topLeading, endPoint: .bottom)
-                .ignoresSafeArea()
-        )
+        .greeneryBackground(.onboarding)
         .onAppear { focus = .name }
     }
 

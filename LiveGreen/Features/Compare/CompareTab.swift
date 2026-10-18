@@ -37,13 +37,11 @@ struct CompareTab: View {
                     if !isLoaded {
                         ProgressView().padding(.top, 40)
                     } else if analysis.cohort == nil {
-                        unavailable("No baseline for your region",
-                                    message: "Per-capita data isn't available for \(model.profile.region.countryCode). Update your location in Settings.",
-                                    systemImage: "globe")
+                        unavailable("No baseline for your region", caption: "Uncharted territory",
+                                    message: "Per-capita data isn't available for \(model.profile.region.countryCode). Update your location in Settings.")
                     } else if analysis.isEmpty {
-                        unavailable("Nothing to compare yet",
-                                    message: "Scan items to see how you compare with people like you.",
-                                    systemImage: "chart.bar.xaxis")
+                        unavailable("Nothing to compare yet", caption: "The garden is still growing",
+                                    message: "Scan items to see how you compare with people like you.")
                     } else {
                         MetricChips(selection: $selection, analysis: analysis)
                         switch selection {
@@ -56,6 +54,7 @@ struct CompareTab: View {
                 // switch, so taps landed mid-animation and the new metric showed late.
                 .padding()
             }
+            .greeneryBackground(.leaderboard)
             .navigationTitle("Leaderboard")
             .settingsToolbarButton()
             .task(id: inputs) { await refresh() }
@@ -104,23 +103,17 @@ struct CompareTab: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         } else {
-            unavailable("No \(CohortMetric.shortName(metric).lowercased()) data yet",
-                        message: "None of your scanned items report this metric. Try another metric or scan more items.",
-                        systemImage: metric.systemImage)
+            unavailable("No \(CohortMetric.shortName(metric).lowercased()) data yet", caption: "Nothing measured here",
+                        message: "None of your scanned items report this metric. Try another metric or scan more items.")
         }
     }
 
-    private func unavailable(_ title: String, message: String, systemImage: String) -> some View {
-        GlassCard {
-            ContentUnavailableView {
-                Label(title, systemImage: systemImage)
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Scan something", systemImage: "viewfinder") { model.selectedTab = .scan }
-                    .buttonStyle(.glassProminent)
-            }
+    private func unavailable(_ title: String, caption: String, message: String) -> some View {
+        GreeneryEmptyState(art: .terrarium, title: title, caption: caption, message: message) {
+            Button("Scan something", systemImage: "viewfinder") { model.selectedTab = .scan }
+                .buttonStyle(.glassProminent)
         }
+        .padding(.top, 24)
     }
 }
 

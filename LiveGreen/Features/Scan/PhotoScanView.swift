@@ -108,7 +108,9 @@ struct PhotoScanView: View {
 
     private var fallback: some View {
         ZStack {
-            LinearGradient(colors: [Theme.moss, .black], startPoint: .top, endPoint: .bottom).ignoresSafeArea()
+            // The forest at night, so the white text and glass controls read the same in either appearance.
+            GreeneryBackdrop(scene: .onboarding)
+                .environment(\.colorScheme, .dark)
             VStack(spacing: 12) {
                 Image(systemName: "camera.viewfinder")
                     .font(.system(size: 60))

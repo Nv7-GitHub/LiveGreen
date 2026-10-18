@@ -17,6 +17,7 @@ struct NudgesTab: View {
                 }
                 .padding()
             }
+            .greeneryBackground(.nudges)
             .navigationTitle("Nudges")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -36,13 +37,11 @@ struct NudgesTab: View {
         VStack(alignment: .leading, spacing: 10) {
             sectionTitle("What we noticed", systemImage: "chart.line.uptrend.xyaxis")
             if trends.isEmpty {
-                GlassCard {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(app.nudges.isRefreshing ? "Looking at your meals…" : "No heavy meals yet")
-                            .font(.headline)
-                        Text("Scan what you eat. When a meal keeps coming out high in carbon, LiveGreen texts you a specific swap nearby right before you'd usually eat it.")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
+                GreeneryEmptyState(art: .seedling,
+                                   title: app.nudges.isRefreshing ? "Looking at your meals…" : "No heavy meals yet",
+                                   caption: "Watching what's on your plate",
+                                   message: "Scan what you eat. When a meal keeps coming out high in carbon, LiveGreen texts you a specific swap nearby right before you'd usually eat it.") {
+                    EmptyView()
                 }
                 .accessibilityIdentifier("nudges.noTrends")
             } else {
