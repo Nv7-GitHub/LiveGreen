@@ -33,6 +33,29 @@ struct PlugDiscoveryView: View {
                 Text("On this network")
             }
 
+            #if targetEnvironment(simulator)
+            Section {
+                ForEach(SimulatedPlugs.all) { dummy in
+                    Button {
+                        connect(label: dummy.name) { dummy.endpoint }
+                    } label: {
+                        HStack {
+                            Label(dummy.name, systemImage: "powerplug")
+                            Spacer()
+                            Text("\(Int(dummy.loadWatts)) W").font(.caption).foregroundStyle(.secondary)
+                            if connectingTo == dummy.name { ProgressView() }
+                        }
+                    }
+                    .disabled(pairing.isVerifying)
+                    .accessibilityIdentifier("pairing.simulated.\(dummy.host)")
+                }
+            } header: {
+                Text("Simulator plugs")
+            } footer: {
+                Text("Dummy Shelly plugs that only exist in the Simulator. They draw their load while on and follow the schedule.")
+            }
+            #endif
+
             Section {
                 TextField("192.168.1.42", text: $manualAddress)
                     .keyboardType(.numbersAndPunctuation)

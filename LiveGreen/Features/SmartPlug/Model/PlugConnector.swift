@@ -6,7 +6,12 @@ nonisolated struct PlugConnector: Sendable {
     var makeShelly: @Sendable (PlugEndpoint, _ password: String?) -> any PlugController
 
     static let live = PlugConnector(
-        makeShelly: { endpoint, password in ShellyClient(endpoint: endpoint, password: password) })
+        makeShelly: { endpoint, password in
+            #if targetEnvironment(simulator)
+            if let simulated = SimulatedPlugs.controller(for: endpoint) { return simulated }
+            #endif
+            return ShellyClient(endpoint: endpoint, password: password)
+        })
 
     func controller(for kind: PairedPlug.Kind, password: String?) -> any PlugController {
         switch kind {
