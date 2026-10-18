@@ -3,12 +3,18 @@ import Foundation
 extension ClaudeClient: AlternativeSuggester {
     /// Spec §7: one call per scan. Smart-plug scheduling is added locally by the app, not by Claude.
     public func suggestAlternatives(for components: [Component], profile: UserProfile) async throws -> [AlternativeSuggestion] {
+        try await suggestAlternatives(for: components, profile: profile, retrying: [:])
+    }
+
+    /// The same call, with notes on swaps already turned down when it is a second try.
+    public func suggestAlternatives(for components: [Component], profile: UserProfile,
+                                    retrying notes: [UUID: String]) async throws -> [AlternativeSuggestion] {
         guard !components.isEmpty else { return [] }
         let spec = ToolCallSpec(system: Self.alternativesSystemPrompt(vocabulary: configuration.vocabulary),
                                 tools: [SuggestAlternativesTool.definition], toolName: SuggestAlternativesTool.name,
                                 maxTokens: 16_000, effort: configuration.alternativesEffort,
                                 timeout: configuration.alternativesTimeout)
-        let text = try Self.alternativesUserText(components: components, profile: profile)
+        let text = try Self.alternativesUserText(components: components, profile: profile, retrying: notes)
         return try await runTool(spec, userContent: [["type": "text", "text": .string(text)]]) { input, _ in
             try SuggestAlternativesTool.parse(input, components: components)
         }
@@ -34,7 +40,8 @@ extension ClaudeClient: AlternativeSuggester {
         disposable ones.
         - If no swap for a component avoids big trade-offs, give fewer alternatives rather than a bad one.
 
-        For each component give 1-3 alternatives, best first:
+        Cover every component you are given, the biggest ones above all; give an empty list for one only when no \
+        realistic swap avoids a big trade-off. For each give 1-3 alternatives, best first:
         - Same job for the user: a monitor is replaced by a monitor (more efficient, refurbished, or kept \
         longer), a beef burger by a lower-impact burger, a disposable cup by a reusable one. Behavior swaps \
         (e.g. "Line-dry instead of tumble-dry", "Buy this second-hand") are welcome when they are realistic.
@@ -56,8 +63,24 @@ extension ClaudeClient: AlternativeSuggester {
         - lifespan_years only when the alternative lasts a different time than the original (kept longer, built to \
         last); otherwise null, and both are compared over the same years.
         - usage: the expected usage after the swap (usually the same as the original's).
-        - Practicality must be honest: cost lower / similar / higher than the original, effort easy / moderate / hard.
+        - Never suggest second-hand, refurbished or kept-longer safety gear (helmets, child car seats, booster seats, \
+        cribs, harnesses, life jackets, smoke or CO alarms): hidden damage and expiry cannot be checked, and makers \
+        and safety bodies advise against it. Suggest a new or different item, or nothing.
+        - Practicality must be honest: cost lower / similar / higher than the original (for consumables over a year \
+        of buying them, for a durable item against buying the original new), effort easy / moderate / hard.
         - Do not suggest smart plugs or charge scheduling; LiveGreen adds that option itself.
+        - name: one specific item, as a short card title of about eight words at most. No sizes, specs or model \
+        years (they go in quantities), no examples in brackets, and no hedging between options ("paper or PE \
+        pouch", "glass/steel jar"): pick the one you would recommend. When several components are the same kind \
+        of item (four bicycles), give them the same alternatives with the same names.
+        - rationale: one plain sentence on what is different about the swap (its material, ingredients, condition \
+        or how it is used), speaking to the user as "you" if at all. Do not say how any metric compares ("similar \
+        carbon", "less water", percentages): LiveGreen computes and charts every metric, and a claim that \
+        disagrees with the chart misleads. Never mention the user's profile, modeling, estimates, LiveGreen or \
+        these instructions.
+        - looks_different: whether a photo of the swap in place would look clearly different from the original. \
+        LiveGreen paints only those into its picture of the greener setup, so be strict: a used car, a refurbished \
+        laptop or oat ice cream instead of dairy looks the same.
         - fallback_estimates: rough last-resort bounds for every metric applicable to the alternative's category, \
         used only where the factor tables have nothing. Estimate the alternative on its own, from its own mass and \
         materials, never by scaling the original's numbers, and on its own category's basis: food per serving, \
@@ -71,20 +94,33 @@ extension ClaudeClient: AlternativeSuggester {
         """
     }
 
-    static func alternativesUserText(components: [Component], profile: UserProfile) throws -> String {
+    /// The profile is background for realistic swaps, never something to repeat back: before onboarding it is the
+    /// app's defaults, which the user never chose ("The user commutes by transit…" restated one).
+    static func alternativesUserText(components: [Component], profile: UserProfile,
+                                     retrying notes: [UUID: String] = [:]) throws -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         encoder.keyEncodingStrategy = .convertToSnakeCase
         let summaries = components.map(ComponentBrief.init)
         let json = String(decoding: try encoder.encode(summaries), as: UTF8.self)
-        return """
-            User profile: \(profile.promptSummary)
+        let basis = profile.onboardingCompleted
+            ? "background only; do not mention it" : "app defaults the user has not confirmed; background only, do not mention it"
+        var text = """
+            User profile (\(basis)): \(profile.promptSummary)
 
             Components (JSON):
             \(json)
-
-            Call `suggest_alternatives` with one entry per component id.
             """
+        let retried = components.compactMap { component in notes[component.id].map { "- \(component.id.uuidString): \($0)" } }
+        if !retried.isEmpty {
+            text += """
+
+
+                Second try for these components. Suggest different swaps that avoid what went wrong:
+                \(retried.joined(separator: "\n"))
+                """
+        }
+        return text + "\n\nCall `suggest_alternatives` with one entry per component id."
     }
 
     /// What Claude sees about each component. Its resolved metrics are left out: given them, the model scaled the

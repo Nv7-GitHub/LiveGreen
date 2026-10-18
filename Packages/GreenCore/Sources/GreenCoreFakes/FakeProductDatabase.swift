@@ -1,7 +1,7 @@
 import Foundation
 import GreenCore
 
-/// In-memory GTIN → product table.
+/// In-memory GTIN → product table, also searchable by brand and name.
 public struct FakeProductDatabase: ProductDatabase {
     public var records: [String: ProductRecord]
 
@@ -11,6 +11,11 @@ public struct FakeProductDatabase: ProductDatabase {
 
     public func product(gtin: String) async throws -> ProductRecord? {
         records[gtin]
+    }
+
+    /// Its own records searched the way the live client searches Open Food Facts' results.
+    public func searchProduct(brand: String, name: String) async throws -> ProductRecord? {
+        ProductNameMatch.best(brand: brand, name: name, among: records.values.sorted { $0.gtin < $1.gtin })
     }
 
     public static let defaultRecords: [String: ProductRecord] = [

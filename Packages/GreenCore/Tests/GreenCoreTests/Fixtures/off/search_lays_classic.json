@@ -1,0 +1,404 @@
+{
+ "hits": [
+  {
+   "code": "0028400097802",
+   "product_name": "Lay's Classic Potato chips",
+   "product_name_en": "Lay's Classic Potato chips",
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "0028400043939",
+   "product_name": "Lays classic potato chips",
+   "product_name_en": "Lays classic potato chips",
+   "brands": [
+    "Lay's"
+   ],
+   "quantity": "50 oz"
+  },
+  {
+   "code": "3200700000974",
+   "product_name": "lay’s classic potato chips",
+   "product_name_en": "lay’s classic potato chips",
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "0028400323826",
+   "product_name": "Lay's Classic potato chips",
+   "product_name_en": "Lay's Classic potato chips",
+   "brands": [
+    "Lay's"
+   ],
+   "quantity": "2.5/8 oz",
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "0028400017152",
+   "product_name": "Lays Classic Potato Chips 200gm",
+   "product_name_en": "Lays Classic Potato Chips 200gm",
+   "brands": [
+    "Lay's"
+   ],
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "0028400027960",
+   "product_name": "Lay's Classic Potato Chips 2.875 Ounce Plastic Bag",
+   "product_name_en": "Lay's Classic Potato Chips 2.875 Ounce Plastic Bag",
+   "categories_tags": [
+    "en:snacks"
+   ]
+  },
+  {
+   "code": "0028400160148",
+   "product_name": "Lay's Classic Potato Chips 10 Ounce Plastic Bag",
+   "product_name_en": "Lay's Classic Potato Chips 10 Ounce Plastic Bag",
+   "brands": [
+    "Lay's"
+   ],
+   "quantity": "10 oz (283.5 g)",
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "0028400161909",
+   "product_name": "Lay's Classic Potato Chips 1.125 Ounce Plastic Bag",
+   "product_name_en": "Lay's Classic Potato Chips 1.125 Ounce Plastic Bag",
+   "categories_tags": [
+    "en:snacks"
+   ]
+  },
+  {
+   "code": "0028400164733",
+   "product_name": "Lay's Classic Potato Chips 13 3/4 Ounce Party Size Bag",
+   "product_name_en": "Lay's Classic Potato Chips 13 3/4 Ounce Party Size Bag",
+   "brands": [
+    "Frito Lays"
+   ],
+   "quantity": "1",
+   "categories_tags": [
+    "en:snacks"
+   ]
+  },
+  {
+   "code": "0041200104532",
+   "product_name": "Lay's, potato chips",
+   "product_name_en": "Lay's, potato chips",
+   "categories_tags": [
+    "en:snacks"
+   ]
+  },
+  {
+   "code": "0028400012072",
+   "product_name": "Lay's Potato Chips",
+   "product_name_en": "Lay's Potato Chips",
+   "brands": [
+    "Lay's"
+   ],
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "0028400236492",
+   "product_name": "Lays potato chips",
+   "product_name_en": "Lays potato chips",
+   "brands": [
+    "Frito Lay"
+   ],
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "50029914",
+   "product_name": "Lays Potato Chips",
+   "product_name_en": "Lays Potato Chips",
+   "brands": [
+    "Lay's"
+   ],
+   "quantity": "8oz"
+  },
+  {
+   "code": "8901491983143",
+   "product_name": "lays potato chips",
+   "product_name_en": "lays potato chips",
+   "brands": [
+    "Lay's"
+   ],
+   "quantity": "28g",
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "0041200099050",
+   "product_name": "Lay's, potato chips",
+   "product_name_en": "Lay's, potato chips",
+   "categories_tags": [
+    "en:snacks"
+   ]
+  },
+  {
+   "code": "8850718801152",
+   "product_name": "มันฝรั่งแผ่นทอดกรอบเลย์",
+   "product_name_en": "Potato chip Lays",
+   "brands": [
+    "เลย์",
+    "Lays",
+    "lay's"
+   ],
+   "quantity": "32 g",
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:fruits-and-vegetables-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "8964000090602",
+   "product_name": "Lays(Masala)",
+   "product_name_en": "Lays(Masala)",
+   "brands": [
+    "Potato chips"
+   ],
+   "quantity": "60",
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  },
+  {
+   "code": "8964000090619",
+   "product_name": "Lays(French Cheese)",
+   "product_name_en": "Lays(French Cheese)",
+   "brands": [
+    "Potato chips"
+   ],
+   "quantity": "1000",
+   "categories_tags": [
+    "en:snacks",
+    "en:salty-snacks",
+    "en:appetizers",
+    "en:chips-and-fries",
+    "en:crisps"
+   ]
+  },
+  {
+   "code": "8964000009062",
+   "product_name": "Lays(french chez)",
+   "product_name_en": "Lays(french chez)",
+   "brands": [
+    "Potato chips"
+   ],
+   "quantity": "60"
+  },
+  {
+   "code": "8964000090596",
+   "product_name": "Lays(Classic)",
+   "product_name_en": "Lays(Classic)",
+   "brands": [
+    "Potato chips"
+   ],
+   "quantity": "60",
+   "categories_tags": [
+    "en:plant-based-foods-and-beverages",
+    "en:plant-based-foods",
+    "en:snacks",
+    "en:cereals-and-potatoes",
+    "en:salty-snacks",
+    "en:appetizers"
+   ],
+   "ecoscore_data": {
+    "agribalyse": {
+     "co2_total": 1.541250051,
+     "co2_agriculture": 0.82537493,
+     "co2_processing": 0.2312449,
+     "co2_packaging": 0.28118162,
+     "co2_transportation": 0.18400438,
+     "co2_distribution": 0.019444221,
+     "co2_consumption": 0,
+     "name_en": "Potato crisps"
+    }
+   }
+  }
+ ],
+ "page": 1,
+ "page_size": 20,
+ "count": 10000
+}

@@ -142,11 +142,48 @@ struct GrokImageClientTests {
                                 selectedAlternatives: [cupID: cupAltID, charger.id: plugAltID])
 
         let prompt = try #require(GreenerImagePrompt.make(for: result))
-        #expect(prompt.contains("1. Replace the disposable coffee cup (right side of the photo) with: reusable steel cup."))
-        #expect(prompt.contains("2. Plug the e-bike charger (upper left of the photo) into a small white smart plug"))
+        #expect(prompt.contains("1. Replace the disposable coffee cup (right side of the photo, about 78–90% across and 52–72% down) with: reusable steel cup."))
+        #expect(!prompt.contains("smart plug"), "scheduling changes nothing a photo shows")
+        #expect(!prompt.contains("2."))
         #expect(prompt.contains("camera angle"))
         #expect(prompt.contains("photorealistic"))
+        #expect(prompt.contains("labels, logos, brand names, usernames and captions"))
         #expect(!prompt.contains("lamp"))
         #expect(GreenerImagePrompt.make(swaps: []) == nil)
+    }
+
+    @Test func onlySwapsThatShowArePictured() throws {
+        // 01, 14, 23: oat ice cream for dairy, a used car and a kept-longer helmet all looked like the original.
+        func component(_ name: String, _ swap: Alternative) -> Component {
+            Component(name: name, category: swap.category, alternatives: [swap])
+        }
+        let sundae = component("Sundae", Alternative(name: "Oat-milk sundae", category: .food, rationale: "", looksDifferent: false))
+        let car = component("SUV", Alternative(name: "Buy a used SUV", category: .household, rationale: "", condition: .used))
+        let laptop = component("Laptop", Alternative(name: "Keep it two more years", category: .electronic, rationale: ""))
+        let scene = [sundae, car, laptop]
+        let picks = Dictionary(uniqueKeysWithValues: scene.map { ($0.id, $0.alternatives[0].id) })
+        let result = ScanResult(title: "Scene", components: scene, selectedAlternatives: picks)
+        #expect(GreenerImagePrompt.swaps(for: result).isEmpty)
+        #expect(GreenerImagePrompt.make(for: result) == nil, "no picture that would look like the photo")
+
+        let bike = component("Cruiser bike", Alternative(name: "Buy a used hybrid bike", category: .household, rationale: "",
+                                                         condition: .used, looksDifferent: true))
+        let cup = component("Plastic cup", Alternative(name: "Stainless steel tumbler with lid", category: .household, rationale: ""))
+        let shown = ScanResult(title: "Scene", components: [bike, cup],
+                               selectedAlternatives: [bike.id: bike.alternatives[0].id, cup.id: cup.alternatives[0].id])
+        let prompt = try #require(GreenerImagePrompt.make(for: shown))
+        #expect(prompt.contains("with: Buy a used hybrid bike, clean and in good condition."))
+        #expect(prompt.contains("with: Stainless steel tumbler with lid, with its lid on."))
+        #expect(prompt.contains("never worn, dirty, rusty or damaged"))
+    }
+
+    @Test func theDividerStartsLeftOfEverySwappedItem() {
+        // 12, 19: at 50/50 both swapped items sat in the "Before" half.
+        #expect(GreenerImagePrompt.revealSplit(for: []) == 0.5)
+        #expect(GreenerImagePrompt.revealSplit(for: [NormalizedRect(x: 0.7, y: 0.2, width: 0.2, height: 0.2)]) == 0.5)
+        let left = GreenerImagePrompt.revealSplit(for: [NormalizedRect(x: 0.3, y: 0.1, width: 0.2, height: 0.3),
+                                                        NormalizedRect(x: 0.6, y: 0.5, width: 0.3, height: 0.3)])
+        #expect(abs(left - 0.26) < 1e-9)
+        #expect(GreenerImagePrompt.revealSplit(for: [NormalizedRect(x: 0, y: 0, width: 0.5, height: 1)]) == 0.06)
     }
 }
