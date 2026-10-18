@@ -113,6 +113,25 @@ struct VehicleModelTests {
         #expect(abs(try #require(component.metrics[.carbon]).value - (9000 + driving)) < 1e-6)
     }
 
+    @Test func anEVChargesThroughAHomeCharger() async throws {
+        let store = ReferenceStore.bundled
+        func scanned(_ powertrain: Powertrain) async throws -> Component {
+            let car = IdentifiedComponent(name: "Parked car", category: .vehicle, boundingBox: .full,
+                                          quantities: Quantities(massKg: 1900, powertrain: powertrain),
+                                          deferrableLoad: .evCharger)
+            let pipeline = ScanPipeline(vision: FixedVision(components: [car]), alternatives: FakeAlternativeSuggester(),
+                                        products: FakeProductDatabase(),
+                                        ladder: EvidenceLadder(resolvers: [FactorModelResolver(store: store)]),
+                                        engine: ImpactEngine(reference: store), profile: .default)
+            return try #require(try await pipeline.run(image: Data([1]), hints: .none, mode: .photo).components.first)
+        }
+        let ev = try await scanned(.electric)
+        #expect(ev.plugCandidate?.loadType == .evCharger)
+        #expect(ev.plugCandidate?.chargerWatts == 7200)
+        // A petrol car draws no grid electricity, so there is nothing to schedule.
+        #expect(try await scanned(.petrol).plugCandidate == nil)
+    }
+
     @Test func roadVehiclesFiledElsewhereBecomeVehicles() {
         func isVehicle(_ name: String, _ category: GreenCore.Category, kg: Double?, _ powertrain: Powertrain? = nil) -> Bool {
             VehicleModel.isVehicle(name: name, category: category, quantities: Quantities(massKg: kg, powertrain: powertrain))
