@@ -6,10 +6,18 @@ struct AlternativeRow: View {
     let component: Component
     let alternative: Alternative
     let isSelected: Bool
+    /// Items on the card that take this swap; above one, the carbon change is per item ("each").
+    var itemCount = 1
     let onSelect: () -> Void
     var onPair: () -> Void = {}
 
     private var isPlug: Bool { alternative.kind == .smartPlugScheduling }
+
+    /// Buying a replacement for something kept for years is priced against buying it new, never as a saving.
+    private var costFraming: PracticalityTags.Framing {
+        if isPlug { return .addOn }
+        return alternative.isPurchase && SwapMath.isDurable(component) ? .replacement : .ongoing
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -22,7 +30,7 @@ struct AlternativeRow: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(alternative.name).font(.subheadline.weight(.semibold))
                         Text(alternative.rationale).font(.caption).foregroundStyle(.secondary)
-                        PracticalityTags(practicality: alternative.practicality)
+                        PracticalityTags(practicality: alternative.practicality, framing: costFraming)
                         summary.font(.caption.bold().monospacedDigit())
                     }
                     .multilineTextAlignment(.leading)
@@ -82,8 +90,8 @@ struct AlternativeRow: View {
         let baseline = (component.metrics[.carbon]?.value ?? 0) * SwapMath.yearlyFactor(.carbon, for: component)
         guard let saving = SwapMath.yearlySaving(.carbon, component: component, alternative: alternative),
               SwapMath.isNetChange(saving, baseline: baseline) else { return nil }
-        let amount = DisplayUnits.carbon(kg: abs(saving.value))
-        return saving.value > 0 ? ("−\(amount)/yr", true) : ("+\(amount)/yr", false)
+        let amount = DisplayUnits.carbon(kg: abs(saving.value)) + "/yr" + (itemCount > 1 ? " each" : "")
+        return saving.value > 0 ? ("−\(amount)", true) : ("+\(amount)", false)
     }
 }
 

@@ -7,14 +7,24 @@ struct OFFProductPayload: Decodable {
     var product: JSONValue?
 
     func record(gtin: String, sourceURL: URL) -> ProductRecord? {
-        guard status != 0, let product, product.object != nil else { return nil }
+        guard status != 0, let product else { return nil }
+        return Self.record(from: product, gtin: gtin, sourceURL: sourceURL)
+    }
+
+    /// A product object as the product API and the search service return it. `brands` is a comma-separated string
+    /// from the product API (its first brand is kept) and a list from search (all kept, comma-separated, so a name
+    /// match can check each).
+    static func record(from product: JSONValue, gtin: String, sourceURL: URL, allBrands: Bool = false) -> ProductRecord? {
+        guard product.object != nil else { return nil }
         let name = product["product_name"]?.string?.trimmedNonEmpty
             ?? product["product_name_en"]?.string?.trimmedNonEmpty ?? "Product \(gtin)"
-        let brand = product["brands"]?.string?.split(separator: ",").first
-            .map { String($0).trimmingCharacters(in: .whitespaces) }
+        let brands = (product["brands"]?.array?.compactMap(\.string)
+            ?? product["brands"]?.string?.split(separator: ",").map(String.init) ?? [])
+            .compactMap { $0.trimmingCharacters(in: .whitespaces).trimmedNonEmpty }
+        let brand = allBrands ? brands.joined(separator: ", ").trimmedNonEmpty : brands.first
         let agribalyse = product["ecoscore_data"]?["agribalyse"]
         return ProductRecord(
-            gtin: gtin, name: name, brand: brand?.trimmedNonEmpty, category: .food,
+            gtin: gtin, name: name, brand: brand, category: .food,
             netMassKg: Self.massKg(quantity: product["product_quantity"], unit: product["product_quantity_unit"]?.string),
             servingKg: Self.massKg(quantity: product["serving_quantity"], unit: product["serving_quantity_unit"]?.string),
             carbonKgPerKg: agribalyse?["co2_total"]?.double,

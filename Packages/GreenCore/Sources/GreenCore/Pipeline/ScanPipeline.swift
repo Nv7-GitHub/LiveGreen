@@ -273,6 +273,7 @@ extension Alternative {
 
     /// The locally added plug alternative (spec §7): the same device, so every metric matches; its saving
     /// comes from the component's plug candidate because scheduling changes when it charges, not what it is.
+    /// It costs more: the plug is bought, and moving charging to cleaner hours uses no less electricity.
     /// The id is derived from the component id so a re-run keeps the user's pick.
     public static func smartPlugScheduling(for component: Component) -> Alternative {
         let load = component.plugCandidate?.loadType.displayName.lowercased() ?? "charger"
@@ -283,6 +284,6 @@ extension Alternative {
                            category: component.category, identifiers: component.identifiers,
                            quantities: component.quantities, usage: component.usage,
                            rationale: "Keep your \(load), but let a plug switch it on only during the cleanest grid hours.",
-                           practicality: Practicality(cost: .lower, effort: .easy), metrics: component.metrics)
+                           practicality: Practicality(cost: .higher, effort: .easy), metrics: component.metrics)
     }
 }
