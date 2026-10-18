@@ -26,7 +26,7 @@ public enum Diet: String, Codable, Sendable, Hashable, CaseIterable, CodingKeyRe
         switch self {
         case .omnivore: (9, 10)
         case .flexitarian: (5, 10)
-        case .vegetarian: (0, 14)
+        case .vegetarian: (0, 16)
         case .vegan: (0, 0)
         }
     }

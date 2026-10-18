@@ -53,6 +53,17 @@ struct UserProfileTests {
         }
     }
 
+    /// Profiles saved with a diet label keep about the food footprint its old modifier gave.
+    @Test func legacyDietsKeepTheirFoodFootprint() throws {
+        let old: [Diet: Double] = [.omnivore: 1, .flexitarian: 0.83, .vegetarian: 0.68, .vegan: 0.51]
+        for (diet, modifier) in old {
+            let meals = diet.typicalMealsPerWeek
+            let profile = UserProfile(meatMealsPerWeek: meals.meat, dairyMealsPerWeek: meals.dairy)
+            let model = try #require(CohortModel(profile: profile, store: .bundled))
+            #expect(abs(model.modifier(for: .food) - modifier) < 0.005, "\(diet) \(model.modifier(for: .food))")
+        }
+    }
+
     @Test func promptSummaryDescribesTheAnswers() {
         let profile = UserProfile(meatMealsPerWeek: 3, dairyMealsPerWeek: 12, commuteKmPerWeekByMode: [:],
                                   homeType: .detachedHouse, floorAreaM2: 180, heatingSources: [.heatPump, .naturalGas],
@@ -131,6 +142,9 @@ struct ProfileModifierTests {
         #expect(abs(mixed.heatingModifier - (modifiers[.naturalGas]! + modifiers[.heatPump]!) / 2) < 1e-12)
         #expect(try model(UserProfile(heatingSources: [])).heatingModifier == modifiers[.none])
         #expect(try model(UserProfile(heatingSources: [.none, .oil])).heatingModifier == modifiers[.oil])
+        let carbon = store.cohort.heatingCarbonModifiers
+        #expect(abs(mixed.heatingCarbonModifier - (carbon[.naturalGas]! + carbon[.heatPump]!) / 2) < 1e-12)
+        #expect(try model(UserProfile(heatingSources: [])).heatingCarbonModifier == carbon[.none])
         let gas = LifestyleEstimate(profile: UserProfile(heatingSources: [.naturalGas])).kgPerYear[.homeEnergy] ?? 0
         let both = LifestyleEstimate(profile: UserProfile(heatingSources: [.naturalGas, .electricResistance])).kgPerYear[.homeEnergy] ?? 0
         let electric = LifestyleEstimate(profile: UserProfile(heatingSources: [.electricResistance])).kgPerYear[.homeEnergy] ?? 0
@@ -140,5 +154,27 @@ struct ProfileModifierTests {
             let estimate = try #require(try model(profile).estimate(for: .carbon))
             #expect(abs(estimate - LifestyleEstimate(profile: profile).totalKg) < 1e-6)
         }
+    }
+
+    /// Home-energy carbon follows the heating source on the US-average grid: a heat pump beats gas, gas beats
+    /// electric resistance, and an unheated home is lowest. Electricity still runs the other way.
+    @Test func heatingCarbonFollowsTheSource() throws {
+        let homeEnergy = { (sources: Set<HeatingSource>) in
+            LifestyleEstimate(profile: UserProfile(heatingSources: sources)).kgPerYear[.homeEnergy] ?? 0
+        }
+        let none = homeEnergy([]), heatPump = homeEnergy([.heatPump]), gas = homeEnergy([.naturalGas])
+        let district = homeEnergy([.districtHeating]), oil = homeEnergy([.oil])
+        let resistance = homeEnergy([.electricResistance])
+        #expect(none < heatPump && heatPump < gas && gas < resistance, "\([none, heatPump, gas, resistance])")
+        #expect(gas < oil && abs(district - gas) / gas < 0.05)
+        for source in HeatingSource.allCases where source != .none {
+            #expect(homeEnergy([source]) > none, "\(source) emits more than no heating")
+        }
+        // The leaderboard estimate uses the same carbon.
+        let pump = try model(UserProfile(heatingSources: [.heatPump]))
+        let furnace = try model(UserProfile(heatingSources: [.naturalGas]))
+        #expect(try #require(pump.estimate(for: .carbon)) < furnace.estimate(for: .carbon)!)
+        // Electrically heated homes still draw more electricity.
+        #expect(try #require(pump.estimate(for: .yearlyElectricity)) > furnace.estimate(for: .yearlyElectricity)!)
     }
 }

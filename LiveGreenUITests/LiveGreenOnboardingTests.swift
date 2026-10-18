@@ -26,6 +26,7 @@ final class LiveGreenOnboardingTests: XCTestCase {
         XCTAssertTrue(app.collectionViews.firstMatch.waitForNonExistence(timeout: 3))
 
         let zip = app.textFields["onboarding.postalCode"]
+        reveal(zip, in: app)
         zip.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.15)).tap()
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3), "Capsule edge focuses the ZIP field")
         app.typeText("10001")
@@ -128,13 +129,22 @@ final class LiveGreenOnboardingTests: XCTestCase {
         add(shot)
     }
 
-    /// Scrolls the question until the whole element is above Next (a half-visible one counts as hittable).
-    /// Chips sit in a lazy grid, so ones below the fold only exist once scrolled to.
+    /// Scrolls the question until the whole element is above Next and below the top of the question's scroll
+    /// area (a half-visible one counts as hittable, and one scrolled under the live estimate card takes no taps).
+    /// Chips sit in a lazy grid, so ones below the fold only exist once scrolled to. Short drags that hold at
+    /// the end, so a small phone's short scroll area isn't overshot by a swipe's momentum.
     @MainActor
     private func reveal(_ element: XCUIElement, in app: XCUIApplication) {
         _ = element.waitForExistence(timeout: 1)
-        let limit = app.buttons["onboarding.next"].frame.minY - 12
-        for _ in 0..<5 where !element.exists || element.frame.maxY > limit { app.swipeUp(velocity: .slow) }
+        let bottom = app.buttons["onboarding.next"].frame.minY - 12
+        let top = app.scrollViews.firstMatch.frame.minY
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        for _ in 0..<8 {
+            let up = !element.exists || element.frame.maxY > bottom
+            guard up || element.frame.minY < top else { break }
+            start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: up ? -150 : 150)),
+                        withVelocity: .slow, thenHoldForDuration: 0.2)
+        }
         XCTAssertTrue(element.exists, "\(element) exists")
     }
 
@@ -149,7 +159,7 @@ final class LiveGreenOnboardingTests: XCTestCase {
     @MainActor
     private func tapChip(_ name: String, in app: XCUIApplication, expectSelected: Bool = true) {
         let chip = app.buttons[name]
-        XCTAssertTrue(chip.exists || chip.waitForExistence(timeout: 3), "\(name) chip exists")
+        // `reveal` scrolls a chip below the fold into existence (the grid is lazy) and asserts it exists.
         reveal(chip, in: app)
         XCTAssertGreaterThanOrEqual(chip.frame.height, 44, "\(name) chip is a 44 pt target")
         chip.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()

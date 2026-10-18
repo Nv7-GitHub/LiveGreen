@@ -42,9 +42,9 @@ public struct LifestyleEstimate: Sendable, Hashable {
             categories.reduce(0) { $0 + total * reference.share(of: $1, for: .carbon) * model.modifier(for: $1, metric: .carbon) }
         }
         let categoryShare = Category.allCases.reduce(0) { $0 + reference.share(of: $1, for: .carbon) }
-        // Heating fuel shifts household energy; electric heating raises it, fuel heating lowers the electric part.
-        // Several sources average evenly.
-        let heating = model.heatingModifier
+        // The heating source shifts home-energy carbon: a heat pump or no heating lowers it, oil and electric
+        // resistance raise it. Several sources average evenly.
+        let heating = model.heatingCarbonModifier
         let travel = profile.commuteKmPerWeekByMode.reduce(0) { $0 + (Self.kgPerKm[$1.key] ?? 0) * $1.value * 52 }
         let packagingAndCare = total * (reference.share(of: .packaging, for: .carbon) + reference.share(of: .personalCare, for: .carbon))
         kgPerYear = [

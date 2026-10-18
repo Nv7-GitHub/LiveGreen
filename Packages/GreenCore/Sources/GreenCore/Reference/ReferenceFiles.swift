@@ -195,6 +195,7 @@ struct PerCapitaFile: Decodable {
     var householdSizeExponent: CitedValue<Double>
     var homeTypeModifiers: CitedValue<[String: Double]>
     var heatingModifiers: CitedValue<[String: Double]>
+    var heatingCarbonModifiers: CitedValue<[String: Double]>
     var categoryShares: CitedValue<[String: [String: Double]]>
 }
 

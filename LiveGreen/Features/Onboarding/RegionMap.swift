@@ -36,7 +36,9 @@ struct RegionMap: View {
             }
         }
         .mapStyle(.standard(elevation: .realistic, emphasis: .muted, pointsOfInterest: .excludingAll))
-        .frame(height: 170)
+        // 170 pt, shrinking toward 110 pt when the question's scroll area is short (SE-size phones) so more of
+        // the map peeks above the fold.
+        .containerRelativeFrame(.vertical) { length, _ in min(170, max(110, length * 0.4)) }
         .clipShape(.rect(cornerRadius: 18))
         .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.white.opacity(0.25)))
         .allowsHitTesting(false)
