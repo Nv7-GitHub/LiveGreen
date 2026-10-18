@@ -7,6 +7,8 @@ nonisolated enum SecretKey: String, CaseIterable, Identifiable, Sendable {
     case xai = "XAI_API_KEY"
     case electricityMaps = "ELECTRICITYMAPS_API_KEY"
     case energyStar = "ENERGYSTAR_APP_TOKEN"
+    case photon = "PHOTON_API_KEY"
+    case photonProject = "PHOTON_PROJECT_ID"
 
     var id: String { rawValue }
 
@@ -17,6 +19,8 @@ nonisolated enum SecretKey: String, CaseIterable, Identifiable, Sendable {
         case .xai: "xAI (Grok image)"
         case .electricityMaps: "Electricity Maps"
         case .energyStar: "ENERGY STAR app token"
+        case .photon: "Photon API key (iMessage nudges)"
+        case .photonProject: "Photon project ID"
         }
     }
 

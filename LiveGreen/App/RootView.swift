@@ -1,10 +1,9 @@
 import SwiftUI
 
-/// iOS 26 floating glass tab bar: Scan, History, Compare, Plugs (when enabled) and a search-role tab.
+/// iOS 26 floating glass tab bar: Scan, History, Leaderboard, Nudges and Plugs (when enabled).
 struct RootView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.scenePhase) private var scenePhase
-    @State private var searchText = ""
 
     var body: some View {
         @Bindable var model = model
@@ -18,15 +17,12 @@ struct RootView: View {
             Tab("Leaderboard", systemImage: "trophy", value: AppTab.compare) {
                 CompareTab()
             }
+            Tab("Nudges", systemImage: "message.badge", value: AppTab.nudges) {
+                NudgesTab()
+            }
             if model.flags.plugFeaturesEnabled {
                 Tab("Plugs", systemImage: "powerplug", value: AppTab.plugs) {
                     PlugsTab()
-                }
-            }
-            Tab(value: AppTab.search, role: .search) {
-                NavigationStack {
-                    HistoryTab(searchText: searchText)
-                        .searchable(text: $searchText, prompt: "Search scans")
                 }
             }
         }
@@ -42,6 +38,18 @@ struct RootView: View {
             if !enabled, model.selectedTab == .plugs { model.selectedTab = .scan }
         }
         .onChange(of: scenePhase, initial: true) { _, phase in refreshPlugs(for: phase) }
+        .task(id: scenePhase) { await sendDueNudges() }
+    }
+
+    /// While the app is open, sends any meal nudge whose time has come, checking every half minute. With no server,
+    /// this is the only way a scheduled nudge goes out on its own; the Nudges tab can send one now.
+    private func sendDueNudges() async {
+        guard scenePhase == .active else { return }
+        model.refreshNudges()
+        while !Task.isCancelled {
+            await model.nudges.sendDue(photon: model.services.photon)
+            try? await Task.sleep(for: .seconds(30))
+        }
     }
 
     /// Spec §8.3: re-plan paired plugs whenever the app comes to the foreground, and queue the best-effort

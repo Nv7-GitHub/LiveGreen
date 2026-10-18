@@ -3,6 +3,6 @@ enum AppTab: Hashable {
     case scan
     case history
     case compare
+    case nudges
     case plugs
-    case search
 }

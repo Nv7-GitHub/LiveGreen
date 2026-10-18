@@ -81,7 +81,7 @@ struct ScanResultView: View {
                 NavigationLink {
                     AlternativesView(result: current)
                 } label: {
-                    Label("Greener swaps", systemImage: "leaf.arrow.triangle.circlepath")
+                    Label("Take action", systemImage: "leaf.arrow.triangle.circlepath")
                 }
             }
         }
@@ -138,6 +138,7 @@ struct ScanResultView: View {
                     if !shownComponents.isEmpty { componentList }
                     if !notCounted.isEmpty { notCountedList }
                     alternativesButton
+                    if let nudge = model.nudges.nudge(forScan: current.id) { NudgeBanner(nudge: nudge) }
                     ScanFeedbackCard(result: current)
                 }
                 .padding(.horizontal)
@@ -306,7 +307,7 @@ struct ScanResultView: View {
         NavigationLink {
             AlternativesView(result: current)
         } label: {
-            Label("See greener swaps", systemImage: "leaf.arrow.triangle.circlepath")
+            Label("Take greener action", systemImage: "leaf.arrow.triangle.circlepath")
                 .font(.headline)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)

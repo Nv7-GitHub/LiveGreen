@@ -102,6 +102,18 @@ struct GreeneryScene {
         drifting: ["Petal", "LeafBirch", "LeafMaple", "Petal"],
         fireflies: true)
 
+    /// Nudges: lilies arching over the title, a meadow below.
+    static let nudges = GreeneryScene(
+        pieces: [
+            GreeneryPiece(art: .lilyArch, widthShare: 0.4, maxWidth: 180, alignment: .topTrailing,
+                          offset: CGSize(width: 12, height: -30), sway: 1.2, swayDuration: 6),
+            GreeneryPiece(art: .groundMeadow, widthShare: 1.15, maxWidth: 560, alignment: .bottom,
+                          offset: CGSize(width: 0, height: 8), mirrored: true),
+        ],
+        drifting: ["Petal", "LeafClover", "LeafOlive"],
+        fireflies: true,
+        bottomClearance: 40)
+
     /// Settings and About: a fern in the corner and nothing at the bottom, where the form keeps scrolling.
     static let settings = GreeneryScene(
         pieces: [

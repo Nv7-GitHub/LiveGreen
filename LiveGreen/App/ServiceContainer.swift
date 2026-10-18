@@ -11,6 +11,10 @@ nonisolated struct ServiceContainer: Sendable {
     var products: any ProductDatabase
     var appliances: any ApplianceDatabase
     var grid: any GridSignal
+    /// Writes the step-by-step plan for a picked swap at a nearby place.
+    var planner: any ActionPlanner
+    /// iMessage nudges (Photon Beta). Live in demo mode too, so nudges for the demo scenes really send.
+    var photon: PhotonClient
     var reference: ReferenceStore
     /// Evidence-ladder resolvers, any order (the ladder sorts by tier).
     var resolvers: [any MetricResolver]
@@ -42,6 +46,8 @@ nonisolated struct ServiceContainer: Sendable {
             products: products,
             appliances: appliances,
             grid: BundledGridSignal(store: reference),
+            planner: LocalActionPlanner(),
+            photon: photon(secrets: Secrets()),
             reference: reference,
             resolvers: resolvers(products: products, appliances: appliances, researcher: researcher, reference: reference),
             modelChoice: modelChoice,
@@ -66,6 +72,8 @@ nonisolated struct ServiceContainer: Sendable {
             products: products,
             appliances: appliances,
             grid: grid,
+            planner: analysis,
+            photon: photon(secrets: secrets),
             reference: reference,
             resolvers: resolvers(products: products, appliances: appliances, researcher: analysis, reference: reference),
             modelChoice: flags.modelChoice,
@@ -74,7 +82,7 @@ nonisolated struct ServiceContainer: Sendable {
 
     /// Identify, alternatives and spec research from the provider picked in Settings.
     static func analysisClient(flags: FeatureFlags, secrets: Secrets,
-                               vocabulary: ReferenceVocabulary) -> any VisionIdentifier & AlternativeSuggester & SpecResearcher {
+                               vocabulary: ReferenceVocabulary) -> any VisionIdentifier & AlternativeSuggester & SpecResearcher & ActionPlanner {
         switch flags.aiProvider {
         case .grok:
             GrokAnalysisClient(configuration: .init(apiKey: secrets.value(for: .xai), vocabulary: vocabulary))
@@ -85,9 +93,20 @@ nonisolated struct ServiceContainer: Sendable {
         }
     }
 
+    static func photon(secrets: Secrets) -> PhotonClient {
+        PhotonClient(configuration: .init(apiKey: secrets.value(for: .photon), projectID: secrets.value(for: .photonProject)))
+    }
+
     /// The container for the current settings.
     static func make(flags: FeatureFlags, secrets: Secrets) -> ServiceContainer {
-        flags.demoMode ? demo(modelChoice: flags.modelChoice) : live(flags: flags, secrets: secrets)
+        guard flags.demoMode else { return live(flags: flags, secrets: secrets) }
+        var services = demo(modelChoice: flags.modelChoice)
+        // Scans stay canned, but with a key the action plans are written for the real places nearby.
+        if secrets.value(for: flags.aiProvider.key) != nil {
+            services.planner = analysisClient(flags: flags, secrets: secrets, vocabulary: services.reference.vocabulary)
+        }
+        services.photon = photon(secrets: secrets)
+        return services
     }
 
     /// Demo helper: the same services with the identifier replaying a specific canned scene.
