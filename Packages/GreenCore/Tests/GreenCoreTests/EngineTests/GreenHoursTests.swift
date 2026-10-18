@@ -54,7 +54,7 @@ struct GreenHoursTests {
     }
 
     @Test func choosesCleanestHoursBeforeDeadline() {
-        // From 19:00 until 07:00: 12 candidate hours.
+        // From 18:00 (the current hour) until 07:00: 13 candidate hours.
         let plan = GreenHoursPlanner.plan(forecast: forecast, requiredHours: 2.4, now: now, deadlineHour: 7, calendar: calendar)
         #expect(plan.plannedHours == 3)
         #expect(plan.fitsDeadline)
@@ -80,8 +80,18 @@ struct GreenHoursTests {
     @Test func deadlineTooTightUsesEveryAvailableHour() {
         let plan = GreenHoursPlanner.plan(forecast: forecast, requiredHours: 5, now: now, deadlineHour: 22, calendar: calendar)
         #expect(!plan.fitsDeadline)
-        #expect(plan.contiguous.hours == [19, 20, 21])
+        #expect(plan.contiguous.hours == [18, 19, 20, 21])
         #expect(GreenHoursPlanner.plan(forecast: forecast, requiredHours: 0, now: now, calendar: calendar).flexible.hours.isEmpty)
+    }
+
+    @Test func currentHourIsACandidate() {
+        // At 18:30 with 18:00 the cleanest hour, the plan includes it so applying switches the plug on now.
+        var hourly = [Double](repeating: 300, count: 24)
+        hourly[18] = 50
+        let plan = GreenHoursPlanner.plan(forecast: GridForecast(hourly: hourly, isFallback: false), requiredHours: 1,
+                                          now: now, calendar: calendar)
+        #expect(plan.flexible.hours == [18])
+        #expect(ShellySchedulePlan.isOn(plan.flexible.schedule(timeZone: calendar.timeZone), atHour: 18))
     }
 
     @Test func savingsFormula() {

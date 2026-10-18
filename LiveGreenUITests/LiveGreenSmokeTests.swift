@@ -87,8 +87,8 @@ final class LiveGreenSmokeTests: XCTestCase {
     }
 
     @MainActor
-    func testEBikeOffersSmartPlugAndMockPlugDashboard() {
-        let app = launch(["-MockPlug", "YES"])
+    func testEBikeOffersSmartPlugAndPairing() {
+        let app = launch()
         app.buttons["E-bike corner"].tap()
         XCTAssertTrue(waitForResults("E-bike corner", in: app))
         skipQuestions(in: app)
@@ -100,8 +100,30 @@ final class LiveGreenSmokeTests: XCTestCase {
             .firstMatch.waitForExistence(timeout: 20))
 
         app.tabBars.buttons["Plugs"].tap()
-        // The mock plug is paired automatically, so the list offers pairing another one.
-        XCTAssertTrue(app.buttons["Pair another plug"].waitForExistence(timeout: 10))
+        let pair = app.buttons["plugs.pair"]
+        XCTAssertTrue(pair.waitForExistence(timeout: 10))
+        pair.tap()
+        XCTAssertTrue(app.buttons["pairing.find"].waitForExistence(timeout: 5), "Pairing starts with the setup steps")
+    }
+
+    @MainActor
+    func testEraseAllDataFromSettings() {
+        let app = launch()
+        app.buttons["E-bike corner"].tap()
+        XCTAssertTrue(waitForResults("E-bike corner", in: app))
+        skipQuestions(in: app)
+        app.tabBars.buttons["Scan"].tap()
+
+        let settings = app.navigationBars.buttons["Settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        settings.tap()
+        let erase = app.buttons["settings.eraseAllData"]
+        for _ in 0..<6 where !erase.isHittable { app.swipeUp() }
+        erase.tap()
+        let confirm = app.buttons["Erase everything"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        confirm.tap()
+        XCTAssertTrue(app.buttons["onboarding.next"].waitForExistence(timeout: 10), "Onboarding starts again")
     }
 
     @MainActor

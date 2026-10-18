@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Step 1: get the plug onto the network, or pick the mock plug.
+/// Step 1: get the plug onto the network.
 struct PairingInstructionsView: View {
     @Bindable var pairing: PairingModel
 
@@ -26,17 +26,7 @@ struct PairingInstructionsView: View {
                 }
                 .buttonStyle(.glassProminent)
                 .controlSize(.large)
-
-                Button {
-                    Task { await pairing.chooseMock() }
-                } label: {
-                    Label("Use a mock plug instead", systemImage: "cpu")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.glass)
-                .controlSize(.large)
-                .disabled(pairing.isVerifying)
-                .accessibilityIdentifier("pairing.useMock")
+                .accessibilityIdentifier("pairing.find")
 
                 PairingErrorText(message: pairing.errorMessage)
             }

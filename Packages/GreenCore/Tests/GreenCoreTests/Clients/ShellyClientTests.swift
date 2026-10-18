@@ -1,5 +1,4 @@
 import Foundation
-import Synchronization
 import Testing
 @testable import GreenCore
 
@@ -136,51 +135,6 @@ struct ShellySchedulePlanTests {
         #expect(ShellySchedulePlan.jobs(for: PlugSchedule(onHours: Array(0..<24))) ==
                 [ShellyScheduleJob(timespec: "0 0 0 * * *", switchOn: true)])
         #expect(ShellySchedulePlan.jobs(for: PlugSchedule(onHours: [])).isEmpty)
-    }
-}
-
-@Suite("MockPlugController")
-struct MockPlugControllerTests {
-    final class Clock: Sendable {
-        private let current: Mutex<Date>
-        init(_ date: Date) { current = Mutex(date) }
-        var now: Date { current.withLock { $0 } }
-        func advance(hours: Double) { current.withLock { $0 = $0.addingTimeInterval(hours * 3600) } }
-    }
-
-    /// 2026-10-16 00:00 UTC.
-    static let midnight = Date(timeIntervalSince1970: 1_792_108_800)
-
-    @Test func accumulatesEnergyWhileOn() async throws {
-        let clock = Clock(Self.midnight)
-        let plug = MockPlugController(loadWatts: 200, clock: { clock.now })
-        try await plug.setSwitch(on: true)
-        clock.advance(hours: 1.5)
-        let status = try await plug.status()
-        #expect(status.isOn)
-        #expect(abs(status.totalEnergyWh - 300) < 1e-6)
-        #expect(abs(status.activePowerW - 200) <= 4)
-        #expect(try await plug.deviceInfo().generation == 2)
-    }
-
-    @Test func followsScheduleBoundaries() async throws {
-        let clock = Clock(Self.midnight)
-        let plug = MockPlugController(loadWatts: 100, clock: { clock.now })
-        try await plug.replaceSchedule(PlugSchedule(onHours: [2, 3], timeZoneIdentifier: "UTC"))
-        #expect(try await plug.status().isOn == false)
-        #expect(await plug.jobs.count == 2)
-
-        clock.advance(hours: 2.5)
-        #expect(try await plug.status().isOn, "switched on at 02:00")
-        clock.advance(hours: 2)
-        let after = try await plug.status()
-        #expect(!after.isOn, "switched off at 04:00")
-        #expect(abs(after.totalEnergyWh - 200) < 1e-6, "on for exactly 02:00–04:00")
-
-        // A manual override holds until the next scheduled boundary.
-        try await plug.setSwitch(on: true)
-        clock.advance(hours: 1)
-        #expect(try await plug.status().isOn)
     }
 }
 

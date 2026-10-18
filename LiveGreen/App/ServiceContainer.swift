@@ -12,8 +12,6 @@ nonisolated struct ServiceContainer: Sendable {
     var appliances: any ApplianceDatabase
     var grid: any GridSignal
     var reference: ReferenceStore
-    /// The mock plug when the Settings toggle is on; paired plugs live in `PlugCenter`.
-    var plug: (any PlugController)?
     /// Evidence-ladder resolvers, any order (the ladder sorts by tier).
     var resolvers: [any MetricResolver]
     var modelChoice: ClaudeModel
@@ -45,7 +43,6 @@ nonisolated struct ServiceContainer: Sendable {
             appliances: appliances,
             grid: BundledGridSignal(store: reference),
             reference: reference,
-            plug: PlugConnector.live.mock,
             resolvers: resolvers(products: products, appliances: appliances, researcher: researcher, reference: reference),
             modelChoice: modelChoice,
             isDemo: true)
@@ -70,7 +67,6 @@ nonisolated struct ServiceContainer: Sendable {
             appliances: appliances,
             grid: grid,
             reference: reference,
-            plug: flags.useMockPlug ? PlugConnector.live.mock : nil,
             resolvers: resolvers(products: products, appliances: appliances, researcher: analysis, reference: reference),
             modelChoice: flags.modelChoice,
             isDemo: false)

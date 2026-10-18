@@ -27,6 +27,14 @@ struct ScanStore {
         try context.save()
     }
 
+    /// Deletes every scan, the profile and the metrics cache.
+    func deleteAll() throws {
+        try context.delete(model: StoredScan.self)
+        try context.delete(model: StoredProfile.self)
+        try context.delete(model: CachedMetrics.self)
+        try context.save()
+    }
+
     func profile() throws -> UserProfile? {
         try context.fetch(FetchDescriptor<StoredProfile>()).first?.profile()
     }

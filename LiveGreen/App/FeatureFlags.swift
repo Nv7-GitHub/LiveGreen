@@ -3,7 +3,7 @@ import GreenCore
 
 /// User-adjustable switches, persisted in UserDefaults and overridable by launch arguments:
 /// `-ScanMode ar|photo|barcode`, `-DemoMode YES`, `-PlugFeatures NO`, `-AIProvider grok|claude`,
-/// `-ModelChoice sonnet|opus`, `-MockPlug YES`. Claude is the analysis provider; `-AIProvider grok` is a developer
+/// `-ModelChoice sonnet|opus`. Claude is the analysis provider; `-AIProvider grok` is a developer
 /// override only (Grok otherwise just renders the greener image).
 nonisolated struct FeatureFlags: Codable, Hashable, Sendable {
     var scanMode: ScanMode = .photo
@@ -11,20 +11,18 @@ nonisolated struct FeatureFlags: Codable, Hashable, Sendable {
     var plugFeaturesEnabled = true
     var aiProvider: AIProvider = .claude
     var modelChoice: ClaudeModel = .sonnet
-    var useMockPlug = false
 
     static let defaultsKey = "LiveGreen.featureFlags"
 
     /// Whether `ServiceContainer.make` would build different services for these flags.
     func servicesDiffer(from other: FeatureFlags) -> Bool {
         demoMode != other.demoMode || aiProvider != other.aiProvider || modelChoice != other.modelChoice
-            || useMockPlug != other.useMockPlug
     }
 
     /// The provider and model keys were renamed when Claude Sonnet 5.5 became the default, so flags saved by older
     /// builds (Grok, Opus) do not carry over.
     enum CodingKeys: String, CodingKey {
-        case scanMode, demoMode, plugFeaturesEnabled, useMockPlug
+        case scanMode, demoMode, plugFeaturesEnabled
         case aiProvider = "analysisProvider"
         case modelChoice = "claudeModel"
     }
@@ -40,7 +38,6 @@ nonisolated struct FeatureFlags: Codable, Hashable, Sendable {
         plugFeaturesEnabled = try container.decodeIfPresent(Bool.self, forKey: .plugFeaturesEnabled) ?? defaults.plugFeaturesEnabled
         aiProvider = try container.decodeIfPresent(AIProvider.self, forKey: .aiProvider) ?? defaults.aiProvider
         modelChoice = try container.decodeIfPresent(ClaudeModel.self, forKey: .modelChoice) ?? defaults.modelChoice
-        useMockPlug = try container.decodeIfPresent(Bool.self, forKey: .useMockPlug) ?? defaults.useMockPlug
     }
 
     static func load(defaults: UserDefaults = .standard,
@@ -82,7 +79,6 @@ nonisolated struct LaunchArguments: Sendable {
         if let mode = string("ScanMode").flatMap({ ScanMode(rawValue: $0.lowercased()) }) { flags.scanMode = mode }
         if let demo = bool("DemoMode") { flags.demoMode = demo }
         if let plug = bool("PlugFeatures") { flags.plugFeaturesEnabled = plug }
-        if let mock = bool("MockPlug") { flags.useMockPlug = mock }
         if let provider = string("AIProvider").flatMap({ AIProvider(rawValue: $0.lowercased()) }) { flags.aiProvider = provider }
         if let model = string("ModelChoice")?.lowercased() {
             flags.modelChoice = ClaudeModel(rawValue: model)

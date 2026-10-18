@@ -33,11 +33,12 @@ public struct GreenHoursPlan: Sendable, Hashable {
 }
 
 public enum GreenHoursPlanner {
-    /// Plans `requiredHours` of charging (rounded up) from the next whole hour until `deadlineHour`
-    /// (local hour the charge must be done by; nil = the next 24 hours).
+    /// Plans `requiredHours` of charging (rounded up) from the current hour until `deadlineHour`
+    /// (local hour the charge must be done by; nil = the next 24 hours). The current hour is a candidate so
+    /// applying a plan can switch the plug on right away when now is among the cleanest hours.
     public static func plan(forecast: GridForecast, requiredHours: Double, now: Date = Date(),
                             deadlineHour: Int? = nil, calendar: Calendar = .current) -> GreenHoursPlan {
-        let start = (calendar.component(.hour, from: now) + 1) % 24
+        let start = calendar.component(.hour, from: now)
         var span = 24
         if let deadlineHour {
             let distance = ((deadlineHour - start) % 24 + 24) % 24

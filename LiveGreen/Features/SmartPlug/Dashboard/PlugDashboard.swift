@@ -6,8 +6,6 @@ struct PlugDashboard: View {
     /// Read in `body` so converted numbers refresh when Settings switches units.
     @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
     let plugID: UUID
-    /// Called when the user swaps an offline plug for the mock plug.
-    var onSwitchPlug: (UUID) -> Void = { _ in }
 
     @Environment(AppModel.self) private var model
     @Environment(\.scenePhase) private var scenePhase
@@ -15,9 +13,8 @@ struct PlugDashboard: View {
     @State private var dashboard: PlugDashboardModel
     @State private var confirmsForget = false
 
-    init(plugID: UUID, onSwitchPlug: @escaping (UUID) -> Void = { _ in }) {
+    init(plugID: UUID) {
         self.plugID = plugID
-        self.onSwitchPlug = onSwitchPlug
         _dashboard = State(initialValue: PlugDashboardModel(plugID: plugID))
     }
 
@@ -27,8 +24,7 @@ struct PlugDashboard: View {
             if let plug = dashboard.plug {
                 VStack(spacing: 16) {
                     PlugStatusCard(plug: plug, status: dashboard.status, isSwitching: dashboard.isSwitching,
-                                   onToggle: { on in Task { await dashboard.setSwitch(on: on) } },
-                                   onUseMock: useMockPlug)
+                                   onToggle: { on in Task { await dashboard.setSwitch(on: on) } })
                     gridCard
                     PlugScheduleCard(plug: plug, dashboard: dashboard, components: model.plugCandidateComponents)
                     PlugSavingsCard(plug: plug, outlook: dashboard.outlook)
@@ -94,13 +90,6 @@ struct PlugDashboard: View {
                 .glassCard()
         } else {
             ProgressView("Loading grid forecast…").frame(maxWidth: .infinity).glassCard()
-        }
-    }
-
-    private func useMockPlug() {
-        Task {
-            await PlugCenter.shared.ensureMockPlug(enabled: true)
-            if let mock = PlugCenter.shared.plugs.first(where: \.isMock) { onSwitchPlug(mock.id) }
         }
     }
 

@@ -10,6 +10,7 @@ struct SettingsView: View {
     @State private var isEditingProfile = false
     @State private var saveError: String?
     @State private var confirmsOnboardingReset = false
+    @State private var confirmsErase = false
     @AppStorage(DisplayUnits.defaultsKey) private var unitSystem: UnitSystem = .imperial
 
     var body: some View {
@@ -53,13 +54,11 @@ struct SettingsView: View {
 
             Section {
                 Toggle("Smart plug features", isOn: $model.flags.plugFeaturesEnabled)
-                Toggle("Use mock plug", isOn: $model.flags.useMockPlug)
-                    .disabled(!model.flags.plugFeaturesEnabled)
             } header: {
                 Text("Smart plug")
             } footer: {
                 Text(model.flags.plugFeaturesEnabled
-                     ? "The mock plug simulates a Shelly plug's power draw for demos."
+                     ? "Scans recommend a Shelly plug for chargers, and the Plugs tab pairs and schedules one."
                      : "Plug recommendations and the Plugs tab are hidden.")
             }
 
@@ -77,6 +76,13 @@ struct SettingsView: View {
                     Label(error, systemImage: "externaldrive.badge.exclamationmark").foregroundStyle(Theme.danger)
                 }
             }
+
+            Section {
+                Button("Erase all data", systemImage: "trash", role: .destructive) { confirmsErase = true }
+                    .accessibilityIdentifier("settings.eraseAllData")
+            } footer: {
+                Text("Deletes your scans and history, profile, paired plugs, settings and the API keys entered here, then starts onboarding again.")
+            }
         }
         .navigationTitle("Settings")
         .toolbar {
@@ -88,6 +94,11 @@ struct SettingsView: View {
             Button("Reset and start over", role: .destructive) { resetOnboarding() }
         } message: {
             Text("Your profile answers are cleared and onboarding starts again. Your scan history is kept.")
+        }
+        .confirmationDialog("Erase all data?", isPresented: $confirmsErase, titleVisibility: .visible) {
+            Button("Erase everything", role: .destructive) { eraseAllData() }
+        } message: {
+            Text("Scans, history, your profile, paired plugs, settings and saved API keys are deleted from this phone. This can't be undone.")
         }
         .sheet(isPresented: $isEditingProfile) {
             OnboardingFlow(initialProfile: model.profile,
@@ -109,6 +120,16 @@ struct SettingsView: View {
             dismiss()
             try? await Task.sleep(for: .milliseconds(500))
             model.resetOnboarding()
+        }
+    }
+
+    /// Same hand-off as `resetOnboarding`: close the dialog and this sheet before onboarding opens.
+    private func eraseAllData() {
+        Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            dismiss()
+            try? await Task.sleep(for: .milliseconds(500))
+            model.eraseAllData()
         }
     }
 
