@@ -2,6 +2,8 @@ import GreenCore
 
 /// Slider range, step and unit for a custom answer to a usage question.
 extension UsageField {
+    static let kmPerMile = 1.609_34
+
     var customRange: ClosedRange<Double> {
         switch self {
         case .hoursOnPerDay, .standbyHoursPerDay: 0...24
@@ -9,6 +11,8 @@ extension UsageField {
         case .wearsPerYear: 0...365
         case .usesPerWeek: 0...50
         case .packsPerWeek: 0...14
+        // Up to about 50,000 km (31,000 mi) a year.
+        case .kmPerWeek: 0...1000
         }
     }
 
@@ -18,6 +22,7 @@ extension UsageField {
         case .wearsPerYear: 5
         // Fine enough for a pack every few weeks (0.25) and for rates converted from servings (0.18).
         case .packsPerWeek: 0.05
+        case .kmPerWeek: 10
         default: 1
         }
     }
@@ -31,6 +36,11 @@ extension UsageField {
         case .chargesPerWeek: return "\(number) \(one ? "charge" : "charges") a week"
         case .wearsPerYear: return "\(number) \(one ? "wear" : "wears") a year"
         case .usesPerWeek: return "\(number) \(one ? "use" : "uses") a week"
+        // Stored in km; shown in miles in imperial units.
+        case .kmPerWeek:
+            let imperial = DisplayUnits.system == .imperial
+            let distance = Int((imperial ? value / Self.kmPerMile : value).rounded())
+            return "\(distance) \(imperial ? "mi" : "km") a week"
         }
     }
 

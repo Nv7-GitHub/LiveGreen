@@ -52,19 +52,20 @@ nonisolated enum ResultInsights {
             let hours = counted.compactMap { hoursOn($0, engine: engine) }
             return hours.isEmpty ? nil : "Assumes \(span(hours)) h a day of use"
         }
-        var servings: [Double] = [], packs: [Double] = [], packaging: [Double] = [], care: [Double] = []
+        var servings: [Double] = [], packs: [Double] = [], packaging: [Double] = [], care: [Double] = [], supplies: [Double] = []
         var lifespans: [Double] = []
         for component in counted {
             switch breakdown.assumptions[component.id] {
             case .servingsPerWeek(let n): servings.append(n)
             case .packsPerWeek(let n): packs.append(n)
             case .usesPerWeek(let n) where component.category == .personalCare: care.append(n)
+            case .usesPerWeek(let n) where component.category == .household: supplies.append(n)
             case .usesPerWeek(let n): packaging.append(n)
             case .lifespan(let years): lifespans.append(years)
             case nil: break
             }
         }
-        let groups = [servings.isEmpty && packs.isEmpty, packaging.isEmpty, care.isEmpty, lifespans.isEmpty]
+        let groups = [servings.isEmpty && packs.isEmpty, packaging.isEmpty, care.isEmpty, supplies.isEmpty, lifespans.isEmpty]
             .filter { !$0 }.count
         // Name each group only when there is more than one.
         func named(_ noun: String, _ text: String) -> String { groups > 1 ? "\(noun) \(text)" : text }
@@ -79,6 +80,7 @@ nonisolated enum ResultInsights {
             parts.append(named("packaging", "\(span(packaging)) \(plural("use", packaging)) a week"))
         }
         if !care.isEmpty { parts.append(named("personal care", "\(span(care)) \(plural("use", care)) a week")) }
+        if !supplies.isEmpty { parts.append(named("supplies", "\(span(supplies)) \(plural("use", supplies)) a week")) }
         if !lifespans.isEmpty {
             let years = "\(span(lifespans)) \(plural("year", lifespans))"
             if groups > 1 {

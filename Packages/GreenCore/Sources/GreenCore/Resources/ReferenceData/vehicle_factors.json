@@ -1,0 +1,139 @@
+{
+ "description": "Light-vehicle factor model. Production = glider mass (curb mass minus the traction battery) x kgCO2ePerKg + battery kWh x kgCO2ePerKWh. Driving per km grows with curb mass: fuel kg CO2e/km (well-to-wheel) = fuelKgCO2ePerKm + fuelKgCO2ePerKmPerTonne x tonnes on the fuel share; wall electricity kWh/km = kWhPerKm + kWhPerKmPerTonne x tonnes on electricShare, times the user's grid. Battery kWh = batteryKWh + batteryKWhPerTonne x tonnes. Per-km coefficients are fitted to EPA combined ratings of common models by curb mass.",
+ "defaultMassKg": 1600,
+ "glider": {
+  "kgCO2ePerKg": 5.0,
+  "productionStageShares": {
+   "materials": 0.8,
+   "manufacturing": 0.15,
+   "transport": 0.03,
+   "endOfLife": 0.02
+  },
+  "verified": false,
+  "citation": {
+   "title": "ICCT (2021), A global comparison of the life-cycle GHG emissions of combustion engine and electric passenger cars (vehicle manufacturing); Argonne GREET 2 vehicle cycle",
+   "tier": 3,
+   "url": "https://theicct.org/publication/a-global-comparison-of-the-life-cycle-greenhouse-gas-emissions-of-combustion-engine-and-electric-passenger-cars/"
+  }
+ },
+ "battery": {
+  "kgCO2ePerKWh": 75,
+  "kgPerKWh": 6.5,
+  "verified": false,
+  "citation": {
+   "title": "ICCT (2021), life-cycle GHG of passenger cars: battery production 59-80 kg CO2e/kWh; pack energy density ~150 Wh/kg",
+   "tier": 3,
+   "url": "https://theicct.org/publication/a-global-comparison-of-the-life-cycle-greenhouse-gas-emissions-of-combustion-engine-and-electric-passenger-cars/"
+  }
+ },
+ "lifespan": {
+  "years": 15,
+  "verified": false,
+  "citation": {
+   "title": "NHTSA (2006), Vehicle Survivability and Travel Mileage Schedules, DOT HS 809 952 (median car survival ~15 years)",
+   "tier": 3,
+   "url": "https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/809952"
+  }
+ },
+ "distance": {
+  "kmPerYear": 18500,
+  "verified": false,
+  "citation": {
+   "title": "FHWA Highway Statistics, table VM-1 (about 11,500 miles a year per light-duty vehicle)",
+   "tier": 3,
+   "url": "https://www.fhwa.dot.gov/policyinformation/statistics.cfm"
+  }
+ },
+ "endOfLife": {
+  "recyclablePercent": 80,
+  "plasticMassShare": 0.1,
+  "verified": false,
+  "citation": {
+   "title": "Eurostat, End-of-life vehicle statistics (reuse and recycling of ELV mass); ACC, Plastics and Polymer Composites in Light Vehicles (~10% of curb mass)",
+   "tier": 3,
+   "url": "https://ec.europa.eu/eurostat/statistics-explained/index.php?title=End-of-life_vehicle_statistics"
+  }
+ },
+ "records": [
+  {
+   "powertrain": "petrol",
+   "fuelKgCO2ePerKm": 0.08,
+   "fuelKgCO2ePerKmPerTonne": 0.1,
+   "kWhPerKm": 0,
+   "kWhPerKmPerTonne": 0,
+   "electricShare": 0,
+   "batteryKWh": 0,
+   "batteryKWhPerTonne": 0,
+   "verified": false,
+   "citation": {
+    "title": "US EPA, GHG emissions from a typical passenger vehicle (8,887 g CO2/gal gasoline) + ~25% well-to-tank (GREET); fueleconomy.gov combined ratings",
+    "tier": 3,
+    "url": "https://www.epa.gov/greenvehicles/greenhouse-gas-emissions-typical-passenger-vehicle"
+   }
+  },
+  {
+   "powertrain": "diesel",
+   "fuelKgCO2ePerKm": 0.07,
+   "fuelKgCO2ePerKmPerTonne": 0.088,
+   "kWhPerKm": 0,
+   "kWhPerKmPerTonne": 0,
+   "electricShare": 0,
+   "batteryKWh": 0,
+   "batteryKWhPerTonne": 0,
+   "verified": false,
+   "citation": {
+    "title": "US EPA, GHG emissions from a typical passenger vehicle (10,180 g CO2/gal diesel); ICCT (2021): diesel ~12% below petrol well-to-wheel",
+    "tier": 3,
+    "url": "https://www.epa.gov/greenvehicles/greenhouse-gas-emissions-typical-passenger-vehicle"
+   }
+  },
+  {
+   "powertrain": "hybrid",
+   "fuelKgCO2ePerKm": 0.056,
+   "fuelKgCO2ePerKmPerTonne": 0.07,
+   "kWhPerKm": 0,
+   "kWhPerKmPerTonne": 0,
+   "electricShare": 0,
+   "batteryKWh": 1.5,
+   "batteryKWhPerTonne": 0,
+   "verified": false,
+   "citation": {
+    "title": "fueleconomy.gov hybrid vs conventional versions of one model (~30% less fuel); hybrid packs ~1-2 kWh",
+    "tier": 3,
+    "url": "https://www.fueleconomy.gov/"
+   }
+  },
+  {
+   "powertrain": "plug_in_hybrid",
+   "fuelKgCO2ePerKm": 0.056,
+   "fuelKgCO2ePerKmPerTonne": 0.07,
+   "kWhPerKm": 0.06,
+   "kWhPerKmPerTonne": 0.07,
+   "electricShare": 0.4,
+   "batteryKWh": 15,
+   "batteryKWhPerTonne": 0,
+   "verified": false,
+   "citation": {
+    "title": "ICCT (2022), Real-world usage of plug-in hybrid vehicles in the United States (electric share of distance ~25-55%)",
+    "tier": 3,
+    "url": "https://theicct.org/"
+   }
+  },
+  {
+   "powertrain": "electric",
+   "fuelKgCO2ePerKm": 0,
+   "fuelKgCO2ePerKmPerTonne": 0,
+   "kWhPerKm": 0.06,
+   "kWhPerKmPerTonne": 0.07,
+   "electricShare": 1,
+   "batteryKWh": 0,
+   "batteryKWhPerTonne": 38,
+   "verified": false,
+   "citation": {
+    "title": "fueleconomy.gov EV ratings (kWh/100 mi, wall to wheels incl. charging losses) and pack sizes by curb mass",
+    "tier": 3,
+    "url": "https://www.fueleconomy.gov/feg/evtech.shtml"
+   }
+  }
+ ]
+}

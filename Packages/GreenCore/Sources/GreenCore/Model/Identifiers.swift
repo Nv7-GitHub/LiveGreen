@@ -98,7 +98,7 @@ extension Identifiers {
     /// Categories whose factor-model numbers rest on the AI's guessed mass and materials, which vary from call
     /// to call. Food is left out because colour words can name a different food (brown rice, green beans) and
     /// the portion shown matters; electronics come from device tables, scaled by screen size and usage.
-    static let genericKeyCategories: Set<Category> = [.clothing, .household, .packaging, .personalCare]
+    static let genericKeyCategories: Set<Category> = [.clothing, .household, .packaging, .personalCare, .vehicle]
 
     /// Words that describe how an item looks rather than what it is. Metal colours are kept: they can be the material.
     static let appearanceWords: Set<String> = [
@@ -152,7 +152,7 @@ extension Identifiers {
 
     /// Categories whose kind includes the brand: two makers' bicycles or SUVs are not one product, while packaging
     /// of one kind is alike whoever printed it.
-    static let brandedKindCategories: Set<Category> = [.clothing, .household, .personalCare]
+    static let brandedKindCategories: Set<Category> = [.clothing, .household, .personalCare, .vehicle]
 
     /// Categories without line keys: a line of food or packaging spans portions and pack sizes.
     static let lineKeyExcludedCategories: Set<Category> = [.food, .packaging]

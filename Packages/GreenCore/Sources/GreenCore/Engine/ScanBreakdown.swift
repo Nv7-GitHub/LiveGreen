@@ -17,6 +17,8 @@ extension ImpactEngine {
             return .lifespan(years: lifespan.value)
         case .unitsPerYear(let units):
             let perWeek = units / Self.weeksPerYear
+            // A household consumable's year counts items used up; what it assumes is how often it is used.
+            if component.category == .household { return .usesPerWeek(component.usage?.usesPerWeek ?? 1) }
             guard component.category == .food else { return .usesPerWeek(perWeek) }
             return FoodServing.isPerPack(component) ? .packsPerWeek(perWeek) : .servingsPerWeek(perWeek)
         }

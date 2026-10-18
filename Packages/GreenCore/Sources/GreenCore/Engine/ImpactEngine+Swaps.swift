@@ -25,7 +25,7 @@ extension ImpactEngine {
 
     /// The item bought second-hand: `share` of a new one's production impacts (embodied carbon, water, land, water
     /// pollution; `Alternative.Condition.productionShare`). An electronic device's carbon includes its use phase,
-    /// which a second-hand device still has, so only the rest is discounted. Plastic, recyclability, power and
+    /// and a vehicle's its driving, which a second-hand one still has, so only the rest is discounted. Plastic, recyclability, power and
     /// lifespan are the item's own and stay.
     public func secondHand(_ component: Component, share: Double, profile: UserProfile) -> Component {
         let note = Source(title: "Bought second-hand: \(Int((share * 100).rounded()))% of a new one's production impacts",
@@ -39,6 +39,8 @@ extension ImpactEngine {
             if component.category == .electronic, let kWh = component.metrics[.yearlyElectricity] {
                 useKg = min(Self.useCarbon(kWh: kWh.value, gramsPerKWh: gridGramsPerKWh(for: profile))
                             * lifespan(of: component).value, carbon.value)
+            } else if let driving = drivingCarbonPerYear(of: component, profile: profile) {
+                useKg = min(driving * lifespan(of: component).value, carbon.value)
             }
             let factor = (useKg + (carbon.value - useKg) * share) / carbon.value
             result.metrics[.carbon] = Self.noting(note, on: carbon.scaled(by: factor))

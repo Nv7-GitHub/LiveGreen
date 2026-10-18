@@ -5,7 +5,7 @@ extension FactorModelResolver {
 
     func electronic(_ component: Component, profile: UserProfile) -> ResolverOutput {
         let q = component.quantities
-        guard let device = store.deviceProfile(deviceType: q.deviceType ?? component.name) else {
+        guard let device = store.deviceProfile(for: component) else {
             return unknownDevice(component)
         }
         let d = device.defaults
@@ -22,7 +22,12 @@ extension FactorModelResolver {
             .lifespan: FactorRanges.relative(d.lifespanYears, 0.3, unit: .years, sources: sources),
             .repairability: FactorRanges.score(d.repairability, spread: 1.5, sources: sources),
         ]
-        if let plastic = d.plasticMassG {
+        // The item's own materials and mass say more about its plastic than the type's typical figure (a camera body
+        // is not a tablet).
+        if let blend = MaterialBlend(materials: component.identifiers.materials, massG: (q.massKg ?? 0) * 1000, store: store),
+           blend.plasticG > 0 {
+            metrics[.plasticMass] = blend.endOfLifeMetrics()[.plasticMass]
+        } else if let plastic = d.plasticMassG {
             metrics[.plasticMass] = FactorRanges.relative(plastic * scale, 0.4, unit: .grams, sources: sources)
         }
         if let recyclable = d.recyclablePercent {
@@ -115,8 +120,9 @@ extension FactorModelResolver {
             var seenEOL = Set<Source>()
             let eolSources = endOfLife.map(\.eol.citation).filter { seenEOL.insert($0).inserted }
             // Averaged over the fibers with end-of-life data, so a part without it does not read as unrecyclable.
+            // Decomposition is mass-weighted like `MaterialBlend`'s: 5% elastane no longer makes a cotton shirt 200 years.
             let recyclable = endOfLife.reduce(0) { $0 + $1.fraction * $1.eol.recyclablePercent } / covered
-            let decomposition = endOfLife.filter { $0.fraction >= 0.05 }.map(\.eol.decompositionYears).max() ?? 0
+            let decomposition = endOfLife.reduce(0) { $0 + $1.fraction * $1.eol.decompositionYears } / covered
             metrics[.recyclablePercent] = FactorRanges.percent(recyclable, spread: 10, sources: eolSources)
             metrics[.decompositionTime] = FactorRanges.multiplicative(decomposition, factor: 2, unit: .years, sources: eolSources)
         }
@@ -139,17 +145,31 @@ extension FactorModelResolver {
     /// Carbon and water need production data for nearly all of the mass; the rest is scaled like the known part.
     static let minModelledShare = 0.9
 
+    /// Materials' share of a made good's cradle-to-gate carbon (the household stage split). Material factors stop at
+    /// the factory gate, so what is made from them also takes forming, assembly, transport and disposal: a bike's
+    /// materials (≈60–80 kg CO2e) are about half of its ≈120 kg.
+    static var materialsShare: Double { StageModel.defaultCarbonShares(for: .household)[.materials] ?? 1 }
+
+    static let processingSource = Source(
+        title: "Forming, assembly, transport and disposal: materials taken as 55% of a made good's carbon (modeled)",
+        tier: .factorModel)
+
     /// A filled product (a cleaner, a detergent) is its contents plus the container `packagingMassG` weighs, as for
     /// personal care: identify reports the contents in `materials` (`detergent_formula`) and the container in
     /// `packagingMaterials`, and only the container counts at end of life. Older answers described just the
     /// container in `materials` for a liquid product; its contents are then unknown, so carbon is left to better
     /// evidence instead of pricing the whole bottle as plastic. Anything else is one blend over its whole mass.
+    /// Carbon is the materials plus the processing of what is made from them (`materialsShare`); a formula that is
+    /// used up is already a finished product. A device lifespan applies only for an explicit device type
+    /// (`Component.deviceLookupKey`), else the household lifespan table's (a bicycle, a table).
     func household(_ component: Component) -> ResolverOutput {
         let q = component.quantities
         var metrics: [MetricKey: Measured] = [:]
-        if let device = store.deviceProfile(deviceType: q.deviceType ?? component.name) {
+        if let device = store.deviceProfile(for: component) {
             metrics[.lifespan] = FactorRanges.relative(device.defaults.lifespanYears, 0.3, unit: .years,
                                                        sources: [device.defaults.citation])
+        } else if let durable = engine.householdLifespan(of: component) {
+            metrics[.lifespan] = FactorRanges.relative(durable.lifespanYears, 0.4, unit: .years, sources: [durable.citation])
         }
         let massG = (q.massKg ?? 0) * 1000
         let materials = outsideFood(component.identifiers.materials)
@@ -170,6 +190,7 @@ extension FactorModelResolver {
             contents = MaterialBlend(materials: materials, massG: massG, store: store)
         }
         var packagingShare = 0.0
+        var stages: [LifecycleStage: Double] = [:]
         if let blend = MaterialBlend(combining: [container, contents].compactMap { $0 }) {
             var endOfLife = blend.endOfLifeMetrics()
             if massG >= Self.scrappedMassG { endOfLife[.decompositionTime] = nil }
@@ -177,12 +198,31 @@ extension FactorModelResolver {
             if blend.plasticG > 0 { packagingShare = (container?.plasticG ?? 0) / blend.plasticG }
             if contentsKnown, blend.modelledShare >= Self.minModelledShare {
                 let scale = 1 / blend.modelledShare
-                metrics[.carbon] = FactorRanges.relative(blend.kgCO2e * scale, 0.4, unit: .kgCO2e, sources: blend.sources)
+                let materialsKg = blend.kgCO2e * scale
+                let madeKg = blend.parts.filter { !$0.factor.isConsumed }
+                    .reduce(0) { $0 + $1.grams / 1000 * $1.factor.kgCO2ePerKg } * scale
+                let processingKg = madeKg * (1 / Self.materialsShare - 1)
+                metrics[.carbon] = FactorRanges.relative(materialsKg + processingKg, 0.4, unit: .kgCO2e,
+                                                         sources: blend.sources + (processingKg > 0 ? [Self.processingSource] : []))
                 metrics[.water] = FactorRanges.relative(blend.liters * scale, 0.5, unit: .liters, sources: blend.sources)
+                stages = Self.householdStages(materialsKg: materialsKg, processingKg: processingKg)
             }
         }
         guard !metrics.isEmpty else { return .empty }
-        return ResolverOutput(metrics: metrics, stageShares: metrics[.carbon] == nil ? [:] : StageModel.defaultCarbonShares(for: .household),
+        return ResolverOutput(metrics: metrics, stageShares: stages,
                               plasticPackagingShare: metrics[.plasticMass] == nil ? nil : packagingShare)
+    }
+
+    /// The modeled split: materials as computed, processing over the household split's other stages. No use stage:
+    /// nothing here draws power.
+    static func householdStages(materialsKg: Double, processingKg: Double) -> [LifecycleStage: Double] {
+        let defaults = StageModel.defaultCarbonShares(for: .household)
+        let rest = defaults.filter { $0.key != .materials && $0.key != .use }
+        let restTotal = rest.values.reduce(0, +)
+        var stages: [LifecycleStage: Double] = [.materials: materialsKg]
+        if restTotal > 0 {
+            for (stage, share) in rest { stages[stage] = processingKg * share / restTotal }
+        }
+        return StageModel.normalized(stages)
     }
 }

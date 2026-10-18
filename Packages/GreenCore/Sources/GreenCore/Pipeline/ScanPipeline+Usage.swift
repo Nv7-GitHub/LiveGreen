@@ -70,8 +70,9 @@ extension ScanPipeline {
             switch component.category {
             case .food: (field, question) = (.servingsPerWeek, "How often do you have this?")
             case .packaging: (field, question) = (.usesPerWeek, "How often do you use one?")
-            case .personalCare: (field, question) = (.usesPerWeek, "How often do you use it?")
-            case .electronic, .clothing, .household: return component
+            case .personalCare, .household where component.quantities.consumable == true:
+                (field, question) = (.usesPerWeek, "How often do you use it?")
+            case .electronic, .clothing, .household, .vehicle: return component
             }
             let asksRate = component.questions.contains { $0.options.contains { $0.field.map(QuestionGate.rateFields.contains) == true } }
             guard !asksRate else { return component }
@@ -156,8 +157,8 @@ extension ScanPipeline {
         let field: UsageField
         switch component.category {
         case .food: field = .servingsPerWeek
-        case .packaging, .personalCare: field = .usesPerWeek
-        case .electronic, .clothing, .household: return []
+        case .packaging, .personalCare, .household where component.quantities.consumable == true: field = .usesPerWeek
+        case .electronic, .clothing, .household, .vehicle: return []
         }
         let probe = AnswerOption(label: "", field: field, value: 1)
         let reached = Set(reach(of: probe, on: component.id, in: components, reference: reference).map(\.id))

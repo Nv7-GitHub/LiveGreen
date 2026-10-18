@@ -245,7 +245,9 @@ public struct ScanPipeline: Sendable {
     }
 
     private func plugCandidate(for component: Component, deferrable: DeferrableLoadType?) -> PlugCandidate? {
-        let device = engine.store?.deviceProfile(deviceType: component.quantities.deviceType ?? component.name)
+        // A plug-in vehicle charges through a home charger, not at an unknown device's 100 W.
+        let device = component.category == .vehicle ? engine.store?.deviceProfile(deviceType: "ev_charger")
+            : engine.store?.deviceProfile(for: component)
         // An explicit deferrable load from identify (a power bank, a phone charger) always qualifies; loads
         // inferred from device defaults must use enough electricity for scheduling to matter.
         guard let load = deferrable ?? device?.deferrableLoad, let kWh = component.metrics[.yearlyElectricity]?.value,

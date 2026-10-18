@@ -206,6 +206,7 @@ extension ScanPipeline {
         case .clothing, .household: return hasMaterials && (q.massKg ?? 0) > 0
         case .packaging: return hasMaterials && ((q.packagingMassG ?? 0) > 0 || (q.massKg ?? 0) > 0)
         case .personalCare: return hasMaterials && (q.packagingMassG ?? 0) > 0
+        case .vehicle: return true
         }
     }
 }

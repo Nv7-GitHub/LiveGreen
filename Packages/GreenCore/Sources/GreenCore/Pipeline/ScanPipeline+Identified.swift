@@ -115,9 +115,15 @@ extension ScanPipeline {
     }
 
     /// A `household` item with a known powered device type (dishwasher, kettle…) is an electronic, so it gets
-    /// power and electricity metrics, ENERGY STAR records and the smart-plug option.
-    /// A worn accessory that is not fabric (`isNonTextileAccessory`) is household, never clothing.
+    /// power and electricity metrics, ENERGY STAR records and the smart-plug option. A road vehicle filed as household
+    /// or electronic is a vehicle (`VehicleModel.isVehicle`). A worn accessory that is not fabric
+    /// (`isNonTextileAccessory`) is household, never clothing.
     func reclassified(_ component: IdentifiedComponent) -> IdentifiedComponent {
+        if VehicleModel.isVehicle(name: component.name, category: component.category, quantities: component.quantities) {
+            var copy = component
+            copy.category = .vehicle
+            return copy
+        }
         if component.category == .clothing, Self.isNonTextileAccessory(component) {
             var copy = component
             copy.category = .household

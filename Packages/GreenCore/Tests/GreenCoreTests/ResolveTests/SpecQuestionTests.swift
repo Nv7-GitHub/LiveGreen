@@ -172,7 +172,10 @@ struct SpecQuestionTests {
                                              quantities: Quantities(massKg: 15), estimates: Self.est(10))
         let pipeline = pipeline([suv, unknownCar, background])
         let result = try await pipeline.run(image: Data([1]), hints: .none, mode: .photo)
-        #expect(result.components.allSatisfy { $0.metrics[.carbon]?.tier == .estimate })
+        // The SUV is a vehicle, modelled from the vehicle table; a car without a mass stays on its estimate (a vehicle
+        // word alone could be a toy), as does the bench. None of them is asked what it is made of.
+        #expect(result.components.first { $0.name == "Electric SUV" }?.category == .vehicle)
+        #expect(result.components.first { $0.name.hasPrefix("Wooden bench") }?.metrics[.carbon]?.tier == .estimate)
         #expect(await pipeline.specQuestions(for: result.components).isEmpty)
     }
 
@@ -191,12 +194,12 @@ struct SpecQuestionTests {
     /// The AI saw the item, so a material answer that moves its carbon more than 3× from that estimate is not offered.
     @Test func materialAnswersFarFromTheEstimateAreNotOffered() async throws {
         let bench = IdentifiedComponent(name: "Storage bench", category: .household, boundingBox: .full,
-                                        quantities: Quantities(massKg: 20), estimates: Self.est(40))
+                                        quantities: Quantities(massKg: 12), estimates: Self.est(40))
         let pipeline = pipeline([bench])
         let result = try await pipeline.run(image: Data([1]), hints: .none, mode: .photo)
         let question = try #require(await pipeline.specQuestions(for: result.components).first)
         #expect(question.topic == .material)
-        // 20 kg of wood is ~9 kg CO2e, 4.4× under the estimate; plastic, steel and the rest are within 3×.
+        // 12 kg of wood is ~10 kg CO2e with its making, 4× under the estimate; plastic, steel and the rest are within 3×.
         #expect(!question.options.contains { $0.label == "Wood" })
         for option in question.options {
             let refined = await pipeline.refining(result, specAnswers: [SpecAnswer(componentID: question.componentID, option: option)])

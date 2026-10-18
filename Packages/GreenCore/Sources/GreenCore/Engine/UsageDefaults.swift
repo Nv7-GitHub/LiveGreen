@@ -37,9 +37,12 @@ public enum UsageDefaults {
     /// Uses a week of other packaging (wrappers, bags, boxes, trays) and of personal-care items: twice and once.
     public static let packagingUsesPerWeek = 2.0
     public static let personalCareUsesPerWeek = 1.0
+    /// Uses a week of a household consumable (`Quantities.consumable`: a cleaning spray, a notebook), a few times a
+    /// week; how many uses one item lasts is the item's own figure.
+    public static let householdConsumableUsesPerWeek = 3.0
 
-    /// The typical rate for a consumable: servings a week for food, uses a week for packaging and personal care; nil
-    /// for durables, which are annualized over their lifespan instead.
+    /// The typical rate for a consumable: servings a week for food, uses a week for packaging, personal care and
+    /// household consumables; nil for durables, which are annualized over their lifespan instead.
     public static func typicalPerWeek(for component: Component, reference: any ReferenceProviding) -> Double? {
         switch component.category {
         case .food:
@@ -49,23 +52,25 @@ public enum UsageDefaults {
             return drinkContainerWords.contains(where: words.contains) ? drinkContainerUsesPerWeek : packagingUsesPerWeek
         case .personalCare:
             return personalCareUsesPerWeek
-        case .electronic, .clothing, .household:
+        case .household where component.quantities.consumable == true:
+            return householdConsumableUsesPerWeek
+        case .electronic, .clothing, .household, .vehicle:
             return nil
         }
     }
 
     /// What an answer is remembered under: the food group for food ("food:latte"), so every latte reads alike, and the
-    /// item's kind (barcode, brand and model, or generic kind) for packaging and personal care. Nil for durables and
-    /// for packaging that follows its food (`Component.parentID`).
+    /// item's kind (barcode, brand and model, or generic kind) for packaging, personal care and household consumables.
+    /// Nil for durables and for packaging that follows its food (`Component.parentID`).
     public static func kindKey(for component: Component, reference: any ReferenceProviding) -> String? {
         switch component.category {
         case .food:
             let group = foodGroup(of: component, reference: reference) ?? ReferenceKey.normalize(component.name)
             return group.isEmpty ? nil : "food:\(group)"
-        case .packaging, .personalCare:
+        case .packaging, .personalCare, .household where component.quantities.consumable == true:
             guard component.parentID == nil, let key = component.resolutionKey else { return nil }
             return "\(component.category.rawValue):\(key)"
-        case .electronic, .clothing, .household:
+        case .electronic, .clothing, .household, .vehicle:
             return nil
         }
     }
@@ -79,9 +84,9 @@ public enum UsageDefaults {
             return FoodServing.packsPerWeek(of: component) * FoodServing.servingsPerPack(component)
         case .food:
             return usage.servingsPerWeek
-        case .packaging, .personalCare:
+        case .packaging, .personalCare, .household where component.quantities.consumable == true:
             return usage.usesPerWeek
-        case .electronic, .clothing, .household:
+        case .electronic, .clothing, .household, .vehicle:
             return nil
         }
     }
@@ -95,9 +100,9 @@ public enum UsageDefaults {
         case .food:
             usage.servingsPerWeek = perWeek
             usage.packsPerWeek = nil
-        case .packaging, .personalCare:
+        case .packaging, .personalCare, .household where component.quantities.consumable == true:
             usage.usesPerWeek = perWeek
-        case .electronic, .clothing, .household:
+        case .electronic, .clothing, .household, .vehicle:
             return component
         }
         usage.source = source

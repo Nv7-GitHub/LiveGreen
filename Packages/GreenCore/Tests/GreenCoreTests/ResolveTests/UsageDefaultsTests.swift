@@ -66,6 +66,24 @@ struct UsageDefaultsTests {
         #expect(first.components.first { $0.name == "Potato chips" }?.usage?.servingsPerWeek == 2)
     }
 
+    /// 17: one stain-remover spray read 0.02 or 0.3 bottles a year across runs; its weekly uses are a typical rate too.
+    @Test func aHouseholdConsumableGetsATypicalWeekToo() async throws {
+        func spray(_ uses: Double) -> IdentifiedComponent {
+            var quantities = Quantities(massKg: 0.7, packagingMassG: 60)
+            quantities.consumable = true
+            quantities.usesPerContainer = 80
+            return IdentifiedComponent(name: "Stain remover spray", category: .household, boundingBox: Self.box(0.2, 0.2, 0.3, 0.6),
+                                       identifiers: Identifiers(materials: [MaterialShare(material: "detergent_formula", percent: 90),
+                                                                            MaterialShare(material: "hdpe", percent: 10)]),
+                                       quantities: quantities, defaultUsage: UsageProfile(usesPerWeek: uses), estimates: Self.est(0.5))
+        }
+        let first = try await pipeline([spray(1)]).run(id: Self.scanID, image: Data([1]), hints: .none, mode: .photo)
+        let second = try await pipeline([spray(14)]).run(id: Self.scanID, image: Data([1]), hints: .none, mode: .photo)
+        #expect(first.yearlyTotals == second.yearlyTotals)
+        #expect(first.components.first?.usage?.usesPerWeek == UsageDefaults.householdConsumableUsesPerWeek)
+        #expect(first.components.first?.usage?.source == .typical)
+    }
+
     /// A drink's frequency never reached its cup or straw, though the question said "the drink and its cup".
     @Test func aDrinksCupAndStrawFollowTheDrink() async throws {
         let drinkBox = Self.box(0.1, 0.1, 0.3, 0.5)

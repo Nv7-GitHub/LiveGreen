@@ -32,6 +32,16 @@ struct CohortModelTests {
         #expect(abs(model(UserProfile(commuteMode: .car)).wholeFootprintMedian(for: .carbon) - 11_000) < 1e-9)
     }
 
+    @Test func aScannedCarReplacesTheProfilesDrivingInsteadOfAddingToIt() throws {
+        // 200 km a week by car: 0.25 × 200 × 52 = 2,600 kg of travel in the onboarding estimate.
+        let driver = model(UserProfile(householdSize: 1, commuteKmPerWeekByMode: [.car: 200]))
+        let base = try #require(driver.estimate(for: .carbon))
+        let ownCar = ScannedFootprint(byCategory: [.vehicle: [.carbon: 5_000]])
+        #expect(abs(try #require(driver.estimate(for: .carbon, scanned: ownCar)) - (base - 2_600 + 5_000)) < 1e-9)
+        let small = ScannedFootprint(byCategory: [.vehicle: [.carbon: 1_000]])
+        #expect(abs(try #require(driver.estimate(for: .carbon, scanned: small)) - base) < 1e-9)
+    }
+
     @Test func percentileMatchesHandComputedCDF() throws {
         // Median 2,000, σ 0.6. A value of 2,000·e^(−0.6) sits at z = −1 → greener than 1 − Φ(−1) = 84.13%.
         let peers = LogNormal(median: 2_000, sigma: 0.6)

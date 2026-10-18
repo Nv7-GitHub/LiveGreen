@@ -23,10 +23,18 @@ public struct Quantities: Codable, Sendable, Hashable {
     /// Food: true when the portion was cooked from a dry grain, pasta or pulse, so its mass includes absorbed water
     /// (`FoodServing.cookedYield`); false for the dry product; nil when identify did not say.
     public var cooked: Bool?
+    /// Vehicles: what drives it. Nil when identify could not tell; the vehicle model then assumes petrol.
+    public var powertrain: Powertrain?
+    /// Household: true for goods that are used up and replaced (a cleaner, a paper notebook, a sponge), so a year
+    /// counts how many are used (`usesPerContainer`) instead of dividing one item by a lifespan.
+    public var consumable: Bool?
+    /// Consumables: how many uses one item lasts (sprays or washes in a bottle, sessions in a notebook).
+    public var usesPerContainer: Double?
 
     public init(massKg: Double? = nil, servingKg: Double? = nil, packagingMassG: Double? = nil,
                 screenSizeInches: Double? = nil, ratedPowerW: Double? = nil, volumeLiters: Double? = nil,
-                foodGroup: String? = nil, deviceType: String? = nil, packNetKg: Double? = nil, cooked: Bool? = nil) {
+                foodGroup: String? = nil, deviceType: String? = nil, packNetKg: Double? = nil, cooked: Bool? = nil,
+                powertrain: Powertrain? = nil, consumable: Bool? = nil, usesPerContainer: Double? = nil) {
         self.massKg = massKg
         self.servingKg = servingKg
         self.packagingMassG = packagingMassG
@@ -37,5 +45,30 @@ public struct Quantities: Codable, Sendable, Hashable {
         self.deviceType = deviceType
         self.packNetKg = packNetKg
         self.cooked = cooked
+        self.powertrain = powertrain
+        self.consumable = consumable
+        self.usesPerContainer = usesPerContainer
+    }
+}
+
+extension Quantities {
+    /// Decodes saved scans and identify output alike. Every field is optional, and a powertrain is read loosely
+    /// ("gasoline", "EV"), an unknown one becoming nil, so an odd spelling never fails a whole identify call.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(massKg: try container.decodeIfPresent(Double.self, forKey: .massKg),
+                  servingKg: try container.decodeIfPresent(Double.self, forKey: .servingKg),
+                  packagingMassG: try container.decodeIfPresent(Double.self, forKey: .packagingMassG),
+                  screenSizeInches: try container.decodeIfPresent(Double.self, forKey: .screenSizeInches),
+                  ratedPowerW: try container.decodeIfPresent(Double.self, forKey: .ratedPowerW),
+                  volumeLiters: try container.decodeIfPresent(Double.self, forKey: .volumeLiters),
+                  foodGroup: try container.decodeIfPresent(String.self, forKey: .foodGroup),
+                  deviceType: try container.decodeIfPresent(String.self, forKey: .deviceType),
+                  packNetKg: try container.decodeIfPresent(Double.self, forKey: .packNetKg),
+                  cooked: try container.decodeIfPresent(Bool.self, forKey: .cooked),
+                  powertrain: (try? container.decodeIfPresent(String.self, forKey: .powertrain))
+                      .flatMap(Powertrain.init(looseRawValue:)),
+                  consumable: try container.decodeIfPresent(Bool.self, forKey: .consumable),
+                  usesPerContainer: try container.decodeIfPresent(Double.self, forKey: .usesPerContainer))
     }
 }
