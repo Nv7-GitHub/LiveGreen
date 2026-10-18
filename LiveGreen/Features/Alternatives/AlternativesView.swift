@@ -35,7 +35,8 @@ struct AlternativesView: View {
                         swapCards
                         if !itemsWithoutSwaps.isEmpty { noOptionCard }
                         ProjectedSavingsCard(savings: SwapMath.projectedSavings(screen.result, selection: selection),
-                                             swapCount: selection.count)
+                                             swapCount: selection.count,
+                                             context: "swaps-\(screen.result.id.uuidString)")
                         if screen.showsGreenerImage { imageSection.id(Self.imageAnchor) }
                         if screen.result.isScreenshot {
                             Label("No greener picture for a screenshot: it would redraw someone else's post.",

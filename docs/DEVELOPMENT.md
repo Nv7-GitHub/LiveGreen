@@ -380,6 +380,23 @@ Measured on the desk photo (Sonnet 5.5, Oct 2026):
   per-capita figure (national withdrawals, farmland and demand also cover industry); land's baseline is one
   world average, so its peers are labelled "worldwide". Each metric's board is built once in the background,
   so switching chips is a lookup. There is no percentile-over-time card and no "simulated" wording in the UI.
+- The board opens on **Overall**: everyone ranked by a personal GreenScore (`CohortModel.greenScore`,
+  `overallLeaderboard`), the swap rule applied to a whole footprint with the region's typical person (each
+  metric's median) as the original. Carbon, electricity, water and land count equally, each log ratio clamped
+  to ±ln 4, summed in metric order so ties and rounding don't depend on dictionary order. It shows as 0–100
+  points (50 = typical, 100 = 4× smaller on every metric).
+- Smart plugs count: a schedule keeps the day's average intensity it shifts away from
+  (`PlugSchedule.baselineIntensity`), so `PairedPlug.yearlySavingsKg` is known without a grid fetch. The
+  Leaderboard sums it over paired plugs into `ScannedFootprint.scheduledSavingsKg`, which comes off carbon
+  only (the electricity is the same), on the carbon board and the overall score alike. Plans saved before the
+  baseline existed count after the next re-plan (app foreground or background refresh). Swap ranking still
+  leaves plug scheduling unscored (same device, listed last).
+- Everyday comparisons ("That's like driving 340 miles in an average gas car!") come from
+  `Equivalences.factors`, each cited (EPA equivalencies calculator, EIA, WaterSense/USGS, Water Research
+  Foundation, IBWA, sports rulebooks). `pick` offers only counts that read well and is seeded by what's on
+  screen plus the day, so the comparison and its opening vary between items, metrics and days but hold still
+  while shown. `EquivalenceCallout` puts one on the results summary (single metric), the leaderboard metric
+  card, projected swap savings (metric also rotates) and the plug savings card.
 - History: delete a scan by swiping, long-pressing, or the "…" menu on the opened scan (with confirmation).
   `AppModel` remembers deleted ids for the session so an open result screen can't save the scan back or start
   a swaps fetch. Cached product metrics are kept; they are keyed by product, not by scan. Feedback notes on a
