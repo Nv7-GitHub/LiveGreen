@@ -145,11 +145,16 @@ struct LeaderboardRealismTests {
         #expect(try rank(Self.green) <= 3, "very green profile is near the top")
         #expect(try rank(Self.heavy) >= 8, "car-heavy profile is near the bottom")
         #expect(try rank(Self.heavy, .yearlyElectricity) >= 8)
+        let percent = { (profile: UserProfile) in try #require(self.model(profile).compare(self.scanned).first).greenerThan }
+        let share = { (profile: UserProfile, metric: MetricKey) in
+            try #require(self.model(profile).compare(self.scanned).first { $0.metric == metric }).greenerThan
+        }
         for metric in CohortModel.leaderboardMetrics {
             #expect(try rank(.default, metric) > 1, "the default profile does not win on \(metric)")
-            #expect(try rank(Self.green, metric) <= 3, "very green profile is near the top on \(metric)")
+            // Plant-based eating saves less water (19%) than land or carbon, so only the ordering is asserted.
+            #expect(try rank(Self.green, metric) <= 4, "very green profile is near the top on \(metric)")
+            #expect(try share(Self.green, metric) > share(.default, metric), "green beats default on \(metric)")
         }
-        let percent = { (profile: UserProfile) in try #require(self.model(profile).compare(self.scanned).first).greenerThan }
         #expect(try percent(Self.green) > percent(Self.typical) && percent(Self.typical) > percent(Self.heavy))
     }
 
