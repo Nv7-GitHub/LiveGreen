@@ -279,11 +279,19 @@ Measured on the desk photo (Sonnet 5.5, Oct 2026):
   items without the selected metric.
 - Coffee's factor is per kg of beans; a brewed drink counts only ~6% of its mass as grounds
   (`FoodServing.dryIngredientShare`). Without this a cup read ~10 kg CO2e.
+- Barcoded food is per pack when Open Food Facts gives the net quantity (`ScanPipeline+PackBasis` sets
+  `Quantities.packNetKg`; `FoodServing.basis` is `.pack(kg)` or `.serving(kg)`), otherwise per serving.
+  Per-pack carbon, water and land are per kg × net mass, packaging plastic is the whole pack's, and the AI's
+  per-serving fallback is multiplied by servings in the pack. A year is `UsageProfile.packsPerWeek` × 52
+  (default 1, or identify's servings a week converted to packs). Cache entries record `packNetKg`, so a
+  basis change is a miss. Food swaps are given the original's pack size and packs a week, so both sides are
+  the same amount of food. Rows, the detail header, the breakdown, the summary and the usage editor say
+  "per pack (…)" or "per serving (…)"; a photo scan with a GTIN makes one extra Open Food Facts request.
 
 ## 9. Usage, questions and phones
 
 - Each usage question gets a "Custom" chip with a full-range slider (`UsageField.customRange`: 0–24 h/day,
-  0–21 servings or charges a week, 0–365 wears a year, 0–50 uses a week).
+  0–21 servings or charges a week, 0–14 packs a week in steps of 0.5, 0–365 wears a year, 0–50 uses a week).
 - Item detail has a "Your usage" card (`UsageEditorCard`) built from
   `ImpactEngine.editableUsage(for:)`, which falls back to the engine's defaults when nothing was stored.
 - The default typical use for smartphones in `device_defaults.json` is 3 h/day. For battery devices
