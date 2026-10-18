@@ -51,6 +51,14 @@ public enum ShoppingTrends {
         return calendar.nextDate(after: now, matching: components, matchingPolicy: .nextTime) ?? now
     }
 
+    /// Share of a single-serve item's packaging a bulk pack keeps per serving, for the fallback swap. A 900 g tub of
+    /// protein powder (about 30 scoops, about 100 g of plastic) is about 3 g a serving against a 28 g bottle; big bags
+    /// and jugs land between 10% and 40%. 0.3 is the cautious end.
+    public static let bulkPackagingShare = 0.3
+
+    /// Plastic per item below which the fallback bulk swap isn't offered, g.
+    public static let minimumFallbackPlasticG = 3.0
+
     /// Items with a bulk swap, most plastic saved first, one per kind of item (the newest scan's copy).
     public static func analyze(_ scans: [ScanResult]) -> [ShoppingTrend] {
         var counts: [String: Int] = [:]
@@ -63,7 +71,9 @@ public enum ShoppingTrends {
         for scan in scans.sorted(by: { $0.date > $1.date }) where !scan.isScreenshot {
             for component in scan.totaledComponents where isSingleServe(component) {
                 let key = component.name.lowercased()
-                guard trends[key] == nil, let best = bulkSwap(for: component) else { continue }
+                guard trends[key] == nil, let best = bulkSwap(for: component) ?? fallbackBulkSwap(for: component) else {
+                    continue
+                }
                 trends[key] = ShoppingTrend(scanID: scan.id, componentID: component.id, itemName: component.name,
                                             swap: best.swap, scanCount: counts[key] ?? 1, plasticCut: best.cut,
                                             yearlyPlasticSavedG: best.savedG)
@@ -93,5 +103,42 @@ public enum ShoppingTrends {
                 return (swap, min(saved / baseline, 1), saved)
             }
             .max { $0.savedG < $1.savedG }
+    }
+
+    /// When no suggested swap avoids enough plastic, the item itself in a bulk pack: the same metrics with
+    /// `bulkPackagingShare` of the plastic, marked as an estimate. Its id is derived from the item's, so the same
+    /// item keeps the same swap (and action plan) across refreshes.
+    public static func fallbackBulkSwap(for component: Component) -> (swap: Alternative, cut: Double, savedG: Double)? {
+        // Only for things bought to be used up, and with real packaging: a cup or box is not bought in bulk, and a
+        // can's lining is too little to bother.
+        guard [.food, .personalCare].contains(component.category), let plastic = component.metrics[.plasticMass],
+              plastic.value >= minimumFallbackPlasticG else { return nil }
+        var metrics = component.metrics
+        metrics[.plasticMass] = Measured(value: plastic.value * bulkPackagingShare, low: plastic.low * bulkPackagingShare * 0.5,
+                                         high: plastic.high * bulkPackagingShare * 1.5, unit: plastic.unit, tier: .estimate)
+        var quantities = component.quantities
+        quantities.packagingMassG = quantities.packagingMassG.map { $0 * bulkPackagingShare }
+        let swap = Alternative(id: derivedID(component.id), name: bulkName(for: component), category: component.category,
+                               identifiers: component.identifiers, quantities: quantities, usage: component.usage,
+                               rationale: "A big pack holds many servings, so each one comes with far less packaging.",
+                               practicality: Practicality(cost: .lower, effort: .easy), metrics: metrics)
+        let saved = plastic.value * (1 - bulkPackagingShare) * SwapMath.yearlyFactor(.plasticMass, for: component)
+        return (swap, 1 - bulkPackagingShare, saved)
+    }
+
+    /// "Protein powder in a bulk tub" for a protein shake; otherwise the item's kind in a bulk pack.
+    static func bulkName(for component: Component) -> String {
+        let name = component.name.lowercased()
+        if name.contains("protein") && (name.contains("shake") || name.contains("drink")) { return "Protein powder in a bulk tub" }
+        let kind = component.identifiers.genericKey?.replacingOccurrences(of: "|", with: " ")
+            .split(separator: " ").last.map(String.init) ?? component.name
+        return component.category == .personalCare ? "Refill-size \(kind)" : "\(kind.prefix(1).uppercased() + kind.dropFirst()) in a bulk pack"
+    }
+
+    /// A stable id for the fallback swap: the item's id with its first byte flipped.
+    static func derivedID(_ id: UUID) -> UUID {
+        var bytes = id.uuid
+        bytes.0 ^= 0xA5
+        return UUID(uuid: bytes)
     }
 }

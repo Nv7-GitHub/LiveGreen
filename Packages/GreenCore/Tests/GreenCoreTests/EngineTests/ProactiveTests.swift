@@ -152,4 +152,16 @@ struct ProactiveTests {
         #expect(trend.reason.contains("2 times"))
         #expect(trend.reason.contains("buying in bulk"))
     }
+
+    @Test func noGoodSwapFallsBackToABulkPack() throws {
+        let item = Self.shake(swaps: [Self.swap("Plant-based protein shake", carbon: 0.4, plastic: 28)])
+        #expect(ShoppingTrends.bulkSwap(for: item) == nil)
+        let scan = ScanResult(date: Self.date(17, 8), title: "Shake", components: [item])
+        let trend = try #require(ShoppingTrends.analyze([scan]).first)
+        #expect(trend.swap.name == "Protein powder in a bulk tub")
+        #expect(abs(trend.plasticCut - 0.7) < 0.001)
+        #expect(trend.swap.metrics[.plasticMass]?.tier == .estimate)
+        // The same item keeps the same swap id, so its action plan is reused.
+        #expect(ShoppingTrends.analyze([scan]).first?.swap.id == trend.swap.id)
+    }
 }

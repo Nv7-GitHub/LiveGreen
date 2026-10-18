@@ -54,6 +54,11 @@ extension ClaudeClient: AlternativeSuggester {
         these with the same factor tables as the original, so they decide its numbers. A food swap must be a \
         different food (another food_group), a smaller serving or less packaging; the same food called local, \
         organic, seasonal or home-made has the same factors and is not a swap.
+        - Single-serve packaged items (a bottled protein shake, a snack bar, a canned or bottled drink, a coffee pod, \
+        a travel-size toiletry): include one bulk option, the same thing or its concentrate bought in a big \
+        container ("Protein powder in a bulk tub" for a bottled protein shake, "Oats in a large bag" for oat \
+        bars). Give its food_group, its serving, and packaging_mass_g and packaging_materials for one serving's \
+        share of the big container (a 900 g tub of about 30 scoops weighs about 100 g, so about 3 g a serving).
         - Reusables (a tumbler, jar, bottle, lunch box or bag used many times in place of single-use ones): set \
         reusable true and category household, give the item's own mass and materials (stainless_steel, glass, \
         glass_tableware, ceramic, pp, silicone, cotton…) and how many years it lasts in lifespan_years. LiveGreen \
