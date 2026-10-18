@@ -44,26 +44,9 @@ public struct ScannedFootprint: Sendable, Hashable {
     }
 }
 
-/// A point on the percentile trend sparkline.
-public struct PercentilePoint: Sendable, Hashable {
-    public var date: Date
-    public var greenerThan: Double
-}
-
 public enum Percentiles {
     /// Share of the distribution above `value`: 1 − CDF(value).
     public static func greenerThan(_ value: Double, in distribution: LogNormal) -> Double {
         1 - distribution.cdf(value)
-    }
-
-    /// Percentile after each scan, recomputed over all scans up to that date.
-    public static func trend(scans: [ScanResult], model: CohortModel, metric: MetricKey = .carbon,
-                             engine: ImpactEngine = ImpactEngine()) -> [PercentilePoint] {
-        let ordered = scans.sorted { $0.date < $1.date }
-        return ordered.indices.compactMap { index in
-            let footprint = ScannedFootprint.from(scans: Array(ordered[...index]), engine: engine)
-            guard let comparison = model.compare(footprint).first(where: { $0.metric == metric }) else { return nil }
-            return PercentilePoint(date: ordered[index].date, greenerThan: comparison.greenerThan)
-        }
     }
 }

@@ -48,7 +48,7 @@ struct CohortModelTests {
         // Peers are the whole region, unadjusted: carbon median 10,000; home electricity 30% of 5,000.
         #expect(abs(try #require(model(UserProfile(householdSize: 1, diet: .vegan)).regionalDistribution(for: .carbon)).median - 10_000) < 1e-9)
         #expect(abs(try #require(model().regionalDistribution(for: .yearlyElectricity)).median - 1_500) < 1e-9)
-        #expect(model().regionalDistribution(for: .water) == nil)
+        #expect(model().regionalDistribution(for: .water) == nil) // no water shares in this reference
 
         let comparison = try #require(model().compare(heavy).first { $0.metric == .carbon })
         #expect(abs(comparison.userValue - 10_000) < 1e-9)
@@ -81,27 +81,13 @@ struct CohortModelTests {
         #expect(first.first { $0.name == "Yuti Purohit" }?.initials == "YP")
         let values = first.compactMap { $0.yearly[.carbon] }
         #expect(values.count == CohortModel.friendNames.count && Set(values).count == values.count)
-        #expect(first.allSatisfy { $0.yearly[.water] == nil })
+        #expect(first.allSatisfy { $0.yearly[.water] == nil }, "no water shares in this reference, so no water draws")
 
         let footprint = ScannedFootprint(byCategory: [.food: [.carbon: 1_500]])
         let board = model().leaderboard(for: footprint)
         #expect(board.count == CohortModel.friendNames.count + 1)
         #expect(board.filter(\.isUser).count == 1)
         #expect(zip(board, board.dropFirst()).allSatisfy { $0.value <= $1.value })
-    }
-
-    @Test func trendRecomputesAfterEachScan() {
-        var first = SampleScansForTests.desk
-        first.date = Date(timeIntervalSince1970: 1_780_000_000)
-        var second = ScanResult(title: "Lunch", components: [first.components[1]])
-        second.components[0].name = "Second burger"
-        second.date = Date(timeIntervalSince1970: 1_790_000_000)
-        let store = ReferenceStore.bundled
-        let real = CohortModel(profile: .default, store: store)!
-        let trend = Percentiles.trend(scans: [second, first], model: real)
-        #expect(trend.count == 2)
-        #expect(trend[0].date < trend[1].date)
-        #expect(trend.allSatisfy { (0...1).contains($0.greenerThan) })
     }
 }
 
@@ -157,9 +143,30 @@ struct LeaderboardRealismTests {
         #expect(try rank(Self.green) <= 3, "very green profile is near the top")
         #expect(try rank(Self.heavy) >= 8, "car-heavy profile is near the bottom")
         #expect(try rank(Self.heavy, .yearlyElectricity) >= 8)
-        #expect(try rank(Self.green, .yearlyElectricity) <= 3)
+        for metric in CohortModel.leaderboardMetrics {
+            #expect(try rank(.default, metric) > 1, "the default profile does not win on \(metric)")
+            #expect(try rank(Self.green, metric) <= 3, "very green profile is near the top on \(metric)")
+        }
         let percent = { (profile: UserProfile) in try #require(self.model(profile).compare(self.scanned).first).greenerThan }
         #expect(try percent(Self.green) > percent(Self.typical) && percent(Self.typical) > percent(Self.heavy))
+    }
+
+    @Test func waterAndLandCountTheConsumptionShares() throws {
+        let us = try model(UserProfile(region: Region(countryCode: "US")))
+        for metric in [MetricKey.water, .land] {
+            let total = try #require(us.baseline.medians[metric])
+            let shares = Category.allCases.reduce(0) { $0 + us.reference.share(of: $1, for: metric) }
+            #expect(shares > 0.5 && shares < 1)
+            #expect(abs(try #require(us.regionalDistribution(for: metric)).median - total * shares) < 1e-6)
+            // An omnivore living alone sits mid-distribution: there is nothing to win by default.
+            let single = try model(UserProfile(region: Region(countryCode: "US"), householdSize: 1))
+            let comparison = try #require(single.compare(.empty).first { $0.metric == metric })
+            #expect((0.3...0.7).contains(comparison.greenerThan), "\(metric) \(comparison.greenerThan)")
+        }
+        // A heavy beef habit is more land than a typical diet, so it raises the land footprint.
+        let typical = try model(Self.typical)
+        let beef = ScannedFootprint(byCategory: [.food: [.land: 10_000]])
+        #expect(try #require(typical.estimate(for: .land, scanned: beef)) > typical.estimate(for: .land)!)
     }
 
     @Test func estimateMatchesOnboardingAndAddsBigScans() throws {
